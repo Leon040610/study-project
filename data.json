@@ -1,0 +1,82 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "name": "Yu",
+      "email": "yuleon0406@163.com",
+      "phone": "",
+      "password": "123456",
+      "role": "student",
+      "createdAt": "2026-06-18T13:49:31.235Z"
+    }
+  ],
+  "goals": [],
+  "plans": [],
+  "tasks": [],
+  "reminders": [],
+  "announcements": [
+    {
+      "id": 1,
+      "title": "系统更新通知",
+      "content": "系统将于本周六进行维护升级，届时将暂停服务2小时。",
+      "priority": "high",
+      "createdAt": "2026-06-15"
+    },
+    {
+      "id": 2,
+      "title": "新功能上线",
+      "content": "日历视图功能已上线，可在首页查看今日任务安排。",
+      "priority": "normal",
+      "createdAt": "2026-06-14"
+    },
+    {
+      "id": 3,
+      "title": "学习提醒",
+      "content": "请及时完成本周学习任务，保持学习进度。",
+      "priority": "normal",
+      "createdAt": "2026-06-13"
+    }
+  ],
+  "resources": [
+    {
+      "id": 1,
+      "title": "JavaScript高级编程",
+      "type": "book",
+      "category": "编程",
+      "url": "https://example.com/js-book"
+    },
+    {
+      "id": 2,
+      "title": "React官方文档",
+      "type": "doc",
+      "category": "编程",
+      "url": "https://react.dev"
+    },
+    {
+      "id": 3,
+      "title": "Python入门教程",
+      "type": "video",
+      "category": "编程",
+      "url": "https://example.com/python-video"
+    },
+    {
+      "id": 4,
+      "title": "数据结构与算法",
+      "type": "book",
+      "category": "算法",
+      "url": "https://example.com/algorithm-book"
+    },
+    {
+      "id": 5,
+      "title": "机器学习实战",
+      "type": "book",
+      "category": "AI",
+      "url": "https://example.com/ml-book"
+    }
+  ],
+  "userIdCounter": 2,
+  "goalIdCounter": 1,
+  "planIdCounter": 1,
+  "taskIdCounter": 1,
+  "reminderIdCounter": 1
+}
