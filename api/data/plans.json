@@ -1,0 +1,14 @@
+[
+  {
+    "id": "h33mezpys2",
+    "user_id": "ex0o45p17t7",
+    "title": "Test Plan",
+    "goal": "Learn Vue",
+    "start_date": "2026-06-20",
+    "end_date": "2026-06-30",
+    "daily_minutes": 60,
+    "progress": 0,
+    "created_at": "2026-06-19T17:19:28.052Z",
+    "updated_at": "2026-06-19T17:19:28.052Z"
+  }
+]

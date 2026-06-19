@@ -25,5 +25,14 @@
     "role": "student",
     "created_at": "2026-06-19T15:41:48.605Z",
     "updated_at": "2026-06-19T15:41:48.605Z"
+  },
+  "test@test.com": {
+    "id": "ex0o45p17t7",
+    "email": "test@test.com",
+    "name": "TestUser",
+    "password": "$2a$10$.EcYFFNXdAfWoKW/i6fwm.w9QwXgLjhwPfurnKE.sicVrHiZz3H.K",
+    "role": "student",
+    "created_at": "2026-06-19T17:18:44.819Z",
+    "updated_at": "2026-06-19T17:18:44.819Z"
   }
 }

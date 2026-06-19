@@ -49,7 +49,14 @@ export const useDataStore = defineStore('data', () => {
     }
     goals.value.push(newGoal)
     try {
-      await api.post('/goals', newGoal)
+      const response = await api.post('/goals', newGoal) as any
+      // 用后端返回的真实数据替换本地临时数据
+      if (response && response.id) {
+        const index = goals.value.findIndex(g => g.id === newGoal.id)
+        if (index !== -1) {
+          goals.value[index] = { ...goals.value[index], ...response, id: response.id }
+        }
+      }
     } catch {}
     return newGoal
   }
@@ -78,7 +85,14 @@ export const useDataStore = defineStore('data', () => {
     }
     plans.value.push(newPlan)
     try {
-      await api.post('/plans', newPlan)
+      const response = await api.post('/plans', newPlan) as any
+      // 用后端返回的真实数据替换本地临时数据
+      if (response && response.id) {
+        const index = plans.value.findIndex(p => p.id === newPlan.id)
+        if (index !== -1) {
+          plans.value[index] = { ...plans.value[index], ...response, id: response.id }
+        }
+      }
     } catch {}
     return newPlan
   }
@@ -109,7 +123,14 @@ export const useDataStore = defineStore('data', () => {
     }
     tasks.value.push(newTask)
     try {
-      await api.post('/tasks', newTask)
+      const response = await api.post('/tasks', newTask) as any
+      // 用后端返回的真实数据替换本地临时数据
+      if (response && response.id) {
+        const index = tasks.value.findIndex(t => t.id === newTask.id)
+        if (index !== -1) {
+          tasks.value[index] = { ...tasks.value[index], ...response, id: response.id }
+        }
+      }
     } catch {}
     return newTask
   }

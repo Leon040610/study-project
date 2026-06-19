@@ -24,9 +24,24 @@ interface Goal {
 const goalStore = new ArrayFileStore<Goal>('goals');
 const goals = goalStore.load();
 
+// 将后端 snake_case 转为前端 camelCase
+function toClientGoal(g: Goal) {
+  return {
+    id: g.id,
+    title: g.title,
+    description: g.description,
+    category: g.category,
+    targetDate: g.target_date,
+    status: g.status,
+    progress: g.progress,
+    completedDate: g.completed_date,
+    abandonedDate: g.abandoned_date,
+  };
+}
+
 router.get('/', authenticate, (req, res) => {
   const userGoals = goals.filter(g => g.user_id === req.user?.id);
-  res.json(userGoals);
+  res.json(userGoals.map(toClientGoal));
 });
 
 router.post('/', authenticate, (req, res) => {
@@ -56,7 +71,7 @@ router.post('/', authenticate, (req, res) => {
   
   goals.push(goal);
   goalStore.save(goals);
-  res.status(201).json(goal);
+  res.status(201).json(toClientGoal(goal));
 });
 
 router.get('/:id', authenticate, (req, res) => {
@@ -66,7 +81,7 @@ router.get('/:id', authenticate, (req, res) => {
     return res.status(404).json({ message: '目标不存在' });
   }
   
-  res.json(goal);
+  res.json(toClientGoal(goal));
 });
 
 router.put('/:id', authenticate, (req, res) => {
@@ -76,7 +91,7 @@ router.put('/:id', authenticate, (req, res) => {
     return res.status(404).json({ message: '目标不存在' });
   }
   
-  const { title, description, category, targetDate, status } = req.body;
+  const { title, description, category, targetDate, status, progress, completedDate } = req.body;
   
   if (status && status !== goals[index].status) {
     goals[index].status = status;
@@ -95,11 +110,13 @@ router.put('/:id', authenticate, (req, res) => {
     description: description !== undefined ? description : goals[index].description,
     category: category || goals[index].category,
     target_date: targetDate || goals[index].target_date,
+    progress: progress !== undefined ? progress : goals[index].progress,
+    completed_date: completedDate !== undefined ? completedDate : goals[index].completed_date,
     updated_at: new Date().toISOString(),
   };
   goalStore.save(goals);
   
-  res.json(goals[index]);
+  res.json(toClientGoal(goals[index]));
 });
 
 router.delete('/:id', authenticate, (req, res) => {

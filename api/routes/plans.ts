@@ -4,15 +4,45 @@ import { plans, tasks, savePlans, saveTasks, type Plan, type Task } from '../uti
 
 const router = express.Router();
 
+// 将后端 snake_case 转为前端 camelCase
+function toClientPlan(p: Plan) {
+  return {
+    id: p.id,
+    title: p.title,
+    goalTitle: p.goal,
+    category: p.goal,
+    startDate: p.start_date,
+    endDate: p.end_date,
+    description: '',
+    progress: p.progress,
+  };
+}
+
+function toClientTask(t: Task) {
+  // 通过 plan_id 查找 plan title
+  const plan = plans.find(p => p.id === t.plan_id);
+  return {
+    id: t.id,
+    title: t.title,
+    planTitle: plan?.title || '',
+    date: t.due_date,
+    completed: t.completed,
+    startDate: t.due_date,
+    endDate: t.due_date,
+  };
+}
+
 router.get('/', authenticate, (req, res) => {
   const userPlans = plans.filter(p => p.user_id === req.user?.id);
-  res.json(userPlans);
+  res.json(userPlans.map(toClientPlan));
 });
 
 router.post('/', authenticate, (req, res) => {
-  const { title, goal, startDate, endDate, dailyMinutes } = req.body;
+  // 兼容前端字段名：goalTitle 或 goal 或 category
+  const { title, goal, goalTitle, category, startDate, endDate, dailyMinutes, description } = req.body;
+  const goalValue = goal || goalTitle || category;
   
-  if (!title || !goal || !startDate || !endDate) {
+  if (!title || !goalValue || !startDate || !endDate) {
     return res.status(400).json({ error: '缺少必填字段' });
   }
   
@@ -23,7 +53,7 @@ router.post('/', authenticate, (req, res) => {
     id,
     user_id: req.user!.id,
     title,
-    goal,
+    goal: goalValue,
     start_date: startDate,
     end_date: endDate,
     daily_minutes: dailyMinutes || 60,
@@ -60,7 +90,7 @@ router.post('/', authenticate, (req, res) => {
   }
   saveTasks();
   
-  res.status(201).json(plan);
+  res.status(201).json(toClientPlan(plan));
 });
 
 router.get('/:id', authenticate, (req, res) => {
@@ -72,7 +102,7 @@ router.get('/:id', authenticate, (req, res) => {
   
   const planTasks = tasks.filter(t => t.plan_id === req.params.id);
   
-  res.json({ plan, tasks: planTasks });
+  res.json({ plan: toClientPlan(plan), tasks: planTasks.map(toClientTask) });
 });
 
 router.put('/:id', authenticate, (req, res) => {
@@ -82,12 +112,13 @@ router.put('/:id', authenticate, (req, res) => {
     return res.status(404).json({ error: '计划不存在' });
   }
   
-  const { title, goal, startDate, endDate, dailyMinutes } = req.body;
+  const { title, goal, goalTitle, category, startDate, endDate, dailyMinutes } = req.body;
+  const goalValue = goal || goalTitle || category;
   
   plans[index] = {
     ...plans[index],
     title: title || plans[index].title,
-    goal: goal || plans[index].goal,
+    goal: goalValue || plans[index].goal,
     start_date: startDate || plans[index].start_date,
     end_date: endDate || plans[index].end_date,
     daily_minutes: dailyMinutes !== undefined ? dailyMinutes : plans[index].daily_minutes,
@@ -95,7 +126,7 @@ router.put('/:id', authenticate, (req, res) => {
   };
   savePlans();
   
-  res.json(plans[index]);
+  res.json(toClientPlan(plans[index]));
 });
 
 router.delete('/:id', authenticate, (req, res) => {
