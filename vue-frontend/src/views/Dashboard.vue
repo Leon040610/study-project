@@ -204,7 +204,7 @@ async function fetchData() {
 
   stats.plans = dataStore.plans.length
   stats.completedTasks = dataStore.tasks.filter(t => t.completed).length
-  stats.reminders = 2
+  stats.reminders = 0
   stats.progress = dataStore.tasks.length > 0
     ? Math.round((stats.completedTasks / dataStore.tasks.length) * 100)
     : 0
@@ -238,7 +238,7 @@ function initCharts() {
       xAxis: { type: 'category', data: ['周一', '周二', '周三', '周四', '周五', '周六', '周日'] },
       yAxis: { type: 'value', name: '分钟' },
       series: [{
-        data: studyData.length >= 7 ? studyData : [120, 180, 90, 240, 150, 300, 280],
+        data: studyData.length >= 7 ? studyData : [0, 0, 0, 0, 0, 0, 0],
         type: 'line',
         smooth: true,
         areaStyle: {
@@ -272,7 +272,7 @@ function initCharts() {
         data: [
           { value: completedCount, name: '已完成', itemStyle: { color: '#10b981' } },
           { value: inProgressCount, name: '进行中', itemStyle: { color: '#4f46e5' } },
-          { value: Math.max(1, dataStore.tasks.length - completedCount - inProgressCount), name: '未开始', itemStyle: { color: '#f59e0b' } }
+          { value: dataStore.tasks.length - completedCount - inProgressCount || 0, name: '未开始', itemStyle: { color: '#f59e0b' } }
         ]
       }]
     })

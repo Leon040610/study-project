@@ -23,80 +23,20 @@ export const useDataStore = defineStore('data', () => {
   const completedGoals = computed(() => goals.value.filter(g => g.status === '已完成'))
   const abandonedGoals = computed(() => goals.value.filter(g => g.status === '已放弃'))
 
-  // 辅助函数：为计划生成任务（每个任务有独立的时间周期）
-  function generateDefaultTasksForPlan(planTitle: string, tasks: { title: string; startDate: string; endDate: string }[]): Task[] {
-    return tasks.map((t, index) => ({
-      id: `${planTitle}-task-${index + 1}`,
-      title: t.title,
-      planTitle,
-      date: t.startDate, // date 字段保留用于兼容，设为任务开始日期
-      completed: false,
-      completedDates: {},
-      startDate: t.startDate,
-      endDate: t.endDate
-    }))
-  }
-
   async function fetchAllData() {
-    const today = new Date()
-    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
-
-    const defaultGoals: Goal[] = [
-      { id: '1', title: '通过考研数学考试', description: '系统复习高等数学、线性代数、概率论', category: '考试科目', targetDate: '2026-12-20', status: '进行中', progress: 65 },
-      { id: '2', title: '掌握Python编程', description: '学习Python基础语法和常用库', category: '技能学习', targetDate: '2026-08-30', status: '进行中', progress: 80 },
-      { id: '3', title: '通过英语四级', description: '备考大学英语四级考试', category: '证书考试', targetDate: '2026-06-15', status: '已完成', progress: 100, completedDate: '2026-06-10' },
-      { id: '4', title: '学习日语N2', description: '学习日语达到N2水平', category: '语言学习', targetDate: '2026-11-30', status: '已放弃', progress: 30, abandonedDate: '2026-05-20' }
-    ]
-    const defaultPlans: Plan[] = [
-      { id: '1', title: '考研数学复习计划', category: '考试科目', goalTitle: '通过考研数学考试', startDate: '2026-06-01', endDate: '2026-12-20', description: '系统复习高等数学、线性代数、概率论' },
-      { id: '2', title: 'Python学习计划', category: '技能学习', goalTitle: '掌握Python编程', startDate: '2026-05-01', endDate: '2026-08-30', description: '学习Python基础和常用库' },
-      { id: '3', title: '英语学习计划', category: '语言学习', goalTitle: '通过英语四级', startDate: '2026-03-01', endDate: '2026-06-15', description: '备考大学英语四级考试' },
-      { id: '4', title: '编程学习计划', category: '技能学习', goalTitle: '掌握Python编程', startDate: '2026-06-01', endDate: '2026-12-31', description: '日常编程练习' },
-      { id: '5', title: '专业课复习计划', category: '考试科目', goalTitle: '通过考研数学考试', startDate: '2026-09-01', endDate: '2026-12-20', description: '复习专业课程' }
-    ]
-    
-    // 每个计划的任务有独立的时间周期，不再每天重复生成
-    const defaultTasks: Task[] = [
-      ...generateDefaultTasksForPlan('考研数学复习计划', [
-        { title: '复习高等数学', startDate: '2026-06-01', endDate: '2026-08-31' },
-        { title: '复习线性代数', startDate: '2026-09-01', endDate: '2026-10-31' },
-        { title: '复习概率论', startDate: '2026-11-01', endDate: '2026-12-20' },
-        { title: '做历年真题', startDate: '2026-06-01', endDate: '2026-12-20' }
-      ]),
-      ...generateDefaultTasksForPlan('Python学习计划', [
-        { title: '学习Python基础语法', startDate: '2026-05-01', endDate: '2026-06-15' },
-        { title: '学习数据结构与算法', startDate: '2026-06-16', endDate: '2026-08-30' }
-      ]),
-      ...generateDefaultTasksForPlan('英语学习计划', [
-        { title: '背诵单词', startDate: '2026-03-01', endDate: '2026-06-15' },
-        { title: '阅读理解', startDate: '2026-03-01', endDate: '2026-06-15' },
-        { title: '听力练习', startDate: '2026-03-01', endDate: '2026-06-15' }
-      ]),
-      ...generateDefaultTasksForPlan('编程学习计划', [
-        { title: '编程实战练习', startDate: '2026-06-01', endDate: '2026-12-31' }
-      ]),
-      ...generateDefaultTasksForPlan('专业课复习计划', [
-        { title: '复习专业课程', startDate: '2026-09-01', endDate: '2026-12-20' },
-        { title: '做课后习题', startDate: '2026-09-01', endDate: '2026-12-20' }
+    try {
+      const [goalsData, plansData, tasksData] = await Promise.all([
+        api.get('/goals').catch(() => []),
+        api.get('/plans').catch(() => []),
+        api.get('/tasks').catch(() => [])
       ])
-    ]
-
-    // 只有在本地数据为空时才从后端获取，避免覆盖本地修改
-    if (goals.value.length === 0 && plans.value.length === 0 && tasks.value.length === 0) {
-      try {
-        const [goalsData, plansData, tasksData] = await Promise.all([
-          api.get('/goals').catch(() => []),
-          api.get('/plans').catch(() => []),
-          api.get('/tasks').catch(() => [])
-        ])
-        goals.value = (goalsData && Array.isArray(goalsData) && goalsData.length > 0) ? goalsData : defaultGoals
-        plans.value = (plansData && Array.isArray(plansData) && plansData.length > 0) ? plansData : defaultPlans
-        tasks.value = (tasksData && Array.isArray(tasksData) && tasksData.length > 0) ? tasksData : defaultTasks
-      } catch {
-        goals.value = defaultGoals
-        plans.value = defaultPlans
-        tasks.value = defaultTasks
-      }
+      goals.value = Array.isArray(goalsData) ? goalsData : []
+      plans.value = Array.isArray(plansData) ? plansData : []
+      tasks.value = Array.isArray(tasksData) ? tasksData : []
+    } catch {
+      goals.value = []
+      plans.value = []
+      tasks.value = []
     }
   }
 
