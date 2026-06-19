@@ -1,14 +1,23 @@
 <template>
-  <div class="app-layout">
-    <aside class="sidebar">
+  <div class="app-layout" :class="{ 'sidebar-collapsed': isMobile }">
+    <!-- 移动端遮罩 -->
+    <transition name="fade">
+      <div v-if="isMobile && sidebarOpen" class="sidebar-overlay" @click="sidebarOpen = false"></div>
+    </transition>
+
+    <aside class="sidebar" :class="{ 'sidebar-open': isMobile && sidebarOpen }">
       <div class="sidebar-header">
-        <h1>🎓 学习计划助手</h1>
+        <div class="logo-icon">
+          <el-icon :size="24"><Reading /></el-icon>
+        </div>
+        <span class="logo-text">学习计划助手</span>
+        <el-button v-if="isMobile" class="sidebar-close" :icon="Close" circle size="small" @click="sidebarOpen = false" />
       </div>
       <el-menu
         :default-active="activeMenu"
         mode="vertical"
         background-color="transparent"
-        text-color="rgba(255,255,255,0.8)"
+        text-color="rgba(255,255,255,0.7)"
         active-text-color="#fff"
         @select="handleMenuSelect"
       >
@@ -41,7 +50,7 @@
           <span>个人中心</span>
         </el-menu-item>
         <template v-if="authStore.isAdmin">
-          <el-menu-divider style="background-color: rgba(255,255,255,0.2)"></el-menu-divider>
+          <el-menu-divider style="background-color: rgba(255,255,255,0.15)"></el-menu-divider>
           <el-sub-menu index="/admin">
             <template #title>
               <el-icon><Setting /></el-icon>
@@ -77,43 +86,49 @@
       <div class="sidebar-footer">
         <div class="user-info">
           <div class="avatar">
-            <el-icon><User /></el-icon>
+            <el-icon :size="20"><User /></el-icon>
           </div>
           <div class="user-detail">
-            <p>{{ authStore.user?.name }}</p>
-            <p class="role">{{ authStore.user?.role === 'admin' ? '管理员' : '学生' }}</p>
+            <p class="user-name">{{ authStore.user?.name || '用户' }}</p>
+            <p class="user-role">{{ authStore.user?.role === 'admin' ? '管理员' : '学生' }}</p>
           </div>
         </div>
-        <el-button @click="handleLogout" style="width: 100%; margin-top: 12px;">
+        <el-button @click="handleLogout" class="logout-btn">
           <el-icon><Switch /></el-icon>
           <span>退出登录</span>
         </el-button>
       </div>
     </aside>
+
     <main class="main-content">
       <header class="main-header">
         <div class="header-content">
-          <h2>{{ pageTitle }}</h2>
+          <div class="header-left">
+            <el-button v-if="isMobile" class="menu-toggle" :icon="Menu" circle @click="sidebarOpen = true" />
+            <h2>{{ pageTitle }}</h2>
+          </div>
           <div class="header-actions">
             <el-badge :value="notificationCount" class="notification-badge" :hidden="notificationCount === 0">
-              <el-button class="notification-btn" @click="showNotifications = true">
-                <el-icon><Bell /></el-icon>
+              <el-button class="notification-btn" @click="showNotifications = true" aria-label="消息中心">
+                <el-icon :size="20"><Bell /></el-icon>
               </el-button>
             </el-badge>
           </div>
         </div>
       </header>
-      <router-view v-slot="{ Component }">
-        <transition name="fade" mode="out-in">
-          <component :is="Component" />
-        </transition>
-      </router-view>
+      <div class="main-body">
+        <router-view v-slot="{ Component }">
+          <transition name="fade" mode="out-in">
+            <component :is="Component" />
+          </transition>
+        </router-view>
+      </div>
     </main>
 
     <!-- 消息中心弹窗 -->
-    <el-dialog v-model="showNotifications" title="消息中心" width="500px">
+    <el-dialog v-model="showNotifications" title="消息中心" width="500px" :class="{ 'dialog-mobile': isMobile }">
       <div v-if="notifications.length === 0" class="empty-notifications">
-        <el-icon style="font-size: 48px; color: #94a3b8;"><Bell /></el-icon>
+        <el-icon :size="48" color="var(--text-tertiary)"><Bell /></el-icon>
         <p>暂无消息</p>
       </div>
       <div v-else class="notifications-list">
@@ -137,21 +152,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import {
-  Monitor,
-  Aim,
-  FolderOpened,
-  Calendar,
-  Document,
-  ChatLineSquare,
-  User,
-  Setting,
-  DataAnalysis,
-  Bell,
-  Switch
+  Monitor, Aim, FolderOpened, Calendar, Document, ChatLineSquare,
+  User, Setting, DataAnalysis, Bell, Switch, Reading, Close, Menu
 } from '@element-plus/icons-vue'
 
 const authStore = useAuthStore()
@@ -159,6 +165,9 @@ const router = useRouter()
 const route = useRoute()
 
 const showNotifications = ref(false)
+const isMobile = ref(false)
+const sidebarOpen = ref(false)
+
 const notifications = ref([
   { id: '1', type: 'reminder', title: '学习提醒', content: '今日有3个任务待完成，请及时处理', time: '10分钟前' },
   { id: '2', type: 'notice', title: '系统通知', content: '您的学习计划"考研数学复习"进度已达到65%', time: '1小时前' },
@@ -166,7 +175,6 @@ const notifications = ref([
 ])
 
 const notificationCount = computed(() => notifications.value.length)
-
 const activeMenu = computed(() => route.path)
 
 const pageTitleMap: Record<string, string> = {
@@ -189,6 +197,7 @@ const pageTitle = computed(() => pageTitleMap[route.path] || '学习计划助手
 
 function handleMenuSelect(index: string) {
   router.push(index)
+  if (isMobile.value) sidebarOpen.value = false
 }
 
 function handleLogout() {
@@ -199,75 +208,140 @@ function handleLogout() {
 function clearNotifications() {
   notifications.value = []
 }
+
+function checkMobile() {
+  isMobile.value = window.innerWidth < 768
+}
+
+onMounted(() => {
+  checkMobile()
+  window.addEventListener('resize', checkMobile)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', checkMobile)
+})
 </script>
 
 <style scoped>
 .app-layout {
   display: flex;
   min-height: 100vh;
-  background: #f1f5f9;
+  background: var(--bg-base);
 }
 
+/* ---- 侧边栏 ---- */
 .sidebar {
-  width: 260px;
-  background: linear-gradient(180deg, #1e40af 0%, #1e3a8a 100%);
+  width: var(--sidebar-width);
+  background: linear-gradient(180deg, var(--bg-sidebar) 0%, #312e81 100%);
   color: white;
   display: flex;
   flex-direction: column;
-  padding: 24px;
+  padding: var(--space-6);
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  z-index: var(--z-fixed);
+  transition: transform var(--transition-slow);
+}
+
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-8);
+}
+
+.logo-icon {
+  width: 40px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
 }
 
-.sidebar-header h1 {
-  font-size: 20px;
+.logo-text {
+  font-size: var(--text-lg);
   font-weight: 700;
-  margin-bottom: 32px;
+  letter-spacing: -0.02em;
+}
+
+.sidebar-close {
+  margin-left: auto;
+  background: rgba(255, 255, 255, 0.1) !important;
+  border: none !important;
+  color: white !important;
 }
 
 .sidebar-footer {
   margin-top: auto;
-  padding-top: 24px;
+  padding-top: var(--space-6);
   border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .user-info {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
 }
 
 .avatar {
   width: 40px;
   height: 40px;
   background: rgba(255, 255, 255, 0.2);
-  border-radius: 50%;
+  border-radius: var(--radius-full);
   display: flex;
   justify-content: center;
   align-items: center;
+  flex-shrink: 0;
 }
 
-.user-detail p {
+.user-name {
+  font-size: var(--text-sm);
+  font-weight: 600;
   margin: 0;
-  font-size: 14px;
 }
 
-.user-detail .role {
-  font-size: 12px;
-  opacity: 0.7;
+.user-role {
+  font-size: var(--text-xs);
+  opacity: 0.6;
+  margin: 0;
 }
 
+.logout-btn {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.1) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  color: white !important;
+  transition: all var(--transition-fast) !important;
+}
+
+.logout-btn:hover {
+  background: rgba(239, 68, 68, 0.3) !important;
+  border-color: rgba(239, 68, 68, 0.4) !important;
+}
+
+/* ---- 主内容区 ---- */
 .main-content {
   flex: 1;
   display: flex;
   flex-direction: column;
-  overflow-y: auto;
+  min-width: 0;
 }
 
 .main-header {
-  background: white;
-  padding: 20px 32px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  background: var(--bg-surface);
+  padding: var(--space-5) var(--space-8);
+  box-shadow: var(--shadow-xs);
   flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  z-index: var(--z-sticky);
 }
 
 .header-content {
@@ -276,68 +350,134 @@ function clearNotifications() {
   align-items: center;
 }
 
-.header-content h2 {
-  font-size: 24px;
-  font-weight: 700;
-  color: #1e293b;
-  margin: 0;
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
 }
 
-.header-actions {
-  display: flex;
-  gap: 12px;
+.header-content h2 {
+  font-size: var(--text-2xl);
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.menu-toggle {
+  background: var(--bg-surface-hover) !important;
+  border: none !important;
 }
 
 .notification-btn {
-  border: none;
-  background: #f1f5f9;
+  border: none !important;
+  background: var(--bg-surface-hover) !important;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-full) !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast) !important;
 }
 
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.2s ease;
+.notification-btn:hover {
+  background: var(--color-primary-light) !important;
+  color: var(--color-primary) !important;
 }
 
+.main-body {
+  flex: 1;
+  overflow-y: auto;
+}
+
+/* ---- 消息中心 ---- */
 .empty-notifications {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 40px;
-  color: #94a3b8;
-}
-
-.empty-notifications p {
-  margin-top: 12px;
+  padding: var(--space-10);
+  color: var(--text-tertiary);
+  gap: var(--space-3);
 }
 
 .notifications-list {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--space-4);
 }
 
 .notification-item {
   display: flex;
-  gap: 12px;
-  padding: 16px;
-  background: #f8fafc;
-  border-radius: 8px;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--bg-surface-hover);
+  border-radius: var(--radius-md);
+  transition: background var(--transition-fast);
+}
+
+.notification-item:hover {
+  background: var(--color-primary-light);
 }
 
 .notification-content h4 {
   margin: 0;
-  font-size: 15px;
+  font-size: var(--text-sm);
+  font-weight: 600;
 }
 
 .notification-content p {
-  margin: 8px 0;
-  font-size: 14px;
-  color: #64748b;
+  margin: var(--space-2) 0;
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
 }
 
 .notification-time {
-  font-size: 12px;
-  color: #94a3b8;
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+}
+
+/* ---- 移动端遮罩 ---- */
+.sidebar-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: calc(var(--z-fixed) - 1);
+  backdrop-filter: blur(2px);
+}
+
+/* ---- 移动端响应式 ---- */
+@media (max-width: 767px) {
+  .sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    transform: translateX(-100%);
+    box-shadow: var(--shadow-xl);
+  }
+
+  .sidebar-open {
+    transform: translateX(0);
+  }
+
+  .main-header {
+    padding: var(--space-4) var(--space-4);
+  }
+
+  .header-content h2 {
+    font-size: var(--text-lg);
+  }
+
+  .dialog-mobile {
+    width: 90% !important;
+    margin: 0 auto !important;
+  }
+}
+
+/* ---- 过渡动画 ---- */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity var(--transition-base);
 }
 
 .fade-enter-from,
