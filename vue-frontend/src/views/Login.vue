@@ -113,7 +113,7 @@ function toggleMode() {
 <style scoped>
 .login-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4f46e5 100%);
+  background: var(--gradient-sidebar);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -187,7 +187,7 @@ function toggleMode() {
 }
 
 .card-header {
-  background: linear-gradient(135deg, var(--color-primary-dark) 0%, var(--color-primary) 100%);
+  background: var(--gradient-primary);
   padding: var(--space-12) var(--space-10);
   text-align: center;
 }

@@ -1,26 +1,80 @@
 <template>
   <div class="profile-page">
+    <!-- 个人信息卡片 -->
     <el-card class="profile-card">
       <div class="profile-header">
         <div class="avatar-wrapper">
           <div class="avatar">
-            <el-icon style="font-size: 40px;"><User /></el-icon>
+            <el-icon :size="40"><User /></el-icon>
           </div>
-          <el-button type="primary" size="small" @click="changeAvatar">更换头像</el-button>
+          <el-button type="primary" size="small" @click="changeAvatar">
+            <el-icon><Camera /></el-icon>
+            <span>更换头像</span>
+          </el-button>
         </div>
         <div class="profile-info">
           <h2>{{ user.name }}</h2>
           <p>{{ user.email }}</p>
-          <el-tag :type="user.role === 'admin' ? 'danger' : ''">
+          <el-tag :type="user.role === 'admin' ? 'danger' : ''" effect="light">
             {{ user.role === 'admin' ? '管理员' : '学生' }}
           </el-tag>
         </div>
       </div>
     </el-card>
 
+    <!-- 主题设置卡片 -->
+    <el-card class="settings-card">
+      <template #header>
+        <div class="card-header-flex">
+          <span class="card-title">
+            <el-icon><Brush /></el-icon>
+            外观设置
+          </span>
+        </div>
+      </template>
+      <div class="theme-settings">
+        <div class="setting-row">
+          <div class="setting-info">
+            <span class="setting-label">主题模式</span>
+            <span class="setting-desc">选择您偏好的界面主题，设置将自动保存</span>
+          </div>
+          <div class="theme-switcher">
+            <button
+              v-for="option in themeOptions"
+              :key="option.value"
+              class="theme-option"
+              :class="{ active: themeStore.mode === option.value }"
+              @click="themeStore.setMode(option.value)"
+            >
+              <el-icon :size="18">
+                <component :is="option.icon" />
+              </el-icon>
+              <span>{{ option.label }}</span>
+            </button>
+          </div>
+        </div>
+        <div class="setting-row current-theme">
+          <div class="setting-info">
+            <span class="setting-label">当前生效</span>
+            <span class="setting-desc">{{ themeStore.isDark ? '暗黑模式' : '明亮模式' }}</span>
+          </div>
+          <div class="theme-indicator" :class="{ dark: themeStore.isDark }">
+            <el-icon :size="16">
+              <Sunny v-if="!themeStore.isDark" />
+              <Moon v-else />
+            </el-icon>
+          </div>
+        </div>
+      </div>
+    </el-card>
+
+    <!-- 个人信息编辑 -->
     <el-card class="form-card">
       <template #header>
-        <span>个人信息</span>
+        <span class="card-title">
+          <el-icon><EditPen /></el-icon>
+          个人信息
+        </span>
       </template>
       <el-form :model="form" label-width="100px">
         <el-form-item label="用户名">
@@ -38,19 +92,23 @@
       </el-form>
     </el-card>
 
+    <!-- 修改密码 -->
     <el-card class="form-card">
       <template #header>
-        <span>修改密码</span>
+        <span class="card-title">
+          <el-icon><Lock /></el-icon>
+          修改密码
+        </span>
       </template>
       <el-form :model="passwordForm" :rules="passwordRules" ref="passwordFormRef" label-width="100px">
         <el-form-item label="原密码" prop="oldPassword">
-          <el-input v-model="passwordForm.oldPassword" type="password" placeholder="请输入原密码" />
+          <el-input v-model="passwordForm.oldPassword" type="password" placeholder="请输入原密码" show-password />
         </el-form-item>
         <el-form-item label="新密码" prop="newPassword">
-          <el-input v-model="passwordForm.newPassword" type="password" placeholder="请输入新密码" />
+          <el-input v-model="passwordForm.newPassword" type="password" placeholder="请输入新密码" show-password />
         </el-form-item>
         <el-form-item label="确认密码" prop="confirmPassword">
-          <el-input v-model="passwordForm.confirmPassword" type="password" placeholder="请再次输入新密码" />
+          <el-input v-model="passwordForm.confirmPassword" type="password" placeholder="请再次输入新密码" show-password />
         </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="changePassword">修改密码</el-button>
@@ -58,34 +116,46 @@
       </el-form>
     </el-card>
 
+    <!-- 学习统计 -->
     <el-card class="stats-card">
       <template #header>
-        <span>学习统计</span>
+        <span class="card-title">
+          <el-icon><DataLine /></el-icon>
+          学习统计
+        </span>
       </template>
       <div class="stats-grid">
         <div class="stat-item">
-          <div class="stat-icon">📋</div>
+          <div class="stat-icon stat-icon-blue">
+            <el-icon :size="22"><FolderOpened /></el-icon>
+          </div>
           <div class="stat-content">
             <div class="stat-value">{{ stats.plans }}</div>
             <div class="stat-label">学习计划</div>
           </div>
         </div>
         <div class="stat-item">
-          <div class="stat-icon">✅</div>
+          <div class="stat-icon stat-icon-green">
+            <el-icon :size="22"><CircleCheck /></el-icon>
+          </div>
           <div class="stat-content">
             <div class="stat-value">{{ stats.completedTasks }}</div>
             <div class="stat-label">已完成任务</div>
           </div>
         </div>
         <div class="stat-item">
-          <div class="stat-icon">🎯</div>
+          <div class="stat-icon stat-icon-amber">
+            <el-icon :size="22"><Aim /></el-icon>
+          </div>
           <div class="stat-content">
             <div class="stat-value">{{ stats.goals }}</div>
             <div class="stat-label">学习目标</div>
           </div>
         </div>
         <div class="stat-item">
-          <div class="stat-icon">📚</div>
+          <div class="stat-icon stat-icon-pink">
+            <el-icon :size="22"><Document /></el-icon>
+          </div>
           <div class="stat-content">
             <div class="stat-value">{{ stats.resources }}</div>
             <div class="stat-label">上传资源</div>
@@ -100,12 +170,24 @@
 import { ref, reactive, onMounted, computed } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useDataStore } from '@/stores/data'
+import { useThemeStore } from '@/stores/theme'
 import { api } from '@/utils/api'
 import { ElMessage } from 'element-plus'
-import { User } from '@element-plus/icons-vue'
+import {
+  User, Camera, Brush, EditPen, Lock, DataLine,
+  FolderOpened, CircleCheck, Aim, Document,
+  Sunny, Moon, Monitor
+} from '@element-plus/icons-vue'
 
 const authStore = useAuthStore()
 const dataStore = useDataStore()
+const themeStore = useThemeStore()
+
+const themeOptions = [
+  { value: 'light' as const, label: '明亮', icon: Sunny },
+  { value: 'dark' as const, label: '暗黑', icon: Moon },
+  { value: 'auto' as const, label: '跟随系统', icon: Monitor }
+]
 
 const user = computed(() => authStore.user || {
   id: '',
@@ -164,12 +246,6 @@ function syncUserForm() {
   form.phone = user.value.phone || ''
 }
 
-async function loadUser() {
-  // 不再调用 getProfile，直接使用 authStore 中已有的用户信息
-  // 登录时已经获取了用户信息，这里只需要同步到表单
-  syncUserForm()
-}
-
 async function fetchStats() {
   try {
     await dataStore.fetchAllData()
@@ -197,7 +273,7 @@ async function updateProfile() {
 async function changePassword() {
   if (!passwordFormRef.value) return
   await passwordFormRef.value.validate().catch(() => {})
-  
+
   try {
     await api.post('/auth/change-password', {
       oldPassword: passwordForm.oldPassword,
@@ -218,102 +294,290 @@ function changeAvatar() {
 
 onMounted(() => {
   syncUserForm()
-  loadUser()
   fetchStats()
 })
 </script>
 
 <style scoped>
 .profile-page {
-  padding: 24px;
+  padding: var(--space-6);
   display: grid;
   grid-template-columns: 1fr 400px;
-  gap: 24px;
+  gap: var(--space-6);
 }
 
 .profile-card {
   grid-column: 1 / -1;
-  padding: 32px;
 }
 
 .profile-header {
   display: flex;
   align-items: center;
-  gap: 24px;
+  gap: var(--space-8);
 }
 
 .avatar-wrapper {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-3);
 }
 
 .avatar {
   width: 120px;
   height: 120px;
-  background: linear-gradient(135deg, #1e40af 0%, #0d9488 100%);
-  border-radius: 50%;
+  background: var(--gradient-primary);
+  border-radius: var(--radius-full);
   display: flex;
   justify-content: center;
   align-items: center;
   color: white;
+  box-shadow: var(--shadow-lg);
+  position: relative;
+}
+
+.avatar::after {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: var(--radius-full);
+  background: var(--gradient-primary);
+  opacity: 0.3;
+  z-index: -1;
+  filter: blur(8px);
 }
 
 .profile-info h2 {
-  margin: 0 0 8px;
-  font-size: 28px;
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-3xl);
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
 }
 
 .profile-info p {
-  margin: 0 0 12px;
-  color: #64748b;
+  margin: 0 0 var(--space-3);
+  color: var(--text-secondary);
+  font-size: var(--text-base);
 }
 
+/* ---- 主题设置卡片 ---- */
+.settings-card {
+  grid-column: 1 / -1;
+}
+
+.card-header-flex {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.card-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-base);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.theme-settings {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.setting-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  background: var(--bg-surface-hover);
+  border-radius: var(--radius-lg);
+  transition: background var(--transition-fast);
+}
+
+.setting-row:hover {
+  background: var(--color-primary-subtle);
+}
+
+.setting-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.setting-label {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.setting-desc {
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+}
+
+/* 主题切换按钮组 */
+.theme-switcher {
+  display: flex;
+  gap: var(--space-1);
+  background: var(--bg-base);
+  padding: var(--space-1);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-default);
+}
+
+.theme-option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+
+.theme-option:hover {
+  color: var(--text-primary);
+  background: var(--bg-surface-hover);
+}
+
+.theme-option.active {
+  background: var(--color-primary);
+  color: white;
+  box-shadow: var(--shadow-sm);
+}
+
+/* 当前主题指示器 */
+.current-theme {
+  background: var(--color-primary-subtle);
+}
+
+.theme-indicator {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-warning-light);
+  color: var(--color-warning);
+  transition: all var(--transition-spring);
+}
+
+.theme-indicator.dark {
+  background: var(--color-primary-dark);
+  color: #c7d2fe;
+  transform: rotate(360deg);
+}
+
+/* ---- 表单卡片 ---- */
 .form-card {
-  padding: 24px;
+  padding: 0;
 }
 
+/* ---- 统计卡片 ---- */
 .stats-card {
-  padding: 24px;
+  grid-column: 1 / -1;
 }
 
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--space-4);
 }
 
 .stat-item {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 16px;
-  background: #f8fafc;
-  border-radius: 12px;
+  gap: var(--space-4);
+  padding: var(--space-5);
+  background: var(--bg-surface-hover);
+  border-radius: var(--radius-lg);
+  transition: all var(--transition-fast);
+  border: 1px solid transparent;
+}
+
+.stat-item:hover {
+  border-color: var(--border-default);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
 }
 
 .stat-icon {
-  font-size: 32px;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-shrink: 0;
 }
 
-.stat-content {
-  display: flex;
-  flex-direction: column;
-}
+.stat-icon-blue { background: var(--color-info-light); color: var(--color-info); }
+.stat-icon-green { background: var(--color-success-light); color: var(--color-success); }
+.stat-icon-amber { background: var(--color-warning-light); color: var(--color-warning); }
+.stat-icon-pink { background: #fce7f3; color: #db2777; }
 
 .stat-value {
-  font-size: 24px;
+  font-size: var(--text-2xl);
   font-weight: 700;
+  color: var(--text-primary);
+  line-height: var(--leading-tight);
 }
 
 .stat-label {
-  font-size: 13px;
-  color: #64748b;
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  margin-top: var(--space-1);
 }
 
+/* ---- 响应式 ---- */
 @media (max-width: 900px) {
   .profile-page {
+    grid-template-columns: 1fr;
+    padding: var(--space-4);
+  }
+
+  .profile-header {
+    flex-direction: column;
+    text-align: center;
+    gap: var(--space-4);
+  }
+
+  .profile-info h2 {
+    font-size: var(--text-2xl);
+  }
+
+  .theme-switcher {
+    flex-wrap: wrap;
+  }
+
+  .theme-option {
+    padding: var(--space-2) var(--space-3);
+    font-size: var(--text-xs);
+  }
+
+  .setting-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .stats-grid {
     grid-template-columns: 1fr;
   }
 }

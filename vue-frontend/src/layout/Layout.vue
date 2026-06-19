@@ -108,6 +108,12 @@
             <h2>{{ pageTitle }}</h2>
           </div>
           <div class="header-actions">
+            <el-button class="theme-toggle-btn" @click="themeStore.toggle()" aria-label="切换主题">
+              <el-icon :size="18">
+                <Sunny v-if="themeStore.isDark" />
+                <Moon v-else />
+              </el-icon>
+            </el-button>
             <el-badge :value="notificationCount" class="notification-badge" :hidden="notificationCount === 0">
               <el-button class="notification-btn" @click="showNotifications = true" aria-label="消息中心">
                 <el-icon :size="20"><Bell /></el-icon>
@@ -155,12 +161,15 @@
 import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useThemeStore } from '@/stores/theme'
 import {
   Monitor, Aim, FolderOpened, Calendar, Document, ChatLineSquare,
-  User, Setting, DataAnalysis, Bell, Switch, Reading, Close, Menu
+  User, Setting, DataAnalysis, Bell, Switch, Reading, Close, Menu,
+  Sunny, Moon
 } from '@element-plus/icons-vue'
 
 const authStore = useAuthStore()
+const themeStore = useThemeStore()
 const router = useRouter()
 const route = useRoute()
 
@@ -233,7 +242,7 @@ onUnmounted(() => {
 /* ---- 侧边栏 ---- */
 .sidebar {
   width: var(--sidebar-width);
-  background: linear-gradient(180deg, var(--bg-sidebar) 0%, #312e81 100%);
+  background: var(--gradient-sidebar);
   color: white;
   display: flex;
   flex-direction: column;
@@ -384,6 +393,31 @@ onUnmounted(() => {
 .notification-btn:hover {
   background: var(--color-primary-light) !important;
   color: var(--color-primary) !important;
+}
+
+.theme-toggle-btn {
+  border: none !important;
+  background: var(--bg-surface-hover) !important;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-full) !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-spring) !important;
+  margin-right: var(--space-2);
+}
+
+.theme-toggle-btn:hover {
+  background: var(--color-warning-light) !important;
+  color: var(--color-warning) !important;
+  transform: rotate(15deg);
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
 }
 
 .main-body {

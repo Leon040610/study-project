@@ -5,6 +5,17 @@
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>智能学习计划助手</title>
+    <script>
+      // 在应用挂载前应用主题，避免暗黑模式闪烁（FOUC）
+      (function () {
+        var stored = localStorage.getItem('study-app-theme');
+        var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        var isDark = stored === 'dark' || ((stored === 'auto' || !stored) && prefersDark);
+        var theme = isDark ? 'dark' : 'light';
+        document.documentElement.classList.add(theme);
+        document.documentElement.style.colorScheme = theme;
+      })();
+    </script>
   </head>
   <body>
     <div id="app"></div>
