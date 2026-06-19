@@ -31,6 +31,7 @@ export const useDataStore = defineStore('data', () => {
       planTitle,
       date: t.startDate, // date 字段保留用于兼容，设为任务开始日期
       completed: false,
+      completedDates: {},
       startDate: t.startDate,
       endDate: t.endDate
     }))
@@ -163,7 +164,8 @@ export const useDataStore = defineStore('data', () => {
     const newTask: Task = {
       ...data,
       id: Date.now().toString(),
-      completed: false
+      completed: false,
+      completedDates: {}
     }
     tasks.value.push(newTask)
     try {
@@ -182,6 +184,32 @@ export const useDataStore = defineStore('data', () => {
       // 任务状态更新后，联动更新关联计划和目标进度
       updateGoalProgressByTask(tasks.value[index])
     }
+  }
+
+  // 判断任务在指定日期是否已完成（日期隔离）
+  function isTaskCompletedOnDate(task: Task, dateStr: string): boolean {
+    if (task.completedDates) {
+      return task.completedDates[dateStr] === true
+    }
+    // 兼容旧数据：没有 completedDates 字段时回退到全局 completed
+    return task.completed
+  }
+
+  // 切换任务在指定日期的完成状态（日期隔离）
+  async function toggleTaskOnDate(taskId: string, dateStr: string, completed: boolean) {
+    const index = tasks.value.findIndex(t => t.id === taskId)
+    if (index === -1) return
+    const task = tasks.value[index]
+    if (!task.completedDates) {
+      task.completedDates = {}
+    }
+    task.completedDates[dateStr] = completed
+    // 同步 completed 字段，保持 Dashboard 等页面的统计兼容
+    task.completed = completed
+    try {
+      await api.put(`/tasks/${taskId}`, { completedDates: task.completedDates, completed: task.completed })
+    } catch {}
+    updateGoalProgressByTask(task)
   }
 
   // 根据任务完成情况更新关联目标的进度
@@ -239,7 +267,9 @@ export const useDataStore = defineStore('data', () => {
     deletePlan,
     addTask,
     updateTask,
-    deleteTask
+    deleteTask,
+    isTaskCompletedOnDate,
+    toggleTaskOnDate
   }
 })
 
@@ -274,4 +304,6 @@ export interface Task {
   completed: boolean
   startDate?: string
   endDate?: string
+  // 按日期记录完成状态，实现日期隔离勾选
+  completedDates?: Record<string, boolean>
 }

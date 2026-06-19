@@ -41,7 +41,7 @@
                     v-for="(task, i) in day.tasks.slice(0, 3)"
                     :key="i"
                     class="task-indicator"
-                    :class="{ completed: task.completed }"
+                    :class="{ completed: dataStore.isTaskCompletedOnDate(task, day.fullDate) }"
                   ></div>
                   <span v-if="day.tasks.length > 3" class="more-tasks">{{ day.tasks.length - 3 }}+</span>
                 </div>
@@ -64,15 +64,15 @@
             v-for="task in selectedTasks"
             :key="task.id"
             class="task-item"
-            :class="{ completed: task.completed }"
+            :class="{ completed: dataStore.isTaskCompletedOnDate(task, selectedDateStr) }"
           >
-            <el-checkbox :checked="task.completed" @change="(val) => toggleTask(task, val)" />
+            <el-checkbox :checked="dataStore.isTaskCompletedOnDate(task, selectedDateStr)" @change="(val) => toggleTask(task, val)" />
             <div class="task-content">
               <h4>{{ task.title }}</h4>
               <p>{{ task.planTitle }}</p>
             </div>
-            <el-tag :type="task.completed ? 'success' : ''">
-              {{ task.completed ? '已完成' : '待完成' }}
+            <el-tag :type="dataStore.isTaskCompletedOnDate(task, selectedDateStr) ? 'success' : ''">
+              {{ dataStore.isTaskCompletedOnDate(task, selectedDateStr) ? '已完成' : '待完成' }}
             </el-tag>
           </div>
         </div>
@@ -281,7 +281,7 @@ async function handleAddTask() {
 }
 
 function toggleTask(task: typeof dataStore.tasks[0], completed: boolean) {
-  dataStore.updateTask(task.id, { completed })
+  dataStore.toggleTaskOnDate(task.id, selectedDateStr.value, completed)
 }
 
 async function fetchData() {
