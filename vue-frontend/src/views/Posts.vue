@@ -55,7 +55,7 @@
     </div>
 
     <div v-if="filteredPosts.length === 0" class="empty-state">
-      <el-icon style="font-size: 48px; color: #94a3b8;"><ChatDotSquare /></el-icon>
+      <el-icon style="font-size: 48px; color: var(--text-tertiary);"><ChatDotSquare /></el-icon>
       <p>暂无帖子</p>
     </div>
 
@@ -367,7 +367,7 @@ fetchPosts()
 .avatar {
   width: 40px;
   height: 40px;
-  background: #f1f5f9;
+  background: var(--bg-surface-hover);
   border-radius: 50%;
   display: flex;
   justify-content: center;
@@ -386,7 +386,7 @@ fetchPosts()
 
 .post-time {
   font-size: 13px;
-  color: #94a3b8;
+  color: var(--text-tertiary);
 }
 
 .post-title {
@@ -396,11 +396,11 @@ fetchPosts()
 }
 
 .post-title:hover {
-  color: #1e40af;
+  color: var(--color-primary-dark);
 }
 
 .post-content {
-  color: #64748b;
+  color: var(--text-secondary);
   font-size: 15px;
   line-height: 1.6;
   margin: 0 0 16px;
@@ -420,7 +420,7 @@ fetchPosts()
   display: flex;
   gap: 20px;
   font-size: 14px;
-  color: #64748b;
+  color: var(--text-secondary);
 }
 
 .actions {
@@ -433,7 +433,7 @@ fetchPosts()
   flex-direction: column;
   align-items: center;
   padding: 80px;
-  color: #94a3b8;
+  color: var(--text-tertiary);
 }
 
 .empty-state p {
@@ -461,7 +461,7 @@ fetchPosts()
   display: flex;
   gap: 20px;
   font-size: 14px;
-  color: #64748b;
+  color: var(--text-secondary);
   margin-bottom: 16px;
 }
 
@@ -481,7 +481,7 @@ fetchPosts()
 .empty-comments {
   text-align: center;
   padding: 40px;
-  color: #94a3b8;
+  color: var(--text-tertiary);
 }
 
 .comments-list {
@@ -493,7 +493,7 @@ fetchPosts()
 
 .comment-item {
   padding: 16px;
-  background: #f8fafc;
+  background: var(--bg-surface);
   border-radius: 8px;
 }
 
@@ -509,11 +509,11 @@ fetchPosts()
 
 .comment-time {
   font-size: 12px;
-  color: #94a3b8;
+  color: var(--text-tertiary);
 }
 
 .comment-item p {
   margin: 0;
-  color: #475569;
+  color: var(--text-secondary);
 }
 </style>

@@ -344,7 +344,7 @@ onMounted(() => {
 .stat-icon-blue { background: var(--color-info-light); color: var(--color-info); }
 .stat-icon-green { background: var(--color-success-light); color: var(--color-success); }
 .stat-icon-amber { background: var(--color-warning-light); color: var(--color-warning); }
-.stat-icon-pink { background: #fce7f3; color: #ec4899; }
+.stat-icon-pink { background: var(--color-danger-light); color: var(--color-danger); }
 
 .stat-value {
   font-size: var(--text-3xl);

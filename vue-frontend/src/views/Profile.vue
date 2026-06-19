@@ -475,7 +475,7 @@ onMounted(() => {
 
 .theme-indicator.dark {
   background: var(--color-primary-dark);
-  color: #c7d2fe;
+  color: var(--text-link);
   transform: rotate(360deg);
 }
 
@@ -525,7 +525,7 @@ onMounted(() => {
 .stat-icon-blue { background: var(--color-info-light); color: var(--color-info); }
 .stat-icon-green { background: var(--color-success-light); color: var(--color-success); }
 .stat-icon-amber { background: var(--color-warning-light); color: var(--color-warning); }
-.stat-icon-pink { background: #fce7f3; color: #db2777; }
+.stat-icon-pink { background: var(--color-danger-light); color: var(--color-danger); }
 
 .stat-value {
   font-size: var(--text-2xl);

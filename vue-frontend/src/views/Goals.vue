@@ -13,7 +13,7 @@
         <el-tab-pane label="进行中" name="in-progress">
           <el-card>
             <div v-if="inProgressGoals.length === 0" class="empty-state">
-              <el-icon style="font-size: 48px; color: #94a3b8;"><Aim /></el-icon>
+              <el-icon style="font-size: 48px; color: var(--text-tertiary);"><Aim /></el-icon>
               <p>暂无进行中的目标</p>
             </div>
             <div v-else class="goals-grid">
@@ -45,7 +45,7 @@
         <el-tab-pane label="已完成" name="completed">
           <el-card>
             <div v-if="completedGoals.length === 0" class="empty-state">
-              <el-icon style="font-size: 48px; color: #94a3b8;"><Check /></el-icon>
+              <el-icon style="font-size: 48px; color: var(--text-tertiary);"><Check /></el-icon>
               <p>暂无已完成的目标</p>
             </div>
             <div v-else class="goals-grid">
@@ -72,7 +72,7 @@
         <el-tab-pane label="已放弃" name="abandoned">
           <el-card>
             <div v-if="abandonedGoals.length === 0" class="empty-state">
-              <el-icon style="font-size: 48px; color: #94a3b8;"><CircleClose /></el-icon>
+              <el-icon style="font-size: 48px; color: var(--text-tertiary);"><CircleClose /></el-icon>
               <p>暂无已放弃的目标</p>
             </div>
             <div v-else class="goals-grid">
@@ -223,7 +223,7 @@ async function deleteGoal(goal: typeof dataStore.goals[0]) {
   flex-direction: column;
   align-items: center;
   padding: 60px;
-  color: #94a3b8;
+  color: var(--text-tertiary);
 }
 
 .empty-state p {
@@ -238,19 +238,19 @@ async function deleteGoal(goal: typeof dataStore.goals[0]) {
 
 .goal-card {
   padding: 20px;
-  background: #fff;
+  background: var(--bg-surface);
   border-radius: 12px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--border-default);
 }
 
 .goal-card.completed {
-  border-color: #d1fae5;
-  background: #f0fdf4;
+  border-color: var(--color-success);
+  background: var(--color-success-subtle);
 }
 
 .goal-card.abandoned {
-  border-color: #fee2e2;
-  background: #fef2f2;
+  border-color: var(--color-danger);
+  background: var(--color-danger-subtle);
   opacity: 0.7;
 }
 
@@ -267,7 +267,7 @@ async function deleteGoal(goal: typeof dataStore.goals[0]) {
 }
 
 .goal-desc {
-  color: #64748b;
+  color: var(--text-secondary);
   font-size: 14px;
   margin: 0 0 16px;
 }
@@ -276,13 +276,13 @@ async function deleteGoal(goal: typeof dataStore.goals[0]) {
   display: flex;
   justify-content: space-between;
   font-size: 13px;
-  color: #94a3b8;
+  color: var(--text-tertiary);
   margin-bottom: 12px;
 }
 
 .progress-bar-container {
   height: 8px;
-  background: #e2e8f0;
+  background: var(--bg-surface-hover);
   border-radius: 4px;
   overflow: hidden;
   margin-bottom: 16px;
@@ -290,13 +290,13 @@ async function deleteGoal(goal: typeof dataStore.goals[0]) {
 
 .progress-bar {
   height: 100%;
-  background: linear-gradient(90deg, #1e40af, #0d9488);
+  background: linear-gradient(90deg, var(--color-primary), var(--color-info));
   border-radius: 4px;
   transition: width 0.5s;
 }
 
 .goal-card.completed .progress-bar {
-  background: #10b981;
+  background: var(--color-success);
 }
 
 .goal-actions {

@@ -2,32 +2,44 @@
   <div class="admin-dashboard">
     <div class="stats-grid">
       <el-card class="stat-card">
-        <div class="stat-icon" style="background: #dbeafe;">👥</div>
+        <div class="stat-icon stat-icon-blue">
+          <el-icon :size="24"><User /></el-icon>
+        </div>
         <div class="stat-value">{{ stats.students }}</div>
         <div class="stat-label">学生总数</div>
       </el-card>
       <el-card class="stat-card">
-        <div class="stat-icon" style="background: #d1fae5;">📋</div>
+        <div class="stat-icon stat-icon-green">
+          <el-icon :size="24"><Document /></el-icon>
+        </div>
         <div class="stat-value">{{ stats.plans }}</div>
         <div class="stat-label">学习计划</div>
       </el-card>
       <el-card class="stat-card">
-        <div class="stat-icon" style="background: #fef3c7;">✅</div>
+        <div class="stat-icon stat-icon-amber">
+          <el-icon :size="24"><CircleCheck /></el-icon>
+        </div>
         <div class="stat-value">{{ stats.completedTasks }}</div>
         <div class="stat-label">已完成任务</div>
       </el-card>
       <el-card class="stat-card">
-        <div class="stat-icon" style="background: #fce7f3;">📚</div>
+        <div class="stat-icon stat-icon-pink">
+          <el-icon :size="24"><Reading /></el-icon>
+        </div>
         <div class="stat-value">{{ stats.resources }}</div>
         <div class="stat-label">共享资源</div>
       </el-card>
       <el-card class="stat-card">
-        <div class="stat-icon" style="background: #ede9fe;">💬</div>
+        <div class="stat-icon stat-icon-purple">
+          <el-icon :size="24"><ChatLineSquare /></el-icon>
+        </div>
         <div class="stat-value">{{ stats.posts }}</div>
         <div class="stat-label">帖子总数</div>
       </el-card>
       <el-card class="stat-card">
-        <div class="stat-icon" style="background: #fed7aa;">🔔</div>
+        <div class="stat-icon stat-icon-orange">
+          <el-icon :size="24"><Bell /></el-icon>
+        </div>
         <div class="stat-value">{{ stats.announcements }}</div>
         <div class="stat-label">系统公告</div>
       </el-card>
@@ -88,6 +100,9 @@
 import { ref, reactive, onMounted } from 'vue'
 import { api } from '@/utils/api'
 import * as echarts from 'echarts'
+import {
+  User, Document, CircleCheck, Reading, ChatLineSquare, Bell
+} from '@element-plus/icons-vue'
 
 const stats = reactive({
   students: 0,
@@ -229,14 +244,22 @@ onMounted(() => {
   margin: 0 auto 12px;
 }
 
+.stat-icon-blue { background: var(--color-info-light); color: var(--color-info); }
+.stat-icon-green { background: var(--color-success-light); color: var(--color-success); }
+.stat-icon-amber { background: var(--color-warning-light); color: var(--color-warning); }
+.stat-icon-pink { background: var(--color-danger-light); color: var(--color-danger); }
+.stat-icon-purple { background: var(--color-primary-light); color: var(--color-primary); }
+.stat-icon-orange { background: var(--color-warning-subtle); color: var(--color-warning); }
+
 .stat-value {
   font-size: 28px;
   font-weight: 700;
+  color: var(--text-primary);
 }
 
 .stat-label {
   font-size: 13px;
-  color: #64748b;
+  color: var(--text-secondary);
 }
 
 .chart-row {

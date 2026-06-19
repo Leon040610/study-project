@@ -57,7 +57,7 @@
     </div>
 
     <div v-if="filteredResources.length === 0" class="empty-state">
-      <el-icon style="font-size: 48px; color: #94a3b8;"><Document /></el-icon>
+      <el-icon style="font-size: 48px; color: var(--text-tertiary);"><Document /></el-icon>
       <p>暂无资源</p>
     </div>
 
@@ -331,11 +331,11 @@ fetchResources()
 
 .resource-meta {
   font-size: 13px;
-  color: #94a3b8;
+  color: var(--text-tertiary);
 }
 
 .resource-desc {
-  color: #64748b;
+  color: var(--text-secondary);
   font-size: 14px;
   margin: 0 0 16px;
   line-height: 1.5;
@@ -349,7 +349,7 @@ fetchResources()
 
 .stats {
   font-size: 13px;
-  color: #94a3b8;
+  color: var(--text-tertiary);
 }
 
 .actions {
@@ -362,7 +362,7 @@ fetchResources()
   flex-direction: column;
   align-items: center;
   padding: 80px;
-  color: #94a3b8;
+  color: var(--text-tertiary);
 }
 
 .empty-state p {
@@ -403,7 +403,7 @@ fetchResources()
 
 .info-row .label {
   font-weight: 600;
-  color: #64748b;
+  color: var(--text-secondary);
 }
 
 .detail-desc h4 {
@@ -413,7 +413,7 @@ fetchResources()
 
 .detail-desc p {
   margin: 0;
-  color: #64748b;
+  color: var(--text-secondary);
   line-height: 1.6;
 }
 </style>

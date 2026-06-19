@@ -98,7 +98,7 @@
               <el-icon><Plus /></el-icon>
               <span>添加任务</span>
             </el-button>
-            <p style="color: #94a3b8; font-size: 12px; margin-top: 8px;">
+            <p style="color: var(--text-tertiary); font-size: 12px; margin-top: 8px;">
               每个任务需设置独立的时间周期，任务会在其时间范围内的每一天显示在日历中
             </p>
           </div>
@@ -421,7 +421,7 @@ onMounted(() => {
 
 .plan-info p {
   margin: 0;
-  color: #64748b;
+  color: var(--text-secondary);
 }
 
 .plan-meta {
@@ -429,12 +429,12 @@ onMounted(() => {
   gap: 24px;
   margin-bottom: 16px;
   font-size: 14px;
-  color: #64748b;
+  color: var(--text-secondary);
 }
 
 .progress-bar-container {
   height: 8px;
-  background: #e2e8f0;
+  background: var(--border-default);
   border-radius: 4px;
   overflow: hidden;
   margin-bottom: 20px;
@@ -463,7 +463,7 @@ onMounted(() => {
   align-items: center;
   gap: 8px;
   padding: 8px 12px;
-  background: #f8fafc;
+  background: var(--bg-surface);
   border-radius: 8px;
 }
 
@@ -487,13 +487,13 @@ onMounted(() => {
 
 .task-period {
   font-size: 12px;
-  color: #94a3b8;
+  color: var(--text-tertiary);
 }
 
 .more-tasks {
   margin: 8px 0 0;
   font-size: 13px;
-  color: #94a3b8;
+  color: var(--text-tertiary);
 }
 
 .plan-actions {
@@ -533,7 +533,7 @@ onMounted(() => {
 
 .info-item .label {
   font-weight: 600;
-  color: #64748b;
+  color: var(--text-secondary);
 }
 
 .detail-tasks h4 {
@@ -552,7 +552,7 @@ onMounted(() => {
   align-items: center;
   gap: 12px;
   padding: 12px;
-  background: #f8fafc;
+  background: var(--bg-surface);
   border-radius: 8px;
 }
 
@@ -571,7 +571,7 @@ onMounted(() => {
 
 .task-date {
   font-size: 13px;
-  color: #94a3b8;
+  color: var(--text-tertiary);
 }
 
 .custom-task-row {
