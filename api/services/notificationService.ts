@@ -4,6 +4,8 @@
  * 包含发送失败重试机制（指数退避）
  */
 
+import { ArrayFileStore } from '../utils/fileStore';
+
 // ---- 通知类型 ----
 export type NotificationChannel = 'email' | 'push' | 'both';
 export type NotificationPriority = 'low' | 'normal' | 'high' | 'urgent';
@@ -36,7 +38,8 @@ export interface NotificationLog {
 }
 
 // ---- 日志存储 ----
-const notificationLogs: NotificationLog[] = [];
+const logStore = new ArrayFileStore<NotificationLog>('notification_logs');
+const notificationLogs = logStore.load();
 
 // ---- 重试配置 ----
 const MAX_RETRIES = 3;
@@ -225,6 +228,7 @@ export async function sendNotification(
       payload,
     };
     notificationLogs.push(log);
+    logStore.save(notificationLogs);
     logs.push(log);
 
     // 异步执行发送（不阻塞调度器）
@@ -257,6 +261,7 @@ async function attemptSend(log: NotificationLog): Promise<void> {
 
       log.status = 'sent';
       log.sentAt = new Date().toISOString();
+      logStore.save(notificationLogs);
       return;
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : String(err);
@@ -270,6 +275,7 @@ async function attemptSend(log: NotificationLog): Promise<void> {
         await new Promise(resolve => setTimeout(resolve, delay));
       } else {
         log.status = 'failed';
+        logStore.save(notificationLogs);
         console.error(`[通知服务] 发送失败，已达最大重试次数: ${errorMsg}`);
       }
     }

@@ -1,35 +1,8 @@
 import express from 'express';
 import { authenticate } from '../middleware/auth';
+import { plans, tasks, savePlans, saveTasks, type Plan, type Task } from '../utils/sharedData';
 
 const router = express.Router();
-
-interface Plan {
-  id: string;
-  user_id: string;
-  title: string;
-  goal: string;
-  start_date: string;
-  end_date: string;
-  daily_minutes: number;
-  progress: number;
-  created_at: string;
-  updated_at: string;
-}
-
-interface Task {
-  id: string;
-  plan_id: string;
-  title: string;
-  description?: string;
-  due_date: string;
-  completed: boolean;
-  priority: number;
-  created_at: string;
-  updated_at: string;
-}
-
-const plans: Plan[] = [];
-const tasks: Task[] = [];
 
 router.get('/', authenticate, (req, res) => {
   const userPlans = plans.filter(p => p.user_id === req.user?.id);
@@ -60,6 +33,7 @@ router.post('/', authenticate, (req, res) => {
   };
   
   plans.push(plan);
+  savePlans();
   
   const start = new Date(startDate);
   const end = new Date(endDate);
@@ -84,6 +58,7 @@ router.post('/', authenticate, (req, res) => {
       updated_at: now,
     });
   }
+  saveTasks();
   
   res.status(201).json(plan);
 });
@@ -118,6 +93,7 @@ router.put('/:id', authenticate, (req, res) => {
     daily_minutes: dailyMinutes !== undefined ? dailyMinutes : plans[index].daily_minutes,
     updated_at: new Date().toISOString(),
   };
+  savePlans();
   
   res.json(plans[index]);
 });
@@ -130,9 +106,11 @@ router.delete('/:id', authenticate, (req, res) => {
   }
   
   plans.splice(index, 1);
-  const taskIndex = tasks.filter(t => t.plan_id !== req.params.id);
+  savePlans();
+  const remainingTasks = tasks.filter(t => t.plan_id !== req.params.id);
   tasks.length = 0;
-  tasks.push(...taskIndex);
+  tasks.push(...remainingTasks);
+  saveTasks();
   
   res.json({ success: true });
 });

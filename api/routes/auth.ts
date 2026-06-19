@@ -2,6 +2,7 @@ import express from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { authenticate } from '../middleware/auth';
+import { FileStore } from '../utils/fileStore';
 
 const router = express.Router();
 
@@ -16,7 +17,9 @@ interface User {
   updated_at: string;
 }
 
-const users: Record<string, User> = {};
+// JSON 文件持久化存储
+const userStore = new FileStore<Record<string, User>>('users');
+const users = userStore.load();
 
 const adminEmail = process.env.ADMIN_EMAIL || 'admin@example.com';
 
@@ -46,6 +49,7 @@ router.post('/register', async (req, res) => {
     created_at: now,
     updated_at: now,
   };
+  userStore.save(users);
   
   const token = jwt.sign({ id, email, role: isAdmin ? 'admin' : 'student' }, process.env.JWT_SECRET || 'secret', { expiresIn: '7d' });
   
@@ -108,6 +112,7 @@ router.put('/profile', authenticate, async (req, res) => {
   if (name) user.name = name;
   if (phone) user.phone = phone;
   user.updated_at = new Date().toISOString();
+  userStore.save(users);
   
   res.json({ id: user.id, email: user.email, phone: user.phone, name: user.name, role: user.role, created_at: user.created_at, updated_at: user.updated_at });
 });
@@ -167,6 +172,7 @@ router.put('/users/:id', authenticate, async (req, res) => {
   if (role && (role === 'student' || role === 'admin')) {
     user.role = role;
     user.updated_at = new Date().toISOString();
+    userStore.save(users);
   }
   
   res.json({ id: user.id, email: user.email, phone: user.phone, name: user.name, role: user.role, created_at: user.created_at, updated_at: user.updated_at });
@@ -184,6 +190,7 @@ router.delete('/users/:id', authenticate, (req, res) => {
   }
   
   delete users[user.email];
+  userStore.save(users);
   res.json({ success: true });
 });
 

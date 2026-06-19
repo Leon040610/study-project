@@ -4,6 +4,8 @@
  */
 
 import { sendNotification, type NotificationPayload, type NotificationChannel, type NotificationPriority } from './notificationService';
+import { tasks, plans, saveTasks, savePlans, type Task, type Plan } from '../utils/sharedData';
+import { ArrayFileStore, FileStore } from '../utils/fileStore';
 
 // ---- 类型定义 ----
 
@@ -32,36 +34,21 @@ export interface UserPreferences {
   updatedAt: string;
 }
 
-// ---- 数据存储（内存） ----
+// ---- 数据存储（JSON 文件持久化） ----
 
-export const reminderRules: ReminderRule[] = [];
-export const userPreferences: UserPreferences[] = [];
+const ruleStore = new ArrayFileStore<ReminderRule>('reminder_rules');
+const prefStore = new ArrayFileStore<UserPreferences>('user_preferences');
+
+export const reminderRules = ruleStore.load();
+export const userPreferences = prefStore.load();
+
+// ---- 持久化方法（供路由层调用） ----
+export function saveRules(): void { ruleStore.save(reminderRules); }
+export function savePrefs(): void { prefStore.save(userPreferences); }
 
 // ---- 已发送去重（避免同一任务重复提醒） ----
 
 const sentCache: Map<string, string> = new Map(); // key: `${taskId}_${ruleId}` → sent ISO
-
-// ---- 任务接口（与 tasks 路由共享全局数据） ----
-
-interface Task {
-  id: string;
-  plan_id: string;
-  title: string;
-  description?: string;
-  due_date: string;
-  completed: boolean;
-  priority: number;
-}
-
-interface Plan {
-  id: string;
-  user_id: string;
-  title: string;
-}
-
-// 使用 global 访问 tasks.ts 中注册的全局数据
-const getGlobalTasks = (): Task[] => (global as any).tasks || [];
-const getGlobalPlans = (): Plan[] => (global as any).plans || [];
 
 // ---- 调度器配置 ----
 
@@ -220,8 +207,8 @@ function checkTaskReminders(task: Task, plan: Plan | undefined): void {
  */
 export function scanTasks(): void {
   try {
-    const allTasks = getGlobalTasks();
-    const allPlans = getGlobalPlans();
+    const allTasks = tasks;
+    const allPlans = plans;
 
     if (allTasks.length === 0) return;
 

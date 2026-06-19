@@ -7,6 +7,8 @@ import {
   type UserPreferences,
   startScheduler,
   triggerScanNow,
+  saveRules,
+  savePrefs,
 } from '../services/schedulerService';
 import {
   getNotificationLogs,
@@ -59,6 +61,7 @@ router.post('/rules', authenticate, (req, res) => {
   };
 
   reminderRules.push(rule);
+  saveRules();
   res.status(201).json(rule);
 });
 
@@ -83,6 +86,7 @@ router.put('/rules/:id', authenticate, (req, res) => {
     enabled: enabled !== undefined ? enabled : reminderRules[index].enabled,
     updatedAt: new Date().toISOString(),
   };
+  saveRules();
 
   res.json(reminderRules[index]);
 });
@@ -96,6 +100,7 @@ router.delete('/rules/:id', authenticate, (req, res) => {
   }
 
   reminderRules.splice(index, 1);
+  saveRules();
   res.json({ success: true });
 });
 
@@ -117,6 +122,7 @@ router.get('/preferences', authenticate, (req, res) => {
       updatedAt: new Date().toISOString(),
     };
     userPreferences.push(prefs);
+    savePrefs();
   }
 
   res.json(prefs);
@@ -141,6 +147,7 @@ router.put('/preferences', authenticate, (req, res) => {
       updatedAt: new Date().toISOString(),
     };
     userPreferences.push(prefs);
+    savePrefs();
     return res.json(prefs);
   }
 
@@ -153,6 +160,7 @@ router.put('/preferences', authenticate, (req, res) => {
     pushToken: pushToken !== undefined ? pushToken : userPreferences[index].pushToken,
     updatedAt: new Date().toISOString(),
   };
+  savePrefs();
 
   res.json(userPreferences[index]);
 });

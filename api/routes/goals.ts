@@ -1,5 +1,6 @@
 import express from 'express';
 import { authenticate } from '../middleware/auth';
+import { ArrayFileStore } from '../utils/fileStore';
 
 const router = express.Router();
 
@@ -20,7 +21,8 @@ interface Goal {
   updated_at: string;
 }
 
-const goals: Goal[] = [];
+const goalStore = new ArrayFileStore<Goal>('goals');
+const goals = goalStore.load();
 
 router.get('/', authenticate, (req, res) => {
   const userGoals = goals.filter(g => g.user_id === req.user?.id);
@@ -53,6 +55,7 @@ router.post('/', authenticate, (req, res) => {
   };
   
   goals.push(goal);
+  goalStore.save(goals);
   res.status(201).json(goal);
 });
 
@@ -94,6 +97,7 @@ router.put('/:id', authenticate, (req, res) => {
     target_date: targetDate || goals[index].target_date,
     updated_at: new Date().toISOString(),
   };
+  goalStore.save(goals);
   
   res.json(goals[index]);
 });
@@ -106,6 +110,7 @@ router.delete('/:id', authenticate, (req, res) => {
   }
   
   goals.splice(index, 1);
+  goalStore.save(goals);
   res.json({ success: true });
 });
 
