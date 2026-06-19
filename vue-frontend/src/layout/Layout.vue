@@ -45,6 +45,10 @@
           <el-icon><ChatLineSquare /></el-icon>
           <span>帖子中心</span>
         </el-menu-item>
+        <el-menu-item index="/reminders">
+          <el-icon><Bell /></el-icon>
+          <span>学习提醒</span>
+        </el-menu-item>
         <el-menu-item index="/profile">
           <el-icon><User /></el-icon>
           <span>个人中心</span>
@@ -193,6 +197,7 @@ const pageTitleMap: Record<string, string> = {
   '/calendar': '日历视图',
   '/resources': '共享资源',
   '/posts': '帖子中心',
+  '/reminders': '学习提醒',
   '/profile': '个人中心',
   '/admin': '数据统计',
   '/admin/students': '学生管理',

@@ -48,6 +48,11 @@ const router = createRouter({
           component: () => import('@/views/Posts.vue')
         },
         {
+          path: '/reminders',
+          name: 'Reminders',
+          component: () => import('@/views/Reminders.vue')
+        },
+        {
           path: '/profile',
           name: 'Profile',
           component: () => import('@/views/Profile.vue')

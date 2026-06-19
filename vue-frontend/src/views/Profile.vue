@@ -68,6 +68,23 @@
       </div>
     </el-card>
 
+    <!-- 学习提醒快捷入口 -->
+    <el-card class="form-card">
+      <template #header>
+        <span class="card-title">
+          <el-icon><Bell /></el-icon>
+          学习提醒
+        </span>
+      </template>
+      <div class="reminder-quick-access">
+        <p class="reminder-desc">配置学习任务提醒，支持邮件和手机推送通知，确保不错过重要任务截止时间。</p>
+        <el-button type="primary" @click="goToReminders">
+          <el-icon><Setting /></el-icon>
+          <span>前往提醒设置</span>
+        </el-button>
+      </div>
+    </el-card>
+
     <!-- 个人信息编辑 -->
     <el-card class="form-card">
       <template #header>
@@ -168,6 +185,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useDataStore } from '@/stores/data'
 import { useThemeStore } from '@/stores/theme'
@@ -176,9 +194,10 @@ import { ElMessage } from 'element-plus'
 import {
   User, Camera, Brush, EditPen, Lock, DataLine,
   FolderOpened, CircleCheck, Aim, Document,
-  Sunny, Moon, Monitor
+  Sunny, Moon, Monitor, Bell, Setting
 } from '@element-plus/icons-vue'
 
+const router = useRouter()
 const authStore = useAuthStore()
 const dataStore = useDataStore()
 const themeStore = useThemeStore()
@@ -290,6 +309,10 @@ async function changePassword() {
 
 function changeAvatar() {
   ElMessage.info('头像上传功能开发中')
+}
+
+function goToReminders() {
+  router.push('/reminders')
 }
 
 onMounted(() => {
@@ -482,6 +505,17 @@ onMounted(() => {
 /* ---- 表单卡片 ---- */
 .form-card {
   padding: 0;
+}
+
+.reminder-quick-access {
+  padding: var(--space-4) 0;
+}
+
+.reminder-desc {
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  margin-bottom: var(--space-4);
+  line-height: 1.6;
 }
 
 /* ---- 统计卡片 ---- */
