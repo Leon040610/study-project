@@ -415,6 +415,21 @@ onUnmounted(() => {
   box-shadow: var(--shadow-md);
 }
 
+/* 选中状态下，任务指示器改为白色以确保可见 */
+.day-cell.selected .task-indicator {
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.3);
+}
+
+.day-cell.selected .task-indicator.completed {
+  background: rgba(209, 250, 229, 0.95);
+  box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.4);
+}
+
+.day-cell.selected .more-tasks {
+  color: rgba(255, 255, 255, 0.85);
+}
+
 .day-cell.selected .day-number {
   color: white;
 }

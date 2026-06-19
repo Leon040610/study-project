@@ -165,15 +165,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, reactive, computed } from 'vue'
+import { ref, onMounted, reactive, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { api } from '@/utils/api'
 import * as echarts from 'echarts'
 import { useDataStore } from '@/stores/data'
+import { useThemeStore } from '@/stores/theme'
 import { Document, Aim, Bell, Calendar, FolderOpened, CircleCheck, TrendCharts } from '@element-plus/icons-vue'
 
 const router = useRouter()
 const dataStore = useDataStore()
+const themeStore = useThemeStore()
 
 const stats = reactive({
   plans: 0,
@@ -255,7 +257,10 @@ function initCharts() {
     const chart = echarts.init(taskChart.value)
     chart.setOption({
       tooltip: { trigger: 'item' },
-      legend: { bottom: 0 },
+      legend: {
+        bottom: 0,
+        textStyle: { color: themeStore.isDark ? '#e2e8f0' : '#374151', fontSize: 13 }
+      },
       series: [{
         type: 'pie',
         radius: ['40%', '70%'],
@@ -309,6 +314,10 @@ onMounted(() => {
   fetchData()
   setTimeout(initCharts, 100)
   window.addEventListener('resize', initCharts)
+})
+
+watch(() => themeStore.isDark, () => {
+  initCharts()
 })
 </script>
 
