@@ -85,15 +85,15 @@
             v-for="task in todayTasks"
             :key="task.id"
             class="task-item"
-            :class="{ completed: task.completed }"
+            :class="{ completed: isTaskCompletedToday(task) }"
           >
-            <el-checkbox :checked="task.completed" @change="(val) => toggleTask(task, val)" />
+            <el-checkbox :model-value="isTaskCompletedToday(task)" @change="(val) => toggleTask(task, val)" />
             <div class="task-info">
               <h4>{{ task.title }}</h4>
               <p>{{ task.planTitle }}</p>
             </div>
-            <el-tag :type="task.completed ? 'success' : 'info'" size="small">
-              {{ task.completed ? '已完成' : '进行中' }}
+            <el-tag :type="isTaskCompletedToday(task) ? 'success' : 'info'" size="small">
+              {{ isTaskCompletedToday(task) ? '已完成' : '进行中' }}
             </el-tag>
           </div>
         </div>
@@ -202,8 +202,10 @@ interface AnnouncementItem {
 async function fetchData() {
   await dataStore.fetchAllData()
 
+  const today = new Date().toISOString().split('T')[0]
   stats.plans = dataStore.plans.length
-  stats.completedTasks = dataStore.tasks.filter(t => t.completed).length
+  // 按日期隔离：以"今日"完成状态统计
+  stats.completedTasks = dataStore.tasks.filter(t => dataStore.isTaskCompletedOnDate(t, today)).length
   stats.reminders = 0
   stats.progress = dataStore.tasks.length > 0
     ? Math.round((stats.completedTasks / dataStore.tasks.length) * 100)
@@ -225,13 +227,20 @@ async function fetchData() {
   }
 }
 
+function isTaskCompletedToday(task: { id: string }): boolean {
+  const today = new Date().toISOString().split('T')[0]
+  const t = dataStore.tasks.find(x => x.id === task.id)
+  return t ? dataStore.isTaskCompletedOnDate(t, today) : false
+}
+
 function initCharts() {
-  const completedCount = dataStore.tasks.filter(t => t.completed).length
-  const inProgressCount = dataStore.tasks.filter(t => !t.completed).length
+  const today = new Date().toISOString().split('T')[0]
+  const completedCount = dataStore.tasks.filter(t => dataStore.isTaskCompletedOnDate(t, today)).length
+  const inProgressCount = dataStore.tasks.filter(t => !dataStore.isTaskCompletedOnDate(t, today)).length
 
   if (studyTimeChart.value) {
     const chart = echarts.init(studyTimeChart.value)
-    const studyData = dataStore.tasks.slice(0, 7).map(t => t.completed ? 60 : 30)
+    const studyData = dataStore.tasks.slice(0, 7).map(t => dataStore.isTaskCompletedOnDate(t, today) ? 60 : 30)
     chart.setOption({
       tooltip: { trigger: 'axis' },
       grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
@@ -280,7 +289,8 @@ function initCharts() {
 }
 
 function toggleTask(task: { id: string }, completed: boolean) {
-  dataStore.updateTask(task.id, { completed })
+  const today = new Date().toISOString().split('T')[0]
+  dataStore.toggleTaskOnDate(task.id, today, completed)
 }
 
 function getStatusType(status: string) {

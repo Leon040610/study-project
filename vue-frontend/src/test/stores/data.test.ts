@@ -186,7 +186,7 @@ describe('DataStore', () => {
       expect(store.isTaskCompletedOnDate(task, '2024-06-20')).toBe(false)
     })
 
-    it('should fall back to global completed when completedDates is missing', () => {
+    it('should return false when completedDates is missing (no fallback to global completed)', () => {
       const store = useDataStore()
       const task: Task = {
         id: '1',
@@ -196,7 +196,8 @@ describe('DataStore', () => {
         completed: true,
       }
 
-      expect(store.isTaskCompletedOnDate(task, '2024-06-20')).toBe(true)
+      // 严格按日期隔离：无 completedDates 时返回 false，不回退到全局 completed
+      expect(store.isTaskCompletedOnDate(task, '2024-06-20')).toBe(false)
     })
 
     it('should return false for a date not in completedDates', () => {
@@ -215,7 +216,7 @@ describe('DataStore', () => {
   })
 
   describe('toggleTaskOnDate', () => {
-    it('should set completedDates for the given date', async () => {
+    it('should set completedDates for the given date without polluting global completed', async () => {
       vi.mocked(api.put).mockResolvedValue({})
       const store = useDataStore()
       store.tasks = [
@@ -226,10 +227,11 @@ describe('DataStore', () => {
 
       expect(store.tasks[0].completedDates).toBeDefined()
       expect(store.tasks[0].completedDates!['2024-06-20']).toBe(true)
-      expect(store.tasks[0].completed).toBe(true)
+      // 不再同步修改全局 completed 字段，避免污染其他日期/其他模块
+      expect(store.tasks[0].completed).toBe(false)
     })
 
-    it('should sync completed field with the toggled state', async () => {
+    it('should not modify global completed field when toggling (date isolation)', async () => {
       vi.mocked(api.put).mockResolvedValue({})
       const store = useDataStore()
       store.tasks = [
@@ -238,10 +240,12 @@ describe('DataStore', () => {
 
       await store.toggleTaskOnDate('1', '2024-06-20', false)
 
-      expect(store.tasks[0].completed).toBe(false)
+      // 全局 completed 保持原值，仅 completedDates 被更新
+      expect(store.tasks[0].completed).toBe(true)
+      expect(store.tasks[0].completedDates!['2024-06-20']).toBe(false)
     })
 
-    it('should call API with updated data', async () => {
+    it('should call API with only completedDates (no global completed)', async () => {
       vi.mocked(api.put).mockResolvedValue({})
       const store = useDataStore()
       store.tasks = [
@@ -252,7 +256,6 @@ describe('DataStore', () => {
 
       expect(api.put).toHaveBeenCalledWith('/tasks/1', {
         completedDates: { '2024-06-20': true },
-        completed: true,
       })
     })
 
@@ -329,9 +332,10 @@ describe('DataStore', () => {
   })
 
   describe('updateGoalProgressByTask', () => {
-    it('should update goal progress based on task completion', async () => {
+    it('should update goal progress based on task completion (today)', async () => {
       vi.mocked(api.put).mockResolvedValue({})
       const store = useDataStore()
+      const today = new Date().toISOString().split('T')[0]
 
       store.goals = [
         { id: 'g1', title: 'Goal 1', description: '', category: '', targetDate: '', status: '进行中', progress: 0 },
@@ -340,19 +344,20 @@ describe('DataStore', () => {
         { id: 'p1', title: 'Plan 1', category: '', goalTitle: 'Goal 1' },
       ] as Plan[]
       store.tasks = [
-        { id: 't1', title: 'Task 1', planTitle: 'Plan 1', date: '', completed: true },
+        { id: 't1', title: 'Task 1', planTitle: 'Plan 1', date: '', completed: false },
         { id: 't2', title: 'Task 2', planTitle: 'Plan 1', date: '', completed: false },
       ] as Task[]
 
-      // Trigger update via toggleTaskOnDate which calls updateGoalProgressByTask
-      await store.toggleTaskOnDate('t1', '2024-06-20', true)
+      // 在"今日"勾选 t1，进度应为 50%
+      await store.toggleTaskOnDate('t1', today, true)
 
       expect(store.goals[0].progress).toBe(50)
     })
 
-    it('should set goal status to completed when all tasks done', async () => {
+    it('should set goal status to completed when all tasks done (today)', async () => {
       vi.mocked(api.put).mockResolvedValue({})
       const store = useDataStore()
+      const today = new Date().toISOString().split('T')[0]
 
       store.goals = [
         { id: 'g1', title: 'Goal 1', description: '', category: '', targetDate: '', status: '进行中', progress: 0 },
@@ -361,11 +366,13 @@ describe('DataStore', () => {
         { id: 'p1', title: 'Plan 1', category: '', goalTitle: 'Goal 1' },
       ] as Plan[]
       store.tasks = [
-        { id: 't1', title: 'Task 1', planTitle: 'Plan 1', date: '', completed: true },
-        { id: 't2', title: 'Task 2', planTitle: 'Plan 1', date: '', completed: true },
+        { id: 't1', title: 'Task 1', planTitle: 'Plan 1', date: '', completed: false },
+        { id: 't2', title: 'Task 2', planTitle: 'Plan 1', date: '', completed: false },
       ] as Task[]
 
-      await store.toggleTaskOnDate('t1', '2024-06-20', true)
+      // 在"今日"勾选所有任务，进度应为 100%
+      await store.toggleTaskOnDate('t1', today, true)
+      await store.toggleTaskOnDate('t2', today, true)
 
       expect(store.goals[0].progress).toBe(100)
       expect(store.goals[0].status).toBe('已完成')

@@ -31,9 +31,9 @@
               v-for="task in plan.tasks"
               :key="task.id"
               class="task-item"
-              :class="{ completed: task.completed }"
+              :class="{ completed: isTaskCompletedToday(task) }"
             >
-              <el-checkbox :checked="task.completed" @change="(val) => toggleTask(task, val)" />
+              <el-checkbox :model-value="isTaskCompletedToday(task)" @change="(val) => toggleTask(task, val)" />
               <div class="task-content">
                 <span class="task-name">{{ task.title }}</span>
                 <span class="task-period">{{ task.startDate }} ~ {{ task.endDate }}</span>
@@ -60,10 +60,10 @@
           </el-select>
         </el-form-item>
         <el-form-item label="开始日期" prop="startDate">
-          <el-date-picker v-model="form.startDate" type="date" placeholder="选择开始日期" style="width: 100%" />
+          <el-date-picker v-model="form.startDate" type="date" placeholder="选择开始日期" style="width: 100%" value-format="YYYY-MM-DD" />
         </el-form-item>
         <el-form-item label="结束日期" prop="endDate">
-          <el-date-picker v-model="form.endDate" type="date" placeholder="选择结束日期" style="width: 100%" />
+          <el-date-picker v-model="form.endDate" type="date" placeholder="选择结束日期" style="width: 100%" value-format="YYYY-MM-DD" />
         </el-form-item>
         <el-form-item label="计划描述">
           <el-input type="textarea" v-model="form.description" :rows="3" placeholder="请输入计划描述" />
@@ -82,6 +82,7 @@
                 placeholder="开始日期"
                 style="width: 140px; margin-right: 8px;"
                 :editable="false"
+                value-format="YYYY-MM-DD"
               />
               <el-date-picker
                 v-model="task.endDate"
@@ -89,6 +90,7 @@
                 placeholder="结束日期"
                 style="width: 140px; margin-right: 8px;"
                 :editable="false"
+                value-format="YYYY-MM-DD"
               />
               <el-button type="danger" size="small" @click="removeCustomTask(index)" :disabled="customTasks.length <= 1">
                 <el-icon><Delete /></el-icon>
@@ -141,9 +143,9 @@
               v-for="task in selectedPlan.tasks"
               :key="task.id"
               class="task-row"
-              :class="{ completed: task.completed }"
+              :class="{ completed: isTaskCompletedToday(task) }"
             >
-              <el-checkbox :checked="task.completed" @change="(val) => toggleTask(task, val)" />
+              <el-checkbox :model-value="isTaskCompletedToday(task)" @change="(val) => toggleTask(task, val)" />
               <span class="task-title">{{ task.title }}</span>
               <span class="task-date">{{ task.startDate }} ~ {{ task.endDate }}</span>
             </div>
@@ -227,7 +229,8 @@ function updatePlans() {
   const result: Plan[] = []
   dataStore.plans.forEach(p => {
     const planTasks = dataStore.tasks.filter(t => t.planTitle === p.title)
-    const completedCount = planTasks.filter(t => t.completed).length
+    // 按"完全完成"统计进度：只有当任务周期内所有日期都被勾选，才计为完成
+    const completedCount = planTasks.filter(t => dataStore.isTaskFullyCompleted(t)).length
     const progress = planTasks.length > 0 ? Math.round((completedCount / planTasks.length) * 100) : 0
     const isCompleted = progress === 100 && planTasks.length > 0
     result.push({
@@ -253,25 +256,25 @@ async function fetchData() {
 async function handleSubmit() {
   if (!formRef.value) return
   await formRef.value.validate().catch(() => {})
-  
+
   // 验证自定义任务
   const validTasks = customTasks.value.filter(t => t.title.trim() && t.startDate && t.endDate)
   if (validTasks.length === 0) {
     ElMessage.error('请至少添加一个完整的任务（名称、开始日期、结束日期都需填写）')
     return
   }
-  
+
   // 检查是否有未完成的任务
   const incompleteTasks = customTasks.value.filter(t => !t.title.trim() || !t.startDate || !t.endDate)
   if (incompleteTasks.length > 0) {
     ElMessage.error('所有任务必须填写名称、开始日期和结束日期')
     return
   }
-  
+
   try {
     const startDateStr = formatDate(form.startDate)
     const endDateStr = formatDate(form.endDate)
-    
+
     // 验证日期范围
     const start = new Date(startDateStr)
     const end = new Date(endDateStr)
@@ -279,31 +282,71 @@ async function handleSubmit() {
       ElMessage.error('结束日期不能早于开始日期')
       return
     }
-    
-    await dataStore.addPlan({
-      title: form.title,
-      category: form.goal || '技能学习',
-      goalTitle: form.goal,
-      startDate: startDateStr,
-      endDate: endDateStr,
-      description: form.description
-    })
-    
-    // 为每个自定义任务创建任务（每个任务有独立的时间周期）
-    for (const task of validTasks) {
-      const taskStartDate = formatDate(task.startDate)
-      const taskEndDate = formatDate(task.endDate)
-      
-      await dataStore.addTask({
-        title: task.title.trim(),
-        planTitle: form.title,
-        date: taskStartDate,
-        startDate: taskStartDate,
-        endDate: taskEndDate
+
+    if (editingPlan.value) {
+      // ===== 编辑模式：在原计划基础上修改，删除旧任务并重建 =====
+      const oldTitle = editingPlan.value.title
+      const newTitle = form.title
+
+      // 1. 更新计划本身
+      await dataStore.updatePlan(editingPlan.value.id, {
+        title: newTitle,
+        category: form.goal || '技能学习',
+        goalTitle: form.goal,
+        startDate: startDateStr,
+        endDate: endDateStr,
+        description: form.description
       })
+
+      // 2. 删除该计划的所有旧任务（按旧标题匹配，避免误删其他计划的任务）
+      const oldTasks = dataStore.tasks.filter(t => t.planTitle === oldTitle)
+      for (const oldTask of oldTasks) {
+        await dataStore.deleteTask(oldTask.id)
+      }
+
+      // 3. 按表单新任务列表重建
+      for (const task of validTasks) {
+        const taskStartDate = formatDate(task.startDate)
+        const taskEndDate = formatDate(task.endDate)
+
+        await dataStore.addTask({
+          title: task.title.trim(),
+          planTitle: newTitle,
+          date: taskStartDate,
+          startDate: taskStartDate,
+          endDate: taskEndDate
+        })
+      }
+
+      ElMessage.success('修改成功')
+    } else {
+      // ===== 创建模式：保持原行为 =====
+      await dataStore.addPlan({
+        title: form.title,
+        category: form.goal || '技能学习',
+        goalTitle: form.goal,
+        startDate: startDateStr,
+        endDate: endDateStr,
+        description: form.description
+      })
+
+      // 为每个自定义任务创建任务（每个任务有独立的时间周期）
+      for (const task of validTasks) {
+        const taskStartDate = formatDate(task.startDate)
+        const taskEndDate = formatDate(task.endDate)
+
+        await dataStore.addTask({
+          title: task.title.trim(),
+          planTitle: form.title,
+          date: taskStartDate,
+          startDate: taskStartDate,
+          endDate: taskEndDate
+        })
+      }
+
+      ElMessage.success('创建成功')
     }
-    
-    ElMessage.success('创建成功')
+
     showCreateModal.value = false
     resetForm()
     updatePlans()
@@ -313,9 +356,15 @@ async function handleSubmit() {
   }
 }
 
-function formatDate(date: Date | string): string {
-  if (typeof date === 'string') return date
+function formatDate(date: Date | string | null | undefined): string {
+  if (!date) return ''
+  if (typeof date === 'string') {
+    // 兼容 ISO 字符串：取 YYYY-MM-DD 部分
+    if (date.includes('T')) return date.split('T')[0]
+    return date
+  }
   const d = new Date(date)
+  if (isNaN(d.getTime())) return ''
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
@@ -354,14 +403,24 @@ function editPlan(plan: Plan) {
 }
 
 async function deletePlan(plan: Plan) {
+  // dataStore.deletePlan 内部已实现级联删除（删除计划 + 同步删除该计划下的全部任务）
   await dataStore.deletePlan(plan.id)
-  dataStore.tasks = dataStore.tasks.filter(t => t.planTitle !== plan.title)
   updatePlans()
   ElMessage.success('删除成功')
 }
 
+// 判断任务在计划视图中今天的勾选状态
+// 复选框应展示"今天"这一天的勾选情况，而非"整个任务完全完成"的状态
+// 这样用户点击复选框才能看到即时的勾选/取消效果（与 Calendar 行为一致）
+function isTaskCompletedToday(task: Task): boolean {
+  const today = formatDate(new Date())
+  return dataStore.isTaskCompletedOnDate(task, today)
+}
+
 function toggleTask(task: Task, completed: boolean) {
-  dataStore.updateTask(task.id, { completed })
+  // 任务列表的勾选/取消勾选作用于整个任务周期
+  // 这样日历视图与计划视图的任务状态完全同步
+  dataStore.toggleTaskCycle(task.id, completed)
   updatePlans()
 }
 

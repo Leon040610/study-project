@@ -13,8 +13,9 @@ function toClientTask(t: Task) {
     planTitle: plan?.title || '',
     date: t.due_date,
     completed: t.completed,
-    startDate: t.due_date,
-    endDate: t.due_date,
+    completedDates: t.completed_dates || {},
+    startDate: t.start_date || t.due_date,
+    endDate: t.end_date || t.due_date,
   };
 }
 
@@ -48,7 +49,10 @@ router.post('/', authenticate, (req, res) => {
     title,
     description: '',
     due_date: date,
+    start_date: startDate || date,
+    end_date: endDate || date,
     completed: false,
+    completed_dates: {},
     priority: 2,
     created_at: now,
     updated_at: now,
@@ -77,6 +81,7 @@ router.put('/:id', authenticate, (req, res) => {
   tasks[index] = {
     ...tasks[index],
     completed: completed !== undefined ? completed : tasks[index].completed,
+    completed_dates: completedDates !== undefined ? completedDates : tasks[index].completed_dates,
     updated_at: new Date().toISOString(),
   };
 

@@ -12,7 +12,59 @@
 import fs from 'fs';
 import path from 'path';
 
-const DATA_DIR = path.resolve(__dirname, '..', 'data');
+/**
+ * 解析数据目录路径
+ *
+ * 支持源码运行和编译后运行两种模式，始终指向项目内的 api/data 目录：
+ *   - 源码：<root>/api/utils/fileStore.ts        -> __dirname = <root>/api/utils      -> <root>/api/data
+ *   - 编译（api/tsconfig.json outDir: ./dist）：
+ *       <root>/api/dist/utils/fileStore.js       -> __dirname = <root>/api/dist/utils -> <root>/api/data
+ *   - 兜底：使用 process.cwd() 向上查找 api/data，避免路径漂移
+ *
+ * 优先级：
+ *   1. 环境变量 DATA_DIR（最高优先级，便于部署时指定）
+ *   2. 已存在的 api/data 目录（向上递归查找）
+ *   3. 根据 __dirname 是否包含 dist 推断
+ *   4. process.cwd() 兜底
+ */
+function resolveDataDir(): string {
+  if (process.env.DATA_DIR && fs.existsSync(process.env.DATA_DIR)) {
+    return process.env.DATA_DIR;
+  }
+
+  // 向上递归查找 api/data 目录（最多 5 层，防止无限循环）
+  let cursor = __dirname;
+  for (let i = 0; i < 5; i++) {
+    const candidate = path.join(cursor, 'api', 'data');
+    if (fs.existsSync(candidate) && fs.statSync(candidate).isDirectory()) {
+      return candidate;
+    }
+    const parent = path.dirname(cursor);
+    if (parent === cursor) break; // 已到根目录
+    cursor = parent;
+  }
+
+  // 根据 __dirname 推断（源码 vs 编译产物）
+  const isCompiled = __dirname.split(path.sep).includes('dist');
+  const inferred = isCompiled
+    ? path.resolve(__dirname, '..', '..', 'data')     // api/dist/utils -> api/data
+    : path.resolve(__dirname, '..', 'data');          // api/utils      -> api/data
+
+  // 推断路径存在则使用；否则退化到 cwd
+  if (fs.existsSync(inferred)) {
+    return inferred;
+  }
+
+  const cwdCandidate = path.resolve(process.cwd(), 'api', 'data');
+  if (fs.existsSync(cwdCandidate)) {
+    return cwdCandidate;
+  }
+
+  // 都没有则使用推断路径，ensureDataDir 会负责创建
+  return inferred;
+}
+
+const DATA_DIR = resolveDataDir();
 
 // 确保 data 目录存在
 function ensureDataDir(): void {

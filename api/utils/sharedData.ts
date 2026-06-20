@@ -28,7 +28,10 @@ export interface Task {
   title: string;
   description?: string;
   due_date: string;
+  start_date?: string;
+  end_date?: string;
   completed: boolean;
+  completed_dates?: Record<string, boolean>;
   priority: number;
   created_at: string;
   updated_at: string;

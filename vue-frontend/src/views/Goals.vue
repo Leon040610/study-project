@@ -28,7 +28,7 @@
                 </div>
                 <p class="goal-desc">{{ goal.description }}</p>
                 <div class="goal-meta">
-                  <span>截止日期：{{ goal.targetDate }}</span>
+                  <span>截止日期：{{ formatTargetDate(goal.targetDate) }}</span>
                   <span>进度：{{ goal.progress }}%</span>
                 </div>
                 <div class="progress-bar-container">
@@ -114,7 +114,7 @@
           <el-input type="textarea" v-model="form.description" :rows="3" placeholder="请输入目标描述" />
         </el-form-item>
         <el-form-item label="截止日期" prop="targetDate">
-          <el-date-picker v-model="form.targetDate" type="date" placeholder="选择截止日期" />
+          <el-date-picker v-model="form.targetDate" type="date" placeholder="选择截止日期" value-format="YYYY-MM-DD" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -162,13 +162,19 @@ onMounted(async () => {
 async function handleSubmit() {
   if (!formRef.value) return
   await formRef.value.validate().catch(() => {})
-  
+
   try {
+    // 防御性处理：若 targetDate 仍为 Date 对象或 ISO 字符串，强制规范化为 YYYY-MM-DD
+    const payload = {
+      ...form,
+      targetDate: formatTargetDate(form.targetDate)
+    }
+
     if (editingGoal.value) {
-      await dataStore.updateGoal(editingGoal.value.id, form)
+      await dataStore.updateGoal(editingGoal.value.id, payload)
       ElMessage.success('修改成功')
     } else {
-      await dataStore.addGoal(form)
+      await dataStore.addGoal(payload)
       ElMessage.success('创建成功')
     }
     showCreateModal.value = false
@@ -182,12 +188,33 @@ async function handleSubmit() {
   }
 }
 
+// 规范化 targetDate 展示：
+//   - 'YYYY-MM-DD'            -> 原样返回
+//   - 'YYYY-MM-DDTHH:mm:ssZ'  -> 取日期部分
+//   - Date 对象                -> 用本地时间转换为 YYYY-MM-DD
+//   - 其他/空                  -> 返回空串
+// 这是修复"截止日期少一天"bug的核心：避免 UTC 时区把本地日期推前一天
+function formatTargetDate(value: string | Date | null | undefined): string {
+  if (!value) return ''
+  if (value instanceof Date) {
+    if (isNaN(value.getTime())) return ''
+    return `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, '0')}-${String(value.getDate()).padStart(2, '0')}`
+  }
+  if (typeof value === 'string') {
+    // 形如 "2026-12-18T16:00:00.000Z" 这种 ISO 串，取日期部分
+    if (value.includes('T')) return value.split('T')[0]
+    return value
+  }
+  return ''
+}
+
 function editGoal(goal: typeof dataStore.goals[0]) {
   editingGoal.value = goal
   form.title = goal.title
   form.description = goal.description
   form.category = goal.category
-  form.targetDate = goal.targetDate
+  // 兼容历史数据：若后端存的是 ISO 串，也能在日期选择器里正确显示
+  form.targetDate = formatTargetDate(goal.targetDate)
   showCreateModal.value = true
 }
 

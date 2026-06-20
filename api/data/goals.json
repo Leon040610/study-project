@@ -5,13 +5,14 @@
     "title": "通过四级英语考试",
     "description": "通过四级考试",
     "category": "语言学习",
-    "target_date": "2026-06-18T16:00:00.000Z",
+    "target_date": "2026-12-18T16:00:00.000Z",
     "status": "进行中",
     "progress": 0,
     "completed_tasks": 0,
     "total_tasks": 0,
     "created_at": "2026-06-19T15:47:50.342Z",
-    "updated_at": "2026-06-19T17:09:59.988Z"
+    "updated_at": "2026-06-19T19:19:46.496Z",
+    "completed_date": "2026-06-19"
   },
   {
     "id": "lwf3p9tb0n",
@@ -26,5 +27,19 @@
     "total_tasks": 0,
     "created_at": "2026-06-19T17:18:58.839Z",
     "updated_at": "2026-06-19T17:18:58.839Z"
+  },
+  {
+    "id": "4dvcduy32nh",
+    "user_id": "sdtjhdgkhjn",
+    "title": "通过英语四级考试",
+    "description": "",
+    "category": "语言学习",
+    "target_date": "2026-12-18T16:00:00.000Z",
+    "status": "进行中",
+    "progress": 0,
+    "completed_tasks": 0,
+    "total_tasks": 0,
+    "created_at": "2026-06-19T19:15:26.066Z",
+    "updated_at": "2026-06-19T19:15:46.306Z"
   }
 ]

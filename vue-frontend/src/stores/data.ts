@@ -108,10 +108,26 @@ export const useDataStore = defineStore('data', () => {
   }
 
   async function deletePlan(id: string) {
+    // 在删除前先记录计划的标题，用于级联删除关联任务
+    const planToDelete = plans.value.find(p => p.id === id)
+
+    // 1. 删除计划本身（本地状态 + 后端）
     plans.value = plans.value.filter(p => p.id !== id)
     try {
       await api.delete(`/plans/${id}`)
     } catch {}
+
+    // 2. 级联删除该计划下的所有任务（本地状态 + 后端）
+    // 否则日历视图重新拉取数据时仍会看到这些"幽灵任务"
+    if (planToDelete) {
+      const relatedTasks = tasks.value.filter(t => t.planTitle === planToDelete.title)
+      for (const t of relatedTasks) {
+        tasks.value = tasks.value.filter(x => x.id !== t.id)
+        try {
+          await api.delete(`/tasks/${t.id}`)
+        } catch {}
+      }
+    }
   }
 
   async function addTask(data: Omit<Task, 'id' | 'completed'>) {
@@ -148,32 +164,110 @@ export const useDataStore = defineStore('data', () => {
   }
 
   // 判断任务在指定日期是否已完成（日期隔离）
+  // 严格以 completedDates 为唯一数据源，不回退到全局 completed
   function isTaskCompletedOnDate(task: Task, dateStr: string): boolean {
     if (task.completedDates) {
       return task.completedDates[dateStr] === true
     }
-    // 兼容旧数据：没有 completedDates 字段时回退到全局 completed
-    return task.completed
+    return false
+  }
+
+  // 判断任务是否已"完全完成"
+  // 规则：只有当任务周期内（或其唯一日期）的所有日期都被勾选时，才视为完成
+  // 用于计算计划/目标进度，避免单日勾选即推进 50%
+  function isTaskFullyCompleted(task: Task): boolean {
+    // 旧数据 / 无周期字段：使用 date 字段
+    if (!task.startDate || !task.endDate) {
+      return task.completedDates?.[task.date] === true
+    }
+
+    // 新数据：周期内所有日期都必须勾选
+    const start = new Date(`${task.startDate}T00:00:00`)
+    const end = new Date(`${task.endDate}T00:00:00`)
+    if (isNaN(start.getTime()) || isNaN(end.getTime()) || end < start) {
+      return task.completedDates?.[task.date] === true
+    }
+
+    const cursor = new Date(start)
+    while (cursor <= end) {
+      const y = cursor.getFullYear()
+      const m = String(cursor.getMonth() + 1).padStart(2, '0')
+      const d = String(cursor.getDate()).padStart(2, '0')
+      const dateStr = `${y}-${m}-${d}`
+      if (!task.completedDates || task.completedDates[dateStr] !== true) {
+        return false
+      }
+      cursor.setDate(cursor.getDate() + 1)
+    }
+    return true
   }
 
   // 切换任务在指定日期的完成状态（日期隔离）
+  // 仅更新 completedDates，不再污染全局 completed 字段
   async function toggleTaskOnDate(taskId: string, dateStr: string, completed: boolean) {
     const index = tasks.value.findIndex(t => t.id === taskId)
     if (index === -1) return
-    const task = tasks.value[index]
-    if (!task.completedDates) {
-      task.completedDates = {}
+    const oldTask = tasks.value[index]
+    const newCompletedDates = {
+      ...(oldTask.completedDates || {}),
+      [dateStr]: completed
     }
-    task.completedDates[dateStr] = completed
-    // 同步 completed 字段，保持 Dashboard 等页面的统计兼容
-    task.completed = completed
+    // 替换 task 对象（而非属性变更）确保响应式可靠触发组件重新渲染
+    tasks.value[index] = { ...oldTask, completedDates: newCompletedDates }
+    // 不再同步修改 task.completed，避免污染其他日期/其他模块的显示
     try {
-      await api.put(`/tasks/${taskId}`, { completedDates: task.completedDates, completed: task.completed })
+      await api.put(`/tasks/${taskId}`, { completedDates: newCompletedDates })
     } catch {}
-    updateGoalProgressByTask(task)
+    updateGoalProgressByTask(tasks.value[index])
+  }
+
+  // 切换任务在整个周期内的完成状态
+  // 用于"周期任务"语义：勾选一个任务 = 标记周期内所有日期为完成/未完成
+  // 这样日历视图左侧所有相关日期的指示器都会同步更新
+  async function toggleTaskCycle(taskId: string, completed: boolean) {
+    const index = tasks.value.findIndex(t => t.id === taskId)
+    if (index === -1) return
+    const oldTask = tasks.value[index]
+
+    // 计算周期内的所有日期字符串
+    const dateStrs: string[] = []
+    if (!oldTask.startDate || !oldTask.endDate) {
+      // 旧数据：只更新 task.date
+      if (oldTask.date) dateStrs.push(oldTask.date)
+    } else {
+      const start = new Date(`${oldTask.startDate}T00:00:00`)
+      const end = new Date(`${oldTask.endDate}T00:00:00`)
+      if (isNaN(start.getTime()) || isNaN(end.getTime()) || end < start) {
+        if (oldTask.date) dateStrs.push(oldTask.date)
+      } else {
+        const cursor = new Date(start)
+        while (cursor <= end) {
+          const y = cursor.getFullYear()
+          const m = String(cursor.getMonth() + 1).padStart(2, '0')
+          const d = String(cursor.getDate()).padStart(2, '0')
+          dateStrs.push(`${y}-${m}-${d}`)
+          cursor.setDate(cursor.getDate() + 1)
+        }
+      }
+    }
+
+    // 构造新的 completedDates 对象
+    const newCompletedDates: Record<string, boolean> = { ...(oldTask.completedDates || {}) }
+    for (const ds of dateStrs) {
+      newCompletedDates[ds] = completed
+    }
+
+    // 替换 task 对象（而非属性变更）确保响应式可靠触发
+    tasks.value[index] = { ...oldTask, completedDates: newCompletedDates }
+
+    try {
+      await api.put(`/tasks/${taskId}`, { completedDates: newCompletedDates })
+    } catch {}
+    updateGoalProgressByTask(tasks.value[index])
   }
 
   // 根据任务完成情况更新关联目标的进度
+  // 进度按"已完全完成的任务数 / 总任务数"计算，确保单日勾选不会推进进度
   function updateGoalProgressByTask(task: Task) {
     // 找到任务关联的计划
     const plan = plans.value.find(p => p.title === task.planTitle)
@@ -183,9 +277,9 @@ export const useDataStore = defineStore('data', () => {
     const goal = goals.value.find(g => g.title === plan.goalTitle)
     if (!goal) return
 
-    // 计算该计划下所有任务的完成情况
+    // 按"完全完成"统计进度
     const planTasks = tasks.value.filter(t => t.planTitle === plan.title)
-    const completedCount = planTasks.filter(t => t.completed).length
+    const completedCount = planTasks.filter(t => isTaskFullyCompleted(t)).length
     const progress = planTasks.length > 0 ? Math.round((completedCount / planTasks.length) * 100) : 0
 
     // 更新目标进度
@@ -230,7 +324,9 @@ export const useDataStore = defineStore('data', () => {
     updateTask,
     deleteTask,
     isTaskCompletedOnDate,
-    toggleTaskOnDate
+    isTaskFullyCompleted,
+    toggleTaskOnDate,
+    toggleTaskCycle
   }
 })
 

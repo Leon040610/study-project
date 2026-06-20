@@ -66,7 +66,7 @@
             class="task-item"
             :class="{ completed: dataStore.isTaskCompletedOnDate(task, selectedDateStr) }"
           >
-            <el-checkbox :checked="dataStore.isTaskCompletedOnDate(task, selectedDateStr)" @change="(val) => toggleTask(task, val)" />
+            <el-checkbox :model-value="dataStore.isTaskCompletedOnDate(task, selectedDateStr)" @change="(val) => toggleTask(task, val)" />
             <div class="task-content">
               <h4>{{ task.title }}</h4>
               <p>{{ task.planTitle }}</p>
@@ -277,6 +277,10 @@ async function handleAddTask() {
 }
 
 function toggleTask(task: typeof dataStore.tasks[0], completed: boolean) {
+  // 日历视图右侧任务列表的勾选/取消只影响"当前选中那一天"的任务状态
+  // 用户在右侧看到的是"某一天"对应的周期任务，应可独立操作各日
+  // 整个周期的批量切换在 Plans 视图完成
+  // 同时通过对象替换触发响应式，确保 el-checkbox 正确重新渲染
   dataStore.toggleTaskOnDate(task.id, selectedDateStr.value, completed)
 }
 

@@ -268,8 +268,10 @@ function syncUserForm() {
 async function fetchStats() {
   try {
     await dataStore.fetchAllData()
+    const today = new Date().toISOString().split('T')[0]
     stats.plans = dataStore.plans.length
-    stats.completedTasks = dataStore.tasks.filter((t: { completed: boolean }) => t.completed).length
+    // 按日期隔离：以"今日"完成状态统计
+    stats.completedTasks = dataStore.tasks.filter((t: any) => dataStore.isTaskCompletedOnDate(t, today)).length
     stats.goals = dataStore.goals.length
     stats.resources = 5
   } catch {

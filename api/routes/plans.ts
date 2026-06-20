@@ -27,8 +27,9 @@ function toClientTask(t: Task) {
     planTitle: plan?.title || '',
     date: t.due_date,
     completed: t.completed,
-    startDate: t.due_date,
-    endDate: t.due_date,
+    completedDates: t.completed_dates || {},
+    startDate: t.start_date || t.due_date,
+    endDate: t.end_date || t.due_date,
   };
 }
 
@@ -65,30 +66,7 @@ router.post('/', authenticate, (req, res) => {
   plans.push(plan);
   savePlans();
   
-  const start = new Date(startDate);
-  const end = new Date(endDate);
-  const days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-  const subjects = ['基础知识', '核心概念', '实践练习', '综合复习', '模拟测试'];
-  
-  for (let i = 1; i <= Math.min(days, 14); i++) {
-    const subjectIndex = (i - 1) % subjects.length;
-    const weekNum = Math.ceil(i / 7);
-    const dueDate = new Date(start);
-    dueDate.setDate(start.getDate() + i - 1);
-    
-    tasks.push({
-      id: Math.random().toString(36).substring(2, 15),
-      plan_id: id,
-      title: `第${weekNum}周 - ${subjects[subjectIndex]} - 第${i}天`,
-      description: '',
-      due_date: dueDate.toISOString().split('T')[0],
-      completed: false,
-      priority: 2,
-      created_at: now,
-      updated_at: now,
-    });
-  }
-  saveTasks();
+  // 不再自动生成任务，任务由前端通过 POST /tasks 创建
   
   res.status(201).json(toClientPlan(plan));
 });

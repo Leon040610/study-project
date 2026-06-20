@@ -119,5 +119,38 @@
     "priority": 2,
     "created_at": "2026-06-19T17:20:11.205Z",
     "updated_at": "2026-06-19T17:20:11.205Z"
+  },
+  {
+    "id": "31eh30a17p",
+    "plan_id": "on0dqit3wwc",
+    "title": "背单词",
+    "description": "",
+    "due_date": "2026-06-19",
+    "start_date": "2026-06-19",
+    "end_date": "2026-12-19",
+    "completed": false,
+    "completed_dates": {
+      "2026-06-20": true,
+      "2026-06-19": false
+    },
+    "priority": 2,
+    "created_at": "2026-06-19T19:18:57.577Z",
+    "updated_at": "2026-06-19T19:19:46.173Z"
+  },
+  {
+    "id": "5haphghjb9s",
+    "plan_id": "on0dqit3wwc",
+    "title": "练习听力",
+    "description": "",
+    "due_date": "2026-06-19",
+    "start_date": "2026-06-19",
+    "end_date": "2026-07-31",
+    "completed": false,
+    "completed_dates": {
+      "2026-06-20": true
+    },
+    "priority": 2,
+    "created_at": "2026-06-19T19:18:57.641Z",
+    "updated_at": "2026-06-19T19:19:27.759Z"
   }
 ]
