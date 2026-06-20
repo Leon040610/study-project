@@ -61,18 +61,18 @@
       <p>暂无资源</p>
     </div>
 
-    <el-dialog v-model="showUploadModal" title="上传资源" width="500px">
-      <el-form :model="form" :rules="rules" ref="formRef" label-width="100px">
+    <el-dialog v-model="showUploadModal" title="上传资源" width="600px" @closed="resetForm">
+      <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
         <el-form-item label="资源名称" prop="title">
-          <el-input v-model="form.title" placeholder="请输入资源名称" />
+          <el-input v-model="form.title" placeholder="请输入资源名称" maxlength="100" show-word-limit />
         </el-form-item>
         <el-form-item label="资源分类" prop="category">
-          <el-select v-model="form.category" placeholder="请选择分类">
+          <el-select v-model="form.category" placeholder="请选择分类" style="width: 100%">
             <el-option v-for="cat in categories" :key="cat" :label="cat" :value="cat" />
           </el-select>
         </el-form-item>
         <el-form-item label="资源类型" prop="type">
-          <el-select v-model="form.type" placeholder="请选择类型">
+          <el-select v-model="form.type" placeholder="请选择类型" style="width: 100%">
             <el-option label="电子书" value="ebook" />
             <el-option label="视频教程" value="video" />
             <el-option label="文档资料" value="document" />
@@ -80,38 +80,89 @@
           </el-select>
         </el-form-item>
         <el-form-item label="资源描述">
-          <el-textarea v-model="form.description" rows="3" placeholder="请输入资源描述" />
+          <el-input
+            v-model="form.description"
+            type="textarea"
+            :rows="4"
+            placeholder="请输入资源描述、内容简介、用途说明等"
+            maxlength="500"
+            show-word-limit
+            resize="vertical"
+          />
         </el-form-item>
         <el-form-item label="资源文件">
           <el-upload
             class="upload-demo"
-            action="/api/resources/upload"
-            :on-success="handleUploadSuccess"
-            :on-error="handleUploadError"
             :auto-upload="false"
             :file-list="fileList"
+            :on-change="handleFileChange"
+            :on-remove="handleFileRemove"
+            :on-preview="handleFilePreview"
             ref="uploadRef"
+            list-type="text"
           >
             <el-button type="primary">选择文件</el-button>
+            <template #tip>
+              <div class="el-upload__tip">支持图片、视频、文档等任意文件，最大 50MB</div>
+            </template>
           </el-upload>
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="showUploadModal = false">取消</el-button>
-        <el-button type="primary" @click="handleUpload">上传</el-button>
+        <el-button @click="cancelUpload">取消</el-button>
+        <el-button type="primary" @click="handleUpload" :loading="uploading">上传</el-button>
       </template>
     </el-dialog>
 
-    <el-dialog v-model="showViewModal" title="资源详情" width="600px">
+    <el-dialog v-model="showViewModal" title="资源详情" width="720px" top="6vh">
       <div v-if="selectedResource" class="resource-detail">
-        <div class="detail-icon" :style="{ background: getIconBg(selectedResource.type) }">
-          {{ getIcon(selectedResource.type) }}
+        <!-- 预览区：按类型显示 -->
+        <div class="preview-area">
+          <img
+            v-if="isImage(selectedResource)"
+            :src="selectedResource.fileUrl"
+            :alt="selectedResource.title"
+            class="preview-image"
+            @error="onPreviewError"
+          />
+          <video
+            v-else-if="isVideo(selectedResource)"
+            :src="selectedResource.fileUrl"
+            controls
+            class="preview-video"
+            preload="metadata"
+          />
+          <audio
+            v-else-if="isAudio(selectedResource)"
+            :src="selectedResource.fileUrl"
+            controls
+            class="preview-audio"
+          />
+          <div v-else class="preview-document">
+            <div class="doc-icon">{{ getIcon(selectedResource.type) }}</div>
+            <div class="doc-info">
+              <div class="doc-name">{{ selectedResource.originalName || selectedResource.title }}</div>
+              <div class="doc-meta">
+                {{ formatMime(selectedResource.mimeType) }}
+                <span v-if="selectedResource.fileSize"> · {{ formatSize(selectedResource.fileSize) }}</span>
+              </div>
+              <div class="doc-hint">该类型文件暂不支持在线预览，请下载查看</div>
+            </div>
+          </div>
+          <div v-if="previewError" class="preview-fallback">
+            <div class="doc-icon">📁</div>
+            <div class="doc-info">
+              <div class="doc-name">{{ selectedResource.title }}</div>
+              <div class="doc-hint">预览加载失败，请下载查看</div>
+            </div>
+          </div>
         </div>
-        <h3>{{ selectedResource.title }}</h3>
+
+        <h3 class="detail-title">{{ selectedResource.title }}</h3>
         <div class="detail-info">
           <div class="info-row">
             <span class="label">分类：</span>
-            <span>{{ selectedResource.category }}</span>
+            <el-tag size="small">{{ selectedResource.category }}</el-tag>
           </div>
           <div class="info-row">
             <span class="label">类型：</span>
@@ -119,21 +170,31 @@
           </div>
           <div class="info-row">
             <span class="label">下载次数：</span>
-            <span>{{ selectedResource.downloadCount }}</span>
+            <span>{{ selectedResource.downloadCount || 0 }}</span>
           </div>
           <div class="info-row">
             <span class="label">评分：</span>
-            <span>⭐ {{ selectedResource.rating }}</span>
+            <span>⭐ {{ selectedResource.rating || '暂无' }}</span>
+          </div>
+          <div class="info-row" v-if="selectedResource.fileSize">
+            <span class="label">文件大小：</span>
+            <span>{{ formatSize(selectedResource.fileSize) }}</span>
           </div>
         </div>
         <div class="detail-desc">
-          <h4>描述</h4>
-          <p>{{ selectedResource.description }}</p>
+          <h4>资源描述</h4>
+          <p>{{ selectedResource.description || '暂无描述' }}</p>
         </div>
       </div>
       <template #footer>
         <el-button @click="showViewModal = false">关闭</el-button>
-        <el-button type="primary" @click="downloadResource(selectedResource)">下载</el-button>
+        <el-button
+          type="primary"
+          @click="downloadResource(selectedResource)"
+          :disabled="!selectedResource || !selectedResource.fileUrl"
+        >
+          下载
+        </el-button>
       </template>
     </el-dialog>
   </div>
@@ -154,6 +215,11 @@ interface Resource {
   downloadCount: number
   rating: number
   fileUrl?: string
+  mimeType?: string
+  fileSize?: number
+  originalName?: string
+  author?: string
+  createdAt?: string
 }
 
 const categories = ['编程开发', '数据科学', '数据库', '网络技术', '操作系统', '前端开发', '人工智能', '其他']
@@ -167,6 +233,9 @@ const showViewModal = ref(false)
 const selectedResource = ref<Resource | null>(null)
 const formRef = ref()
 const uploadRef = ref()
+const loading = ref(false)
+const uploading = ref(false)
+const previewError = ref(false)
 
 const form = reactive({
   title: '',
@@ -177,8 +246,8 @@ const form = reactive({
 
 const rules = {
   title: [{ required: true, message: '请输入资源名称', trigger: 'blur' }],
-  category: [{ required: true, message: '请选择资源分类', trigger: 'blur' }],
-  type: [{ required: true, message: '请选择资源类型', trigger: 'blur' }]
+  category: [{ required: true, message: '请选择资源分类', trigger: 'change' }],
+  type: [{ required: true, message: '请选择资源类型', trigger: 'change' }]
 }
 
 const fileList = ref<any[]>([])
@@ -222,54 +291,215 @@ function getTypeName(type: string) {
   return names[type] || '其他'
 }
 
+function isImage(r: Resource) {
+  if (!r.fileUrl) return false
+  const mt = (r.mimeType || '').toLowerCase()
+  if (mt.startsWith('image/')) return true
+  const ext = (r.originalName || r.fileUrl).toLowerCase()
+  return /\.(png|jpe?g|gif|bmp|webp|svg|ico)$/i.test(ext)
+}
+
+function isVideo(r: Resource) {
+  if (!r.fileUrl) return false
+  const mt = (r.mimeType || '').toLowerCase()
+  if (mt.startsWith('video/')) return true
+  const ext = (r.originalName || r.fileUrl).toLowerCase()
+  return /\.(mp4|webm|ogg|mov|m4v|avi|mkv)$/i.test(ext)
+}
+
+function isAudio(r: Resource) {
+  if (!r.fileUrl) return false
+  const mt = (r.mimeType || '').toLowerCase()
+  if (mt.startsWith('audio/')) return true
+  const ext = (r.originalName || r.fileUrl).toLowerCase()
+  return /\.(mp3|wav|ogg|flac|m4a|aac)$/i.test(ext)
+}
+
+function formatSize(bytes?: number) {
+  if (!bytes || bytes <= 0) return ''
+  if (bytes < 1024) return bytes + ' B'
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB'
+  if (bytes < 1024 * 1024 * 1024) return (bytes / 1024 / 1024).toFixed(1) + ' MB'
+  return (bytes / 1024 / 1024 / 1024).toFixed(2) + ' GB'
+}
+
+function formatMime(mt?: string) {
+  if (!mt) return '未知类型'
+  const map: Record<string, string> = {
+    'application/pdf': 'PDF 文档',
+    'application/zip': 'ZIP 压缩包',
+    'application/x-rar-compressed': 'RAR 压缩包',
+    'application/msword': 'Word 文档',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'Word 文档',
+    'application/vnd.ms-excel': 'Excel 表格',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'Excel 表格',
+    'application/vnd.ms-powerpoint': 'PPT 演示',
+    'application/vnd.openxmlformats-officedocument.presentationml.presentation': 'PPT 演示',
+    'text/plain': '文本文件',
+    'text/markdown': 'Markdown',
+    'application/json': 'JSON',
+    'application/octet-stream': '二进制文件'
+  }
+  return map[mt] || mt
+}
+
+function onPreviewError() {
+  previewError.value = true
+}
+
+function resetForm() {
+  form.title = ''
+  form.description = ''
+  form.category = ''
+  form.type = ''
+  fileList.value = []
+  previewError.value = false
+}
+
 async function fetchResources() {
+  loading.value = true
   try {
     const data = await api.get('/resources')
     resources.value = data || []
-  } catch {
-    resources.value = [
-      { id: '1', title: 'Python从入门到精通', description: '全面讲解Python编程基础和进阶知识', category: '编程开发', type: 'ebook', downloadCount: 1256, rating: 4.8 },
-      { id: '2', title: '高等数学视频教程', description: '考研数学高等数学全套视频课程', category: '数据科学', type: 'video', downloadCount: 892, rating: 4.9 },
-      { id: '3', title: 'SQL学习手册', description: 'SQL数据库查询和优化技巧详解', category: '数据库', type: 'document', downloadCount: 654, rating: 4.7 },
-      { id: '4', title: 'Vue3实战项目', description: '使用Vue3构建企业级应用的实战教程', category: '前端开发', type: 'video', downloadCount: 523, rating: 4.8 },
-      { id: '5', title: '机器学习入门', description: '从零开始学习机器学习算法', category: '人工智能', type: 'ebook', downloadCount: 432, rating: 4.6 },
-      { id: '6', title: 'Linux命令速查', description: '常用Linux命令大全', category: '操作系统', type: 'document', downloadCount: 389, rating: 4.5 },
-      { id: '7', title: '网络协议详解', description: 'TCP/IP协议栈原理与实现', category: '网络技术', type: 'ebook', downloadCount: 276, rating: 4.7 },
-      { id: '8', title: '算法与数据结构', description: '经典算法实现和数据结构讲解', category: '编程开发', type: 'video', downloadCount: 567, rating: 4.9 }
-    ]
+  } catch (e) {
+    console.error('加载资源失败:', e)
+    resources.value = []
+  } finally {
+    loading.value = false
   }
 }
 
 async function handleUpload() {
   if (!formRef.value) return
-  await formRef.value.validate().catch(() => {})
-  
   try {
-    await api.post('/resources', form)
+    await formRef.value.validate()
+  } catch {
+    return
+  }
+
+  uploading.value = true
+  try {
+    let fileUrl = ''
+    let mimeType = ''
+    let fileSize = 0
+    let originalName = ''
+    if (fileList.value.length > 0 && fileList.value[0].raw) {
+      const raw = fileList.value[0].raw
+      const uploadRes: any = await uploadFile(raw)
+      if (uploadRes && uploadRes.fileUrl) {
+        fileUrl = uploadRes.fileUrl
+        mimeType = uploadRes.mimetype || raw.type || ''
+        fileSize = uploadRes.size || raw.size || 0
+        originalName = uploadRes.originalName || raw.name || ''
+      } else {
+        throw new Error('文件上传失败')
+      }
+    }
+
+    const newResource: any = await api.post('/resources', {
+      title: form.title,
+      description: form.description,
+      category: form.category,
+      type: form.type,
+      fileUrl,
+      mimeType,
+      fileSize,
+      originalName
+    })
+
     ElMessage.success('上传成功')
     showUploadModal.value = false
+    resetForm()
     fetchResources()
-  } catch {
-    ElMessage.error('操作失败')
+    if (newResource && newResource.id) {
+      setTimeout(() => viewResource(newResource), 300)
+    }
+  } catch (e: any) {
+    ElMessage.error(typeof e === 'string' ? e : (e && e.message) || '操作失败')
+  } finally {
+    uploading.value = false
   }
 }
 
-function handleUploadSuccess() {
-  ElMessage.success('文件上传成功')
+function uploadFile(file: File): Promise<any> {
+  return new Promise((resolve, reject) => {
+    const formData = new FormData()
+    formData.append('file', file)
+    fetch('/api/resources/upload', {
+      method: 'POST',
+      body: formData,
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token') || ''}`
+      }
+    })
+      .then(r => r.json())
+      .then(data => {
+        if (data.success) resolve(data)
+        else reject(new Error(data.message || '上传失败'))
+      })
+      .catch(err => reject(err))
+  })
 }
 
-function handleUploadError() {
-  ElMessage.error('文件上传失败')
+function handleFileChange(file: any) {
+  fileList.value = [file]
+}
+
+function handleFileRemove() {
+  fileList.value = []
+}
+
+function handleFilePreview() {
+  // 阻止默认预览
+}
+
+function cancelUpload() {
+  showUploadModal.value = false
+  resetForm()
 }
 
 function viewResource(resource: Resource) {
   selectedResource.value = resource
+  previewError.value = false
   showViewModal.value = true
 }
 
-function downloadResource(resource: Resource | null) {
+async function downloadResource(resource: Resource | null) {
   if (!resource) return
-  ElMessage.success('开始下载')
+  if (!resource.fileUrl) {
+    ElMessage.warning('该资源未上传文件，无法下载')
+    return
+  }
+  try {
+    const token = localStorage.getItem('token') || ''
+    const res = await fetch(`/api/resources/${resource.id}/download`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {}
+    })
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ message: '下载失败' }))
+      ElMessage.error(err.message || '下载失败')
+      return
+    }
+    const disp = res.headers.get('Content-Disposition') || ''
+    let filename = resource.originalName || resource.title
+    const m = disp.match(/filename\*?=(?:UTF-8'')?["']?([^;"']+)/i)
+    if (m && m[1]) {
+      try { filename = decodeURIComponent(m[1]) } catch { filename = m[1] }
+    }
+    const blob = await res.blob()
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = filename
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    setTimeout(() => URL.revokeObjectURL(url), 1000)
+    ElMessage.success('下载完成')
+  } catch (e: any) {
+    ElMessage.error('下载失败: ' + (e && e.message ? e.message : ''))
+  }
+  setTimeout(() => fetchResources(), 1200)
 }
 
 fetchResources()
@@ -374,6 +604,83 @@ fetchResources()
   text-align: center;
 }
 
+.preview-area {
+  background: #0f172a;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 20px;
+  min-height: 220px;
+  max-height: 360px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+
+.preview-image {
+  max-width: 100%;
+  max-height: 320px;
+  object-fit: contain;
+  border-radius: 8px;
+}
+
+.preview-video {
+  max-width: 100%;
+  max-height: 320px;
+  border-radius: 8px;
+}
+
+.preview-audio {
+  width: 100%;
+}
+
+.preview-document,
+.preview-fallback {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  color: #fff;
+  text-align: left;
+}
+
+.preview-document .doc-icon,
+.preview-fallback .doc-icon {
+  font-size: 48px;
+  flex-shrink: 0;
+}
+
+.preview-document .doc-info,
+.preview-fallback .doc-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.preview-document .doc-name,
+.preview-fallback .doc-name {
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 6px;
+  word-break: break-all;
+  color: #f1f5f9;
+}
+
+.preview-document .doc-meta,
+.preview-fallback .doc-meta {
+  font-size: 13px;
+  color: #94a3b8;
+  margin-bottom: 4px;
+}
+
+.preview-document .doc-hint,
+.preview-fallback .doc-hint {
+  font-size: 12px;
+  color: #94a3b8;
+  margin-top: 4px;
+}
+
 .detail-icon {
   width: 80px;
   height: 80px;
@@ -385,6 +692,12 @@ fetchResources()
   margin: 0 auto 20px;
 }
 
+.detail-title {
+  margin: 0 0 20px;
+  font-size: 22px;
+  font-weight: 700;
+}
+
 .resource-detail h3 {
   margin: 0 0 20px;
   font-size: 24px;
@@ -393,27 +706,47 @@ fetchResources()
 .detail-info {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  margin-bottom: 24px;
+  gap: 10px;
+  margin-bottom: 20px;
+  text-align: left;
+  background: #f8fafc;
+  padding: 16px;
+  border-radius: 8px;
 }
 
 .info-row {
-  font-size: 15px;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .info-row .label {
   font-weight: 600;
   color: var(--text-secondary);
+  min-width: 80px;
+  text-align: right;
+}
+
+.detail-desc {
+  text-align: left;
+  background: #f8fafc;
+  padding: 16px;
+  border-radius: 8px;
 }
 
 .detail-desc h4 {
   margin: 0 0 12px;
-  font-size: 16px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #475569;
 }
 
 .detail-desc p {
   margin: 0;
   color: var(--text-secondary);
   line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 </style>

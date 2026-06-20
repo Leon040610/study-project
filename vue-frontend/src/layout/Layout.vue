@@ -128,7 +128,7 @@
         </div>
       </header>
       <div class="main-body">
-        <router-view :key="$route.fullPath" />
+        <router-view :key="route.fullPath" />
       </div>
     </main>
 

@@ -2,230 +2,277 @@
   "users": [
     {
       "id": 1,
+      "name": "测试用户",
+      "email": "test1@x.com",
+      "phone": "",
+      "password": "123456",
+      "role": "student",
+      "createdAt": "2026-06-20T12:25:10.917Z"
+    },
+    {
+      "id": 2,
       "name": "Yu",
       "email": "yuleon0406@163.com",
       "phone": "",
       "password": "123456",
       "role": "student",
-      "createdAt": "2026-06-18T13:49:31.235Z"
-    }
-  ],
-  "goals": [
-    {
-      "id": "1781924162847",
-      "title": "通过英语四级考试",
-      "description": "通过考试",
-      "category": "语言学习",
-      "targetDate": "2026-12-19",
-      "status": "进行中",
-      "progress": 0,
-      "createdAt": "2026-06-20T02:56:03.175Z",
-      "completedDate": "2026-06-20"
-    }
-  ],
-  "plans": [
-    {
-      "id": "1781925697109",
-      "title": "学习英语四级",
-      "category": "通过英语四级考试",
-      "goalTitle": "通过英语四级考试",
-      "startDate": "2026-06-19",
-      "endDate": "2026-12-19",
-      "description": "通过四级考试",
-      "createdAt": "2026-06-20T03:21:37.421Z"
-    }
-  ],
-  "tasks": [
-    {
-      "id": "1781925858906",
-      "title": "背单词",
-      "planTitle": "学习英语四级",
-      "date": "2026-06-19",
-      "startDate": "2026-06-19",
-      "endDate": "2026-07-31",
-      "completed": false,
-      "completedDates": {
-        "2026-06-20": false,
-        "2026-06-19": false,
-        "2026-06-21": false,
-        "2026-06-22": false,
-        "2026-06-23": false,
-        "2026-06-24": false,
-        "2026-06-25": false,
-        "2026-06-26": false,
-        "2026-06-27": false,
-        "2026-06-28": false,
-        "2026-06-29": false,
-        "2026-06-30": false,
-        "2026-07-01": false,
-        "2026-07-02": false,
-        "2026-07-03": false,
-        "2026-07-04": false,
-        "2026-07-05": false,
-        "2026-07-06": false,
-        "2026-07-07": false,
-        "2026-07-08": false,
-        "2026-07-09": false,
-        "2026-07-10": false,
-        "2026-07-11": false,
-        "2026-07-12": false,
-        "2026-07-13": false,
-        "2026-07-14": false,
-        "2026-07-15": false,
-        "2026-07-16": false,
-        "2026-07-17": false,
-        "2026-07-18": false,
-        "2026-07-19": false,
-        "2026-07-20": false,
-        "2026-07-21": false,
-        "2026-07-22": false,
-        "2026-07-23": false,
-        "2026-07-24": false,
-        "2026-07-25": false,
-        "2026-07-26": false,
-        "2026-07-27": false,
-        "2026-07-28": false,
-        "2026-07-29": false,
-        "2026-07-30": false,
-        "2026-07-31": false
-      },
-      "createdAt": "2026-06-20T03:24:19.165Z"
+      "createdAt": "2026-06-20T12:28:08.645Z"
     },
     {
-      "id": "1781925859171",
-      "title": "学习听力",
-      "planTitle": "学习英语四级",
-      "date": "2026-08-01",
-      "startDate": "2026-08-01",
-      "endDate": "2026-09-30",
-      "completed": false,
-      "completedDates": {
-        "2026-06-20": false,
-        "2026-08-01": false,
-        "2026-08-02": false,
-        "2026-08-03": false,
-        "2026-08-04": false,
-        "2026-08-05": false,
-        "2026-08-06": false,
-        "2026-08-07": false,
-        "2026-08-08": false,
-        "2026-08-09": false,
-        "2026-08-10": false,
-        "2026-08-11": false,
-        "2026-08-12": false,
-        "2026-08-13": false,
-        "2026-08-14": false,
-        "2026-08-15": false,
-        "2026-08-16": false,
-        "2026-08-17": false,
-        "2026-08-18": false,
-        "2026-08-19": false,
-        "2026-08-20": false,
-        "2026-08-21": false,
-        "2026-08-22": false,
-        "2026-08-23": false,
-        "2026-08-24": false,
-        "2026-08-25": false,
-        "2026-08-26": false,
-        "2026-08-27": false,
-        "2026-08-28": false,
-        "2026-08-29": false,
-        "2026-08-30": false,
-        "2026-08-31": false,
-        "2026-09-01": false,
-        "2026-09-02": false,
-        "2026-09-03": false,
-        "2026-09-04": false,
-        "2026-09-05": false,
-        "2026-09-06": false,
-        "2026-09-07": false,
-        "2026-09-08": false,
-        "2026-09-09": false,
-        "2026-09-10": false,
-        "2026-09-11": false,
-        "2026-09-12": false,
-        "2026-09-13": false,
-        "2026-09-14": false,
-        "2026-09-15": false,
-        "2026-09-16": false,
-        "2026-09-17": false,
-        "2026-09-18": false,
-        "2026-09-19": false,
-        "2026-09-20": false,
-        "2026-09-21": false,
-        "2026-09-22": false,
-        "2026-09-23": false,
-        "2026-09-24": false,
-        "2026-09-25": false,
-        "2026-09-26": false,
-        "2026-09-27": false,
-        "2026-09-28": false,
-        "2026-09-29": false,
-        "2026-09-30": false
-      },
-      "createdAt": "2026-06-20T03:24:19.228Z"
-    },
-    {
-      "id": "1781925859235",
-      "title": "学习阅读",
-      "planTitle": "学习英语四级",
-      "date": "2026-10-01",
-      "startDate": "2026-10-01",
-      "endDate": "2026-11-01",
-      "completed": false,
-      "completedDates": {
-        "2026-10-01": false,
-        "2026-10-02": false,
-        "2026-10-03": false,
-        "2026-10-04": false,
-        "2026-10-05": false,
-        "2026-10-06": false,
-        "2026-10-07": false,
-        "2026-10-08": false,
-        "2026-10-09": false,
-        "2026-10-10": false,
-        "2026-10-11": false,
-        "2026-10-12": false,
-        "2026-10-13": false,
-        "2026-10-14": false,
-        "2026-10-15": false,
-        "2026-10-16": false,
-        "2026-10-17": false,
-        "2026-10-18": false,
-        "2026-10-19": false,
-        "2026-10-20": false,
-        "2026-10-21": false,
-        "2026-10-22": false,
-        "2026-10-23": false,
-        "2026-10-24": false,
-        "2026-10-25": false,
-        "2026-10-26": false,
-        "2026-10-27": false,
-        "2026-10-28": false,
-        "2026-10-29": false,
-        "2026-10-30": false,
-        "2026-10-31": false,
-        "2026-11-01": false
-      },
-      "createdAt": "2026-06-20T03:24:19.490Z"
-    },
-    {
-      "id": "1781925859496",
-      "title": "学习作文",
-      "planTitle": "学习英语四级",
-      "date": "2026-06-19",
-      "startDate": "2026-06-19",
-      "endDate": "2026-06-21",
-      "completed": false,
-      "completedDates": {
-        "2026-06-19": false,
-        "2026-06-20": false,
-        "2026-06-21": false
-      },
-      "createdAt": "2026-06-20T03:24:19.554Z"
+      "id": 3,
+      "name": "test",
+      "email": "test@123.com",
+      "phone": "",
+      "password": "123456",
+      "role": "student",
+      "createdAt": "2026-06-20T12:34:43.298Z"
     }
   ],
+  "goals": [],
+  "plans": [],
+  "tasks": [],
   "reminders": [],
+  "posts": [
+    {
+      "id": "p1",
+      "userId": 1,
+      "authorName": "测试用户",
+      "title": "测试帖子",
+      "content": "内容",
+      "category": "学习心得",
+      "viewCount": 0,
+      "commentCount": 0,
+      "likes": 0,
+      "likedUsers": [],
+      "createdAt": "2026-06-20T12:25:10.939Z"
+    },
+    {
+      "id": "p2",
+      "userId": 2,
+      "authorName": "Yu",
+      "title": "学习",
+      "content": "四级",
+      "category": "学习心得",
+      "viewCount": 4,
+      "commentCount": 1,
+      "likes": 1,
+      "likedUsers": [
+        3
+      ],
+      "createdAt": "2026-06-20T12:28:50.852Z"
+    }
+  ],
+  "comments": [
+    {
+      "id": "c1",
+      "postId": "p2",
+      "userId": 3,
+      "authorName": "test",
+      "content": "好",
+      "createdAt": "2026-06-20T12:35:04.993Z"
+    }
+  ],
+  "notificationLogs": [
+    {
+      "id": "log_1781958310943_602g",
+      "userId": 1,
+      "taskId": "test_task",
+      "channel": "email",
+      "status": "sent",
+      "attempts": 1,
+      "maxAttempts": 3,
+      "createdAt": "2026-06-20T12:25:10.943Z",
+      "sentAt": "2026-06-20T12:25:10.943Z",
+      "payload": {
+        "taskTitle": "测试提醒 - 学习任务即将到期",
+        "taskDescription": "这是一条测试通知，验证提醒功能是否正常工作。",
+        "dueDate": "2026-06-20T12:55:10.943Z",
+        "priority": "normal",
+        "planTitle": "测试计划"
+      }
+    },
+    {
+      "id": "log_1781958310943_kzo7",
+      "userId": 1,
+      "taskId": "test_task",
+      "channel": "push",
+      "status": "sent",
+      "attempts": 1,
+      "maxAttempts": 3,
+      "createdAt": "2026-06-20T12:25:10.943Z",
+      "sentAt": "2026-06-20T12:25:10.943Z",
+      "payload": {
+        "taskTitle": "测试提醒 - 学习任务即将到期",
+        "taskDescription": "这是一条测试通知，验证提醒功能是否正常工作。",
+        "dueDate": "2026-06-20T12:55:10.943Z",
+        "priority": "normal",
+        "planTitle": "测试计划"
+      }
+    },
+    {
+      "id": "log_1781959587611_is7y",
+      "userId": 1,
+      "taskId": "test_task",
+      "channel": "email",
+      "status": "failed",
+      "attempts": 1,
+      "maxAttempts": 3,
+      "createdAt": "2026-06-20T12:46:27.589Z",
+      "sentAt": null,
+      "payload": {
+        "taskTitle": "测试提醒 - 学习任务即将到期",
+        "taskDescription": "这是一条测试通知，验证提醒功能是否正常工作。",
+        "dueDate": "2026-06-20T13:16:27.589Z",
+        "priority": "normal",
+        "planTitle": "测试计划"
+      },
+      "details": {
+        "to": "test1@x.com",
+        "error": "SMTP 未配置"
+      }
+    },
+    {
+      "id": "log_1781959587612_ykgm",
+      "userId": 1,
+      "taskId": "test_task",
+      "channel": "push",
+      "status": "sent",
+      "attempts": 1,
+      "maxAttempts": 3,
+      "createdAt": "2026-06-20T12:46:27.589Z",
+      "sentAt": "2026-06-20T12:46:27.612Z",
+      "payload": {
+        "taskTitle": "测试提醒 - 学习任务即将到期",
+        "taskDescription": "这是一条测试通知，验证提醒功能是否正常工作。",
+        "dueDate": "2026-06-20T13:16:27.589Z",
+        "priority": "normal",
+        "planTitle": "测试计划"
+      },
+      "details": {
+        "userId": 1,
+        "content": "测试提醒 - 学习任务即将到期"
+      }
+    },
+    {
+      "id": "log_1781959587621_lroa",
+      "userId": 1,
+      "taskId": "rule_rule2",
+      "ruleId": "rule2",
+      "channel": "push",
+      "status": "sent",
+      "attempts": 1,
+      "maxAttempts": 3,
+      "createdAt": "2026-06-20T12:46:27.621Z",
+      "sentAt": "2026-06-20T12:46:27.621Z",
+      "payload": {
+        "taskTitle": "5秒测试规则",
+        "taskDescription": "这是一个5秒后触发的测试规则",
+        "dueDate": "2026-06-20T12:46:32.616Z",
+        "priority": "normal",
+        "planTitle": "5秒测试规则"
+      },
+      "details": {
+        "userId": 1,
+        "content": "5秒测试规则"
+      }
+    },
+    {
+      "id": "log_1781960965805_vqft",
+      "userId": 1,
+      "taskId": "test_task",
+      "channel": "email",
+      "status": "sent",
+      "attempts": 1,
+      "maxAttempts": 3,
+      "createdAt": "2026-06-20T13:09:24.730Z",
+      "sentAt": "2026-06-20T13:09:25.805Z",
+      "payload": {
+        "taskTitle": "测试提醒 - 学习任务即将到期",
+        "taskDescription": "这是一条测试通知，验证提醒功能是否正常工作。",
+        "dueDate": "2026-06-20T13:39:24.730Z",
+        "priority": "normal",
+        "planTitle": "测试计划"
+      },
+      "details": {
+        "to": "test1@x.com",
+        "messageId": "<6cf8dd1a-0624-1549-4456-833b64748248@163.com>"
+      }
+    },
+    {
+      "id": "log_1781960965806_gh0k",
+      "userId": 1,
+      "taskId": "test_task",
+      "channel": "push",
+      "status": "sent",
+      "attempts": 1,
+      "maxAttempts": 3,
+      "createdAt": "2026-06-20T13:09:24.730Z",
+      "sentAt": "2026-06-20T13:09:25.806Z",
+      "payload": {
+        "taskTitle": "测试提醒 - 学习任务即将到期",
+        "taskDescription": "这是一条测试通知，验证提醒功能是否正常工作。",
+        "dueDate": "2026-06-20T13:39:24.730Z",
+        "priority": "normal",
+        "planTitle": "测试计划"
+      },
+      "details": {
+        "userId": 1,
+        "content": "测试提醒 - 学习任务即将到期"
+      }
+    },
+    {
+      "id": "log_1781961117141_i8ge",
+      "userId": 2,
+      "taskId": "test_task",
+      "channel": "email",
+      "status": "sent",
+      "attempts": 1,
+      "maxAttempts": 3,
+      "createdAt": "2026-06-20T13:11:56.381Z",
+      "sentAt": "2026-06-20T13:11:57.141Z",
+      "payload": {
+        "taskTitle": "测试提醒 - 学习任务即将到期",
+        "taskDescription": "这是一条测试通知，验证提醒功能是否正常工作。",
+        "dueDate": "2026-06-20T13:41:56.381Z",
+        "priority": "normal",
+        "planTitle": "测试计划"
+      },
+      "details": {
+        "to": "yuleon0406@163.com",
+        "messageId": "<6578b1a9-d354-fe09-d162-eb5a2863c0b9@163.com>"
+      }
+    }
+  ],
+  "userPreferences": [
+    {
+      "userId": 2,
+      "email": "yuleon0406@163.com",
+      "defaultChannel": "email",
+      "advanceMinutes": 30,
+      "quietHoursStart": "22:00",
+      "quietHoursEnd": "07:00",
+      "updatedAt": "2026-06-20T12:30:27.139Z"
+    }
+  ],
+  "reminderRules": [
+    {
+      "id": "rule2",
+      "userId": 1,
+      "planId": null,
+      "name": "5秒测试规则",
+      "description": "这是一个5秒后触发的测试规则",
+      "triggerType": "fixed_time",
+      "triggerTime": "2026-06-20T12:46:32.616Z",
+      "advanceMinutes": 30,
+      "frequency": "once",
+      "channel": "push",
+      "enabled": true,
+      "lastTriggeredAt": "2026-06-20T12:46:27.621Z",
+      "lastTriggeredKey": null,
+      "createdAt": "2026-06-20T12:46:27.617Z",
+      "updatedAt": "2026-06-20T12:46:27.617Z"
+    }
+  ],
   "announcements": [
     {
       "id": 1,
@@ -251,44 +298,160 @@
   ],
   "resources": [
     {
-      "id": 1,
+      "id": "r1",
       "title": "JavaScript高级编程",
-      "type": "book",
-      "category": "编程",
-      "url": "https://example.com/js-book"
+      "description": "深入讲解JavaScript语言核心特性与最佳实践",
+      "category": "编程开发",
+      "type": "ebook",
+      "downloadCount": 1256,
+      "rating": 4.8,
+      "fileUrl": "",
+      "author": "Douglas Crockford",
+      "createdAt": "2026-06-15"
     },
     {
-      "id": 2,
-      "title": "React官方文档",
-      "type": "doc",
-      "category": "编程",
-      "url": "https://react.dev"
+      "id": "r2",
+      "title": "React官方教程",
+      "description": "React 18 官方学习资源",
+      "category": "前端开发",
+      "type": "ebook",
+      "downloadCount": 892,
+      "rating": 4.9,
+      "fileUrl": "",
+      "author": "Meta",
+      "createdAt": "2026-06-14"
     },
     {
-      "id": 3,
-      "title": "Python入门教程",
+      "id": "r3",
+      "title": "Python速成课程",
+      "description": "一周内学会Python编程",
+      "category": "编程开发",
       "type": "video",
-      "category": "编程",
-      "url": "https://example.com/python-video"
+      "downloadCount": 654,
+      "rating": 4.7,
+      "fileUrl": "",
+      "author": "Eric Matthes",
+      "createdAt": "2026-06-13"
     },
     {
-      "id": 4,
-      "title": "数据结构与算法",
-      "type": "book",
-      "category": "算法",
-      "url": "https://example.com/algorithm-book"
+      "id": "r4",
+      "title": "高等数学视频教程",
+      "description": "考研数学全套视频课程",
+      "category": "数据科学",
+      "type": "video",
+      "downloadCount": 523,
+      "rating": 4.8,
+      "fileUrl": "",
+      "author": "考研名师",
+      "createdAt": "2026-06-12"
     },
     {
-      "id": 5,
-      "title": "机器学习实战",
-      "type": "book",
-      "category": "AI",
-      "url": "https://example.com/ml-book"
+      "id": "r5",
+      "title": "SQL学习手册",
+      "description": "SQL数据库查询与优化技巧详解",
+      "category": "数据库",
+      "type": "document",
+      "downloadCount": 432,
+      "rating": 4.6,
+      "fileUrl": "",
+      "author": "DataCamp",
+      "createdAt": "2026-06-11"
+    },
+    {
+      "id": "r6",
+      "title": "Vue3实战项目",
+      "description": "使用Vue3构建企业级应用",
+      "category": "前端开发",
+      "type": "video",
+      "downloadCount": 389,
+      "rating": 4.7,
+      "fileUrl": "",
+      "author": "社区贡献",
+      "createdAt": "2026-06-10"
+    },
+    {
+      "id": "r7",
+      "title": "机器学习入门",
+      "description": "从零开始学习机器学习算法",
+      "category": "人工智能",
+      "type": "ebook",
+      "downloadCount": 276,
+      "rating": 4.5,
+      "fileUrl": "",
+      "author": "Andrew Ng",
+      "createdAt": "2026-06-09"
+    },
+    {
+      "id": "r8",
+      "title": "Linux命令速查",
+      "description": "常用Linux命令大全",
+      "category": "操作系统",
+      "type": "document",
+      "downloadCount": 567,
+      "rating": 4.9,
+      "fileUrl": "",
+      "author": "社区贡献",
+      "createdAt": "2026-06-08"
+    },
+    {
+      "id": "r100",
+      "title": "测试资源",
+      "description": "desc",
+      "category": "其他",
+      "type": "document",
+      "author": "匿名用户",
+      "downloadCount": 0,
+      "rating": 0,
+      "fileUrl": "",
+      "createdAt": "2026-06-20T12:25:10.935Z"
+    },
+    {
+      "id": "r101",
+      "title": "我的上传测试资源",
+      "description": "通过 API 上传",
+      "category": "编程开发",
+      "type": "document",
+      "author": "匿名用户",
+      "downloadCount": 1,
+      "rating": 0,
+      "fileUrl": "/api/resources/file/1781958373214_c9grtzc_test-upload.txt",
+      "createdAt": "2026-06-20T12:26:13.227Z"
+    },
+    {
+      "id": "r102",
+      "title": "四级",
+      "description": "",
+      "category": "其他",
+      "type": "other",
+      "author": "匿名用户",
+      "downloadCount": 1,
+      "rating": 0,
+      "fileUrl": "/api/resources/file/1781958665260_8lxheku_思维导图.png",
+      "createdAt": "2026-06-20T12:31:05.521Z"
+    },
+    {
+      "id": "r103",
+      "title": "测试图片资源",
+      "description": "这是一张测试图片，包含详细描述信息。\n\n支持多行文字输入。",
+      "category": "前端开发",
+      "type": "ebook",
+      "author": "匿名用户",
+      "downloadCount": 1,
+      "rating": 0,
+      "fileUrl": "/api/resources/file/1781959587569_9w92ch1_test-img.png",
+      "mimeType": "image/png",
+      "fileSize": 70,
+      "originalName": "test-img.png",
+      "createdAt": "2026-06-20T12:46:27.575Z"
     }
   ],
-  "userIdCounter": 2,
-  "goalIdCounter": 2,
-  "planIdCounter": 4,
-  "taskIdCounter": 25,
-  "reminderIdCounter": 1
+  "userIdCounter": 4,
+  "goalIdCounter": 1,
+  "planIdCounter": 1,
+  "taskIdCounter": 1,
+  "reminderIdCounter": 1,
+  "postIdCounter": 3,
+  "commentIdCounter": 2,
+  "resourceIdCounter": 104,
+  "ruleIdCounter": 3
 }

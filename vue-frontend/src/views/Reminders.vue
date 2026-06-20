@@ -8,6 +8,38 @@
       </el-button>
     </div>
 
+    <!-- 渠道状态提示 -->
+    <el-alert
+      v-if="channelStatus"
+      :type="channelStatus.smtp.configured ? 'success' : 'warning'"
+      :closable="false"
+      style="margin-bottom: 16px;"
+      show-icon
+    >
+      <template #title>
+        <span style="font-weight: 600;">通知渠道状态</span>
+      </template>
+      <div style="font-size: 13px; line-height: 1.8;">
+        <div>
+          <el-tag size="small" :type="channelStatus.smtp.configured ? 'success' : 'danger'" style="margin-right: 8px;">
+            邮件 SMTP
+          </el-tag>
+          <span v-if="channelStatus.smtp.configured">
+            ✓ 已配置 · {{ channelStatus.smtp.host }} · 发送账号 {{ channelStatus.smtp.user }}
+          </span>
+          <span v-else>
+            ✗ 未配置 · 请在 server.js 同目录创建 .env 文件并设置 SMTP_HOST/SMTP_USER/SMTP_PASS
+          </span>
+        </div>
+        <div style="margin-top: 4px;">
+          <el-tag size="small" :type="channelStatus.sms.configured ? 'success' : 'info'" style="margin-right: 8px;">
+            短信 SMS
+          </el-tag>
+          <span>{{ channelStatus.sms.note }}</span>
+        </div>
+      </div>
+    </el-alert>
+
     <!-- 通知偏好设置 -->
     <el-card class="prefs-card">
       <template #header>
@@ -62,8 +94,8 @@
           </el-col>
         </el-row>
         <el-form-item>
-          <el-button type="primary" @click="savePrefs">保存偏好</el-button>
-          <el-button @click="sendTestNotification">发送测试通知</el-button>
+          <el-button type="primary" :loading="prefsLoading" @click="savePrefs">保存偏好</el-button>
+          <el-button :loading="sendingTest" @click="sendTestNotification">发送测试通知</el-button>
         </el-form-item>
       </el-form>
     </el-card>
@@ -133,8 +165,9 @@
             {{ formatDate(row.createdAt) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="120">
+        <el-table-column label="操作" width="240">
           <template #default="{ row }">
+            <el-button size="small" type="success" @click="triggerNow(row)">立即触发</el-button>
             <el-button size="small" @click="editRule(row)">编辑</el-button>
             <el-button size="small" type="danger" @click="deleteRule(row)">删除</el-button>
           </template>
@@ -301,6 +334,8 @@ const prefsLoading = ref(false)
 const logsLoading = ref(false)
 const showRuleModal = ref(false)
 const editingRule = ref<ReminderRule | null>(null)
+const sendingTest = ref(false)
+const channelStatus = ref<any>(null)
 
 const prefs = reactive<UserPrefs>({
   defaultChannel: 'both',
@@ -457,13 +492,51 @@ async function savePrefs() {
 }
 
 async function sendTestNotification() {
+  sendingTest.value = true
   try {
-    await api.post('/reminders/test')
-    ElMessage.success('测试通知已发送，请查看日志')
-    setTimeout(fetchLogs, 1000)
-    setTimeout(fetchStats, 1000)
+    const res = await api.post('/reminders/test') as any
+    const summary = res && res.summary
+    if (summary && summary.failed > 0) {
+      ElMessage.warning(res.message || '部分渠道发送失败')
+    } else {
+      ElMessage.success(res.message || '测试通知已发送')
+    }
+    setTimeout(() => {
+      fetchLogs()
+      fetchStats()
+    }, 500)
+    fetchChannelStatus()
+  } catch (e: any) {
+    ElMessage.error(typeof e === 'string' ? e : (e && e.message) || '发送失败')
+  } finally {
+    sendingTest.value = false
+  }
+}
+
+async function triggerNow(rule: ReminderRule) {
+  try {
+    const res = await api.post(`/reminders/rules/${rule.id}/trigger`) as any
+    const sent = (res.logs || []).filter((l: any) => l.status === 'sent').length
+    const total = (res.logs || []).length
+    if (sent > 0) {
+      ElMessage.success(`已触发规则 (${sent}/${total} 渠道成功)`)
+    } else {
+      ElMessage.warning('规则已触发但所有渠道失败')
+    }
+    setTimeout(() => {
+      fetchLogs()
+      fetchStats()
+    }, 500)
+  } catch (e: any) {
+    ElMessage.error('触发失败: ' + (e && e.message ? e.message : ''))
+  }
+}
+
+async function fetchChannelStatus() {
+  try {
+    channelStatus.value = await api.get('/reminders/channel-status')
   } catch {
-    ElMessage.error('发送失败')
+    // ignore
   }
 }
 
@@ -512,9 +585,20 @@ function editRule(rule: ReminderRule) {
 }
 
 async function saveRule() {
-  const payload = {
+  let triggerIso: string | undefined = undefined
+  if (ruleForm.triggerType !== 'before_due' && ruleFormTime.value) {
+    const now = new Date()
+    const target = new Date(now)
+    target.setHours(ruleFormTime.value.getHours(), ruleFormTime.value.getMinutes(), 0, 0)
+    if (target.getTime() <= now.getTime()) {
+      target.setDate(target.getDate() + 1)
+    }
+    triggerIso = target.toISOString()
+  }
+
+  const payload: any = {
     triggerType: ruleForm.triggerType,
-    triggerTime: ruleForm.triggerType !== 'before_due' ? timeToString(ruleFormTime.value) : undefined,
+    triggerTime: triggerIso,
     advanceMinutes: ruleForm.triggerType === 'before_due' ? ruleForm.advanceMinutes : undefined,
     frequency: ruleForm.triggerType === 'recurring' ? ruleForm.frequency : undefined,
     channel: ruleForm.channel,
@@ -527,7 +611,7 @@ async function saveRule() {
       ElMessage.success('规则已更新')
     } else {
       await api.post('/reminders/rules', payload)
-      ElMessage.success('规则已创建')
+      ElMessage.success('规则已创建，将在触发时间自动发送通知')
     }
     showRuleModal.value = false
     editingRule.value = null
@@ -564,6 +648,7 @@ onMounted(() => {
   fetchRules()
   fetchLogs()
   fetchStats()
+  fetchChannelStatus()
 })
 
 onBeforeUnmount(() => {
