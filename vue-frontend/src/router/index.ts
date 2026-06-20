@@ -15,7 +15,42 @@ const router = createRouter({
       children: [
         {
           path: '',
-          redirect: '/admin'
+          redirect: '/dashboard'
+        },
+        {
+          path: '/dashboard',
+          name: 'Dashboard',
+          component: () => import('@/views/Dashboard.vue')
+        },
+        {
+          path: '/goals',
+          name: 'Goals',
+          component: () => import('@/views/Goals.vue')
+        },
+        {
+          path: '/plans',
+          name: 'Plans',
+          component: () => import('@/views/Plans.vue')
+        },
+        {
+          path: '/calendar',
+          name: 'Calendar',
+          component: () => import('@/views/Calendar.vue')
+        },
+        {
+          path: '/resources',
+          name: 'Resources',
+          component: () => import('@/views/Resources.vue')
+        },
+        {
+          path: '/posts',
+          name: 'Posts',
+          component: () => import('@/views/Posts.vue')
+        },
+        {
+          path: '/reminders',
+          name: 'Reminders',
+          component: () => import('@/views/Reminders.vue')
         },
         {
           path: '/profile',
@@ -61,11 +96,6 @@ const router = createRouter({
           path: '/admin/settings',
           name: 'AdminSettings',
           component: () => import('@/views/admin/AdminSettings.vue')
-        },
-        {
-          path: '/admin/backup',
-          name: 'AdminBackup',
-          component: () => import('@/views/admin/AdminBackup.vue')
         }
       ]
     }
@@ -79,15 +109,16 @@ router.beforeEach((to, from, next) => {
 
   if (to.path === '/login') {
     if (isLoggedIn) {
-      next(user?.role === 'admin' ? '/admin' : '/profile')
+      next('/dashboard')
     } else {
       next()
     }
   } else {
     if (!isLoggedIn) {
       next('/login')
-    } else if (to.matched.some(r => r.meta?.requiresAdmin) && user?.role !== 'admin') {
-      next('/profile')
+    } else if (to.matched.some(r => r.meta?.requiresAdmin) && (!user || user.role !== 'admin')) {
+      // 权限不足，跳回首页
+      next('/dashboard')
     } else {
       next()
     }

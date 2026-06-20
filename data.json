@@ -22,13 +22,144 @@
       "password": "123456",
       "role": "student",
       "createdAt": "2026-06-20T12:28:08.645Z",
-      "avatar": "/uploads/avatars/2_1781968223090.png",
-      "avatarUpdatedAt": "2026-06-20T15:10:23.099Z"
+      "avatar": "/uploads/avatars/2_1781978612774.png",
+      "avatarUpdatedAt": "2026-06-20T18:03:32.781Z"
+    },
+    {
+      "id": 4,
+      "name": "TestUser",
+      "email": "longpwd@x.com",
+      "phone": "",
+      "password": "abcdefghij",
+      "role": "student",
+      "createdAt": "2026-06-20T16:49:40.226Z"
     }
   ],
-  "goals": [],
-  "plans": [],
-  "tasks": [],
+  "goals": [
+    {
+      "id": "1781975748002",
+      "title": "通过英语四级考试",
+      "description": "完成学习，通过考试",
+      "category": "语言学习",
+      "targetDate": "2026-12-12",
+      "status": "进行中",
+      "progress": 0,
+      "createdAt": "2026-06-20T17:15:48.327Z"
+    },
+    {
+      "id": "1781976000277",
+      "title": "完成考研数学",
+      "description": "",
+      "category": "考试科目",
+      "targetDate": "2026-10-31",
+      "status": "进行中",
+      "progress": 0,
+      "createdAt": "2026-06-20T17:20:00.599Z"
+    }
+  ],
+  "plans": [
+    {
+      "id": "1781975917297",
+      "title": "学习四级",
+      "category": "通过英语四级考试",
+      "goalTitle": "通过英语四级考试",
+      "startDate": "2026-06-19",
+      "endDate": "2026-12-12",
+      "description": "完成每日任务",
+      "createdAt": "2026-06-20T17:18:37.613Z"
+    },
+    {
+      "id": "1781976119230",
+      "title": "学习考研数学",
+      "category": "完成考研数学",
+      "goalTitle": "完成考研数学",
+      "startDate": "2026-06-25",
+      "endDate": "2026-10-25",
+      "description": "",
+      "createdAt": "2026-06-20T17:21:59.549Z"
+    }
+  ],
+  "tasks": [
+    {
+      "id": "1781975917620",
+      "title": "背单词",
+      "planTitle": "学习四级",
+      "date": "2026-06-19",
+      "startDate": "2026-06-19",
+      "endDate": "2026-12-12",
+      "completed": false,
+      "completedDates": {
+        "2026-06-20": false
+      },
+      "createdAt": "2026-06-20T17:18:37.877Z"
+    },
+    {
+      "id": "1781975917882",
+      "title": "学习英语听力",
+      "planTitle": "学习四级",
+      "date": "2026-06-19",
+      "startDate": "2026-06-19",
+      "endDate": "2026-07-18",
+      "completed": false,
+      "completedDates": {},
+      "createdAt": "2026-06-20T17:18:37.941Z"
+    },
+    {
+      "id": "1781975917946",
+      "title": "学习阅读",
+      "planTitle": "学习四级",
+      "date": "2026-07-19",
+      "startDate": "2026-07-19",
+      "endDate": "2026-08-18",
+      "completed": false,
+      "completedDates": {},
+      "createdAt": "2026-06-20T17:18:38.204Z"
+    },
+    {
+      "id": "1781975918209",
+      "title": "学习写译部分",
+      "planTitle": "学习四级",
+      "date": "2026-08-19",
+      "startDate": "2026-08-19",
+      "endDate": "2026-09-10",
+      "completed": false,
+      "completedDates": {},
+      "createdAt": "2026-06-20T17:18:38.265Z"
+    },
+    {
+      "id": "1781976119555",
+      "title": "学习高数部分",
+      "planTitle": "学习考研数学",
+      "date": "2026-06-25",
+      "startDate": "2026-06-25",
+      "endDate": "2026-08-24",
+      "completed": false,
+      "completedDates": {},
+      "createdAt": "2026-06-20T17:21:59.797Z"
+    },
+    {
+      "id": "1781976119803",
+      "title": "学习线代部分",
+      "planTitle": "学习考研数学",
+      "date": "2026-08-25",
+      "startDate": "2026-08-25",
+      "endDate": "2026-09-24",
+      "completed": false,
+      "completedDates": {},
+      "createdAt": "2026-06-20T17:21:59.874Z"
+    },
+    {
+      "id": "1781976119881",
+      "title": "刷题",
+      "planTitle": "学习考研数学",
+      "date": "2026-09-25",
+      "startDate": "2026-09-25",
+      "endDate": "2026-10-25",
+      "completed": false,
+      "completedDates": {},
+      "createdAt": "2026-06-20T17:22:00.121Z"
+    }
+  ],
   "reminders": [],
   "posts": [
     {
@@ -512,6 +643,95 @@
         "userId": 1,
         "content": "测试提醒 - 学习任务即将到期"
       }
+    },
+    {
+      "id": "log_1781975153926_vcg6",
+      "userId": 2,
+      "taskId": "test_task",
+      "channel": "email",
+      "status": "failed",
+      "attempts": 1,
+      "maxAttempts": 3,
+      "createdAt": "2026-06-20T17:05:53.891Z",
+      "sentAt": null,
+      "payload": {
+        "taskTitle": "测试提醒 - 学习任务即将到期",
+        "taskDescription": "这是一条测试通知，验证提醒功能是否正常工作。",
+        "dueDate": "2026-06-20T17:35:53.891Z",
+        "priority": "normal",
+        "planTitle": "测试计划"
+      },
+      "details": {
+        "to": "yuleon0406@163.com",
+        "error": "SMTP 未配置"
+      }
+    },
+    {
+      "id": "log_1781975239874_tbxu",
+      "userId": 2,
+      "taskId": "test_task",
+      "channel": "email",
+      "status": "failed",
+      "attempts": 1,
+      "maxAttempts": 3,
+      "createdAt": "2026-06-20T17:07:19.874Z",
+      "sentAt": null,
+      "payload": {
+        "taskTitle": "测试提醒 - 学习任务即将到期",
+        "taskDescription": "这是一条测试通知，验证提醒功能是否正常工作。",
+        "dueDate": "2026-06-20T17:37:19.874Z",
+        "priority": "normal",
+        "planTitle": "测试计划"
+      },
+      "details": {
+        "to": "yuleon0406@163.com",
+        "error": "SMTP 未配置"
+      }
+    },
+    {
+      "id": "log_1781975631014_zmav",
+      "userId": 2,
+      "taskId": "test_task",
+      "channel": "email",
+      "status": "sent",
+      "attempts": 1,
+      "maxAttempts": 3,
+      "createdAt": "2026-06-20T17:13:50.216Z",
+      "sentAt": "2026-06-20T17:13:51.014Z",
+      "payload": {
+        "taskTitle": "测试提醒 - 学习任务即将到期",
+        "taskDescription": "这是一条测试通知，验证提醒功能是否正常工作。",
+        "dueDate": "2026-06-20T17:43:50.216Z",
+        "priority": "normal",
+        "planTitle": "测试计划"
+      },
+      "details": {
+        "to": "yuleon0406@163.com",
+        "messageId": "<b7f14722-4376-99b9-d516-a9b1ec99b466@163.com>"
+      }
+    },
+    {
+      "id": "log_1781976187731_0vhy",
+      "userId": 2,
+      "taskId": "rule_rule3",
+      "ruleId": "rule3",
+      "channel": "email",
+      "status": "sent",
+      "attempts": 1,
+      "maxAttempts": 3,
+      "createdAt": "2026-06-20T17:23:07.041Z",
+      "sentAt": "2026-06-20T17:23:07.731Z",
+      "payload": {
+        "taskTitle": "fixed_time 提醒",
+        "taskDescription": "您的学习计划\"\"将在 30 分钟后开始",
+        "dueDate": "2026-06-20T17:23:00.000Z",
+        "priority": "normal",
+        "planTitle": "fixed_time 提醒"
+      },
+      "details": {
+        "to": "yuleon0406@163.com",
+        "messageId": "<a861d82f-5e01-4e54-aca8-adb40d2c116d@163.com>"
+      }
     }
   ],
   "userPreferences": [
@@ -536,21 +756,72 @@
   ],
   "reminderRules": [
     {
-      "id": "rule2",
+      "id": "rule3",
+      "userId": 2,
+      "planId": null,
+      "name": "fixed_time 提醒",
+      "description": "",
+      "triggerType": "fixed_time",
+      "triggerTime": "01:23",
+      "advanceMinutes": 30,
+      "frequency": "daily",
+      "channel": "email",
+      "enabled": true,
+      "lastTriggeredAt": "2026-06-20T17:23:07.041Z",
+      "lastTriggeredKey": null,
+      "createdAt": "2026-06-20T17:22:52.031Z",
+      "updatedAt": "2026-06-20T17:22:52.031Z"
+    },
+    {
+      "id": "rule4",
       "userId": 1,
       "planId": null,
-      "name": "5秒测试规则",
-      "description": "这是一个5秒后触发的测试规则",
+      "name": "??????",
+      "description": "",
       "triggerType": "fixed_time",
-      "triggerTime": "2026-06-20T12:46:32.616Z",
+      "triggerTime": "09:30",
       "advanceMinutes": 30,
-      "frequency": "once",
-      "channel": "push",
+      "frequency": "daily",
+      "channel": "email",
       "enabled": true,
-      "lastTriggeredAt": "2026-06-20T12:46:27.621Z",
+      "lastTriggeredAt": null,
       "lastTriggeredKey": null,
-      "createdAt": "2026-06-20T12:46:27.617Z",
-      "updatedAt": "2026-06-20T12:46:27.617Z"
+      "createdAt": "2026-06-20T17:31:34.633Z",
+      "updatedAt": "2026-06-20T17:31:34.633Z"
+    },
+    {
+      "id": "rule5",
+      "userId": 1,
+      "planId": null,
+      "name": "????",
+      "description": "",
+      "triggerType": "recurring",
+      "triggerTime": "14:00",
+      "advanceMinutes": 30,
+      "frequency": "daily",
+      "channel": "both",
+      "enabled": true,
+      "lastTriggeredAt": null,
+      "lastTriggeredKey": null,
+      "createdAt": "2026-06-20T17:31:34.639Z",
+      "updatedAt": "2026-06-20T17:31:34.639Z"
+    },
+    {
+      "id": "rule6",
+      "userId": 1,
+      "planId": null,
+      "name": "ISO ????",
+      "description": "",
+      "triggerType": "fixed_time",
+      "triggerTime": "01:23",
+      "advanceMinutes": 30,
+      "frequency": "daily",
+      "channel": "email",
+      "enabled": true,
+      "lastTriggeredAt": null,
+      "lastTriggeredKey": null,
+      "createdAt": "2026-06-20T17:31:34.650Z",
+      "updatedAt": "2026-06-20T17:31:34.650Z"
     }
   ],
   "announcements": [
@@ -676,6 +947,157 @@
   ],
   "adminLogs": [
     {
+      "id": "log_1781979358154_u2yy3",
+      "actor": "admin@study.com",
+      "actorId": 1,
+      "action": "announcement.delete",
+      "target": "a_1781979358128_258fh",
+      "meta": {},
+      "ip": "",
+      "createdAt": "2026-06-20T18:15:58.154Z"
+    },
+    {
+      "id": "log_1781979358148_m982a",
+      "actor": "admin@study.com",
+      "actorId": 1,
+      "action": "announcement.update",
+      "target": "a_1781979358128_258fh",
+      "meta": {},
+      "ip": "",
+      "createdAt": "2026-06-20T18:15:58.148Z"
+    },
+    {
+      "id": "log_1781979358129_7eb99",
+      "actor": "admin@study.com",
+      "actorId": 1,
+      "action": "announcement.create",
+      "target": "a_1781979358128_258fh",
+      "meta": {
+        "title": "????"
+      },
+      "ip": "",
+      "createdAt": "2026-06-20T18:15:58.129Z"
+    },
+    {
+      "id": "log_1781979266048_aofgv",
+      "actor": "admin@study.com",
+      "actorId": 1,
+      "action": "settings.update",
+      "target": "",
+      "meta": {
+        "keys": [
+          "security"
+        ]
+      },
+      "ip": "",
+      "createdAt": "2026-06-20T18:14:26.048Z"
+    },
+    {
+      "id": "log_1781979266024_aeg5w",
+      "actor": "admin@study.com",
+      "actorId": 1,
+      "action": "settings.update",
+      "target": "",
+      "meta": {
+        "keys": [
+          "security"
+        ]
+      },
+      "ip": "",
+      "createdAt": "2026-06-20T18:14:26.024Z"
+    },
+    {
+      "id": "log_1781979252952_6yoi3",
+      "actor": "admin@study.com",
+      "actorId": 1,
+      "action": "settings.update",
+      "target": "",
+      "meta": {
+        "keys": [
+          "security"
+        ]
+      },
+      "ip": "",
+      "createdAt": "2026-06-20T18:14:12.952Z"
+    },
+    {
+      "id": "log_1781979252916_vza2w",
+      "actor": "admin@study.com",
+      "actorId": 1,
+      "action": "settings.update",
+      "target": "",
+      "meta": {
+        "keys": [
+          "security",
+          "allowRegister=false"
+        ]
+      },
+      "ip": "",
+      "createdAt": "2026-06-20T18:14:12.916Z"
+    },
+    {
+      "id": "log_1781974180234_librh",
+      "actor": "admin@study.com",
+      "actorId": 1,
+      "action": "settings.update",
+      "target": "",
+      "meta": {
+        "keys": [
+          "site",
+          "security"
+        ]
+      },
+      "ip": "",
+      "createdAt": "2026-06-20T16:49:40.234Z"
+    },
+    {
+      "id": "log_1781974180196_uzw9z",
+      "actor": "admin@study.com",
+      "actorId": 1,
+      "action": "settings.update",
+      "target": "",
+      "meta": {
+        "keys": [
+          "site",
+          "security"
+        ]
+      },
+      "ip": "",
+      "createdAt": "2026-06-20T16:49:40.196Z"
+    },
+    {
+      "id": "log_1781974165200_5p3gv",
+      "actor": "admin@study.com",
+      "actorId": 1,
+      "action": "announcement.delete",
+      "target": "a_1781974165183_4ybvd",
+      "meta": {},
+      "ip": "",
+      "createdAt": "2026-06-20T16:49:25.200Z"
+    },
+    {
+      "id": "log_1781974165195_vuang",
+      "actor": "admin@study.com",
+      "actorId": 1,
+      "action": "announcement.update",
+      "target": "a_1781974165183_4ybvd",
+      "meta": {},
+      "ip": "",
+      "createdAt": "2026-06-20T16:49:25.195Z"
+    },
+    {
+      "id": "log_1781974165185_og9xs",
+      "actor": "admin@study.com",
+      "actorId": 1,
+      "action": "announcement.create",
+      "target": "a_1781974165183_4ybvd",
+      "meta": {
+        "title": "????"
+      },
+      "ip": "",
+      "createdAt": "2026-06-20T16:49:25.185Z"
+    },
+    {
       "id": "log_1781973215708_kyfdf",
       "actor": "admin@study.com",
       "actorId": 1,
@@ -746,12 +1168,12 @@
   ],
   "settings": {
     "site": {
-      "name": "????X",
+      "name": "??????",
       "description": "一站式个人学习管理",
       "contact": "admin@example.com",
       "subtitle": "",
       "icp": "",
-      "supportEmail": "",
+      "supportEmail": "admin@example.com",
       "maintenance": false
     },
     "security": {
@@ -759,7 +1181,7 @@
       "maxLoginAttempts": 5,
       "lockoutMinutes": 15,
       "sessionTimeoutHours": 24,
-      "tokenTtlDays": 14,
+      "tokenTtlDays": 7,
       "passwordMinLen": 6,
       "maxLoginFail": 5,
       "allowRegister": true,
@@ -816,13 +1238,13 @@
       "createdAt": "2026-06-20T15:29:01.013Z"
     }
   ],
-  "userIdCounter": 4,
-  "goalIdCounter": 1,
-  "planIdCounter": 1,
-  "taskIdCounter": 1,
+  "userIdCounter": 5,
+  "goalIdCounter": 3,
+  "planIdCounter": 3,
+  "taskIdCounter": 8,
   "reminderIdCounter": 1,
   "postIdCounter": 28,
   "commentIdCounter": 3,
   "resourceIdCounter": 104,
-  "ruleIdCounter": 3
+  "ruleIdCounter": 7
 }

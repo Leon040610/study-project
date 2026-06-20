@@ -22,6 +22,34 @@
           active-text-color="#fff"
           @select="handleMenuSelect"
         >
+        <el-menu-item index="/dashboard">
+          <el-icon><Monitor /></el-icon>
+          <span>首页</span>
+        </el-menu-item>
+        <el-menu-item index="/goals">
+          <el-icon><Aim /></el-icon>
+          <span>学习目标</span>
+        </el-menu-item>
+        <el-menu-item index="/plans">
+          <el-icon><FolderOpened /></el-icon>
+          <span>学习计划</span>
+        </el-menu-item>
+        <el-menu-item index="/calendar">
+          <el-icon><Calendar /></el-icon>
+          <span>日历视图</span>
+        </el-menu-item>
+        <el-menu-item index="/resources">
+          <el-icon><Document /></el-icon>
+          <span>共享资源</span>
+        </el-menu-item>
+        <el-menu-item index="/posts">
+          <el-icon><ChatLineSquare /></el-icon>
+          <span>帖子中心</span>
+        </el-menu-item>
+        <el-menu-item index="/reminders">
+          <el-icon><Bell /></el-icon>
+          <span>学习提醒</span>
+        </el-menu-item>
         <el-menu-item index="/profile">
           <el-icon><User /></el-icon>
           <span>个人中心</span>
@@ -58,16 +86,12 @@
               <span>公告管理</span>
             </el-menu-item>
             <el-menu-item index="/admin/logs">
-              <el-icon><Tickets /></el-icon>
-              <span>日志管理</span>
+              <el-icon><Document /></el-icon>
+              <span>系统日志</span>
             </el-menu-item>
             <el-menu-item index="/admin/settings">
-              <el-icon><Tools /></el-icon>
+              <el-icon><Setting /></el-icon>
               <span>系统设置</span>
-            </el-menu-item>
-            <el-menu-item index="/admin/backup">
-              <el-icon><Folder /></el-icon>
-              <span>备份恢复</span>
             </el-menu-item>
           </el-sub-menu>
         </template>
@@ -148,9 +172,9 @@ import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useThemeStore } from '@/stores/theme'
 import {
-  FolderOpened, Document, ChatLineSquare,
+  Monitor, Aim, FolderOpened, Calendar, Document, ChatLineSquare,
   User, Setting, DataAnalysis, Bell, Switch, Reading, Close, Menu,
-  Sunny, Moon, Tickets, Tools, Folder
+  Sunny, Moon
 } from '@element-plus/icons-vue'
 
 const authStore = useAuthStore()
@@ -172,6 +196,13 @@ const notificationCount = computed(() => notifications.value.length)
 const activeMenu = computed(() => route.path)
 
 const pageTitleMap: Record<string, string> = {
+  '/dashboard': '首页',
+  '/goals': '学习目标',
+  '/plans': '学习计划',
+  '/calendar': '日历视图',
+  '/resources': '共享资源',
+  '/posts': '帖子中心',
+  '/reminders': '学习提醒',
   '/profile': '个人中心',
   '/admin': '数据统计',
   '/admin/students': '学生管理',
@@ -179,9 +210,8 @@ const pageTitleMap: Record<string, string> = {
   '/admin/resources': '资源管理',
   '/admin/posts': '帖子管理',
   '/admin/announcements': '公告管理',
-  '/admin/logs': '日志管理',
-  '/admin/settings': '系统设置',
-  '/admin/backup': '备份恢复'
+  '/admin/logs': '系统日志',
+  '/admin/settings': '系统设置'
 }
 
 const pageTitle = computed(() => pageTitleMap[route.path] || '学习计划助手')

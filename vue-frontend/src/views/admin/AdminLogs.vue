@@ -142,7 +142,7 @@ onMounted(reload)
 
 <style scoped>
 .admin-logs { padding: 8px 4px; }
-.page-title { font-size: 20px; font-weight: 700; margin-bottom: 16px; }
+.page-title { font-size: 20px; font-weight: 700; margin-bottom: 16px; color: var(--el-text-color-primary); }
 .filter-bar { display: flex; gap: 8px; align-items: center; margin-bottom: 12px; flex-wrap: wrap; }
 .filter-spacer { flex: 1; }
 .pagination-wrap { display: flex; justify-content: flex-end; margin-top: 12px; }

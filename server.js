@@ -205,7 +205,16 @@ function getUserFromToken(req) {
   const authHeader = req.headers.authorization;
   if (authHeader && authHeader.startsWith('Bearer ')) {
     const token = authHeader.substring(7);
-    return tokenUserMap.get(token);
+    const entry = tokenUserMap.get(token);
+    if (!entry) return null;
+    // 检查 token TTL
+    const ttlDays = (settings?.security?.tokenTtlDays) || 7;
+    const expiresAt = entry.created_at ? new Date(entry.created_at).getTime() + ttlDays * 86400000 : Infinity;
+    if (Date.now() > expiresAt) {
+      tokenUserMap.delete(token);
+      return null;
+    }
+    return entry;
   }
   return null;
 }
@@ -225,13 +234,33 @@ app.post('/api/auth/register', (req, res) => {
   if (!name || !email || !password) {
     return res.status(400).json({ message: '请填写必填字段' });
   }
+  // 应用系统设置：是否允许注册
+  if (settings?.security?.allowRegister === false) {
+    return res.status(403).json({ message: '管理员已关闭新用户注册' });
+  }
+  // 应用系统设置：密码最小长度
+  const minLen = settings?.security?.passwordMinLen || 6;
+  if (password.length < minLen) {
+    return res.status(400).json({ message: `密码长度至少 ${minLen} 位` });
+  }
   const existing = users.find(u => u.email === email);
   if (existing) {
     return res.status(400).json({ message: '该邮箱已注册' });
   }
-  const user = { id: userIdCounter++, name, email, phone: phone || '', password, role: 'student', createdAt: new Date().toISOString() };
+  // 应用系统设置：新注册是否需要审核
+  const requireApproval = settings?.security?.requireApproval === true;
+  const user = {
+    id: userIdCounter++, name, email, phone: phone || '', password,
+    role: 'student',
+    status: requireApproval ? 'pending' : 'active',
+    createdAt: new Date().toISOString()
+  };
   users.push(user);
   saveData();
+  // 需审核的账号不直接发 token
+  if (requireApproval) {
+    return res.json({ token: null, user: { id: user.id, name: user.name, email: user.email, phone: user.phone, role: 'student', status: 'pending', created_at: user.createdAt }, message: '注册成功，等待管理员审核' });
+  }
   const token = generateToken(email);
   tokenUserMap.set(token, { id: user.id, name: user.name, email: user.email, phone: user.phone, role: user.role, created_at: user.createdAt });
   res.json({ token, user: { id: user.id, name: user.name, email: user.email, phone: user.phone, role: 'student', created_at: user.createdAt } });
@@ -239,9 +268,20 @@ app.post('/api/auth/register', (req, res) => {
 
 app.post('/api/auth/login', (req, res) => {
   const { email, password } = req.body;
-  const user = users.find(u => u.email === email && u.password === password);
-  if (!user) {
+  const user = users.find(u => u.email === email);
+  if (!user || user.password !== password) {
     return res.status(401).json({ message: '邮箱或密码错误' });
+  }
+  // 应用系统设置：维护模式（仅管理员可登录）
+  if (settings?.site?.maintenance === true && user.role !== 'admin') {
+    return res.status(503).json({ message: '系统维护中，仅管理员可登录' });
+  }
+  // 应用系统设置：待审核账号不可登录
+  if (user.status === 'pending') {
+    return res.status(403).json({ message: '账号待审核，请联系管理员' });
+  }
+  if (user.status === 'disabled') {
+    return res.status(403).json({ message: '账号已被禁用' });
   }
   const token = generateToken(email);
   tokenUserMap.set(token, { id: user.id, name: user.name, email: user.email, phone: user.phone, role: user.role, created_at: user.createdAt });
@@ -431,6 +471,50 @@ app.delete('/api/tasks/:id', (req, res) => {
 
 // ========== 公告 ==========
 app.get('/api/announcements', (req, res) => res.json(announcements));
+
+// 创建公告（仅管理员）
+app.post('/api/announcements', requireAdmin, (req, res) => {
+  const { title, content, priority } = req.body || {};
+  if (!title || !content) {
+    return res.status(400).json({ message: '标题和内容不能为空' });
+  }
+  const item = {
+    id: 'a_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
+    title,
+    content,
+    priority: priority || 'normal',
+    createdBy: req.currentUser.email,
+    created_at: new Date().toISOString()
+  };
+  announcements.unshift(item);
+  saveData();
+  logAdminAction(req.currentUser, 'announcement.create', item.id, { title });
+  res.json(item);
+});
+
+// 更新公告（仅管理员）
+app.put('/api/announcements/:id', requireAdmin, (req, res) => {
+  const item = announcements.find(a => a.id === req.params.id);
+  if (!item) return res.status(404).json({ message: '公告不存在' });
+  const { title, content, priority } = req.body || {};
+  if (title !== undefined) item.title = title;
+  if (content !== undefined) item.content = content;
+  if (priority !== undefined) item.priority = priority;
+  item.updated_at = new Date().toISOString();
+  saveData();
+  logAdminAction(req.currentUser, 'announcement.update', item.id, {});
+  res.json(item);
+});
+
+// 删除公告（仅管理员）
+app.delete('/api/announcements/:id', requireAdmin, (req, res) => {
+  const idx = announcements.findIndex(a => a.id === req.params.id);
+  if (idx < 0) return res.status(404).json({ message: '公告不存在' });
+  const [removed] = announcements.splice(idx, 1);
+  saveData();
+  logAdminAction(req.currentUser, 'announcement.delete', removed.id, {});
+  res.json({ success: true });
+});
 
 // ========== 资源分类（用户自定义） ==========
 
@@ -809,6 +893,35 @@ app.put('/api/reminders/preferences', (req, res) => {
   res.json(userPreferences[index]);
 });
 
+// 标准化 triggerTime 为 "HH:mm"（兼容历史 ISO 字符串）
+function normalizeTriggerTime(t) {
+  if (t == null || t === '') return null;
+  if (typeof t === 'string' && /^\d{1,2}:\d{2}$/.test(t)) return t;
+  // 历史 ISO 字符串 → 取服务器本地时区的 HH:mm
+  const d = new Date(t);
+  if (isNaN(d.getTime())) return null;
+  const h = String(d.getHours()).padStart(2, '0');
+  const m = String(d.getMinutes()).padStart(2, '0');
+  return `${h}:${m}`;
+}
+
+// 启动时迁移历史 reminderRules.triggerTime（ISO 字符串 → "HH:mm"）
+function migrateReminderRulesTimeFormat() {
+  let migrated = 0;
+  for (const r of reminderRules) {
+    const original = r.triggerTime;
+    const normalized = normalizeTriggerTime(original);
+    if (original && original !== normalized) {
+      r.triggerTime = normalized;
+      migrated++;
+    }
+  }
+  if (migrated > 0) {
+    console.log(`[Migration] 已将 ${migrated} 条提醒规则的 triggerTime 迁移为 "HH:mm" 格式`);
+    saveData();
+  }
+}
+
 // 提醒规则
 app.get('/api/reminders/rules', (req, res) => {
   const user = getUserFromToken(req);
@@ -831,7 +944,7 @@ app.post('/api/reminders/rules', (req, res) => {
     name: name || `${triggerType} 提醒`,
     description: description || '',
     triggerType,
-    triggerTime: triggerTime || null,
+    triggerTime: normalizeTriggerTime(triggerTime),
     advanceMinutes: advanceMinutes || 30,
     frequency: frequency || 'daily',
     channel,
@@ -853,9 +966,13 @@ app.put('/api/reminders/rules/:id', (req, res) => {
   if (!user) return res.status(401).json({ message: '未登录' });
   const index = reminderRules.findIndex(r => r.id === req.params.id && r.userId === user.id);
   if (index === -1) return res.status(404).json({ message: '规则不存在' });
+  const incoming = { ...req.body };
+  if ('triggerTime' in incoming) {
+    incoming.triggerTime = normalizeTriggerTime(incoming.triggerTime);
+  }
   reminderRules[index] = {
     ...reminderRules[index],
-    ...req.body,
+    ...incoming,
     updatedAt: new Date().toISOString()
   };
   saveData();
@@ -919,26 +1036,59 @@ function buildRulePayload(rule, dbUser) {
   if (rule.planId) {
     plan = plans.find(p => String(p.id) === String(rule.planId) || String(p.id) === String(rule.planId));
   }
-  const triggerDate = rule.triggerTime ? new Date(rule.triggerTime) : new Date();
+  // 关键修复：基于 triggerTime("HH:mm") + 服务器本地时区派生 dueDate
+  const dueDate = nextTriggerDate(rule).toISOString();
   return {
     taskTitle: rule.name || '计划任务提醒',
     taskDescription: rule.description || `您的学习计划"${plan ? plan.title : ''}"将在 ${rule.advanceMinutes} 分钟后开始`,
-    dueDate: triggerDate.toISOString(),
+    dueDate,
     priority: 'normal',
     planTitle: plan ? plan.title : (rule.name || '学习计划')
   };
 }
 
-// 调度单条规则的检查
+// 关键修复：基于 "HH:mm" + frequency + 服务器本地时区计算下次触发的绝对时间戳
+function nextTriggerDate(rule) {
+  if (!rule.triggerTime) return new Date();
+  const [h, m] = String(rule.triggerTime).split(':').map(Number);
+  if (isNaN(h) || isNaN(m)) return new Date();
+  const now = new Date();
+  const candidate = new Date(now);
+  candidate.setHours(h, m, 0, 0);
+
+  const freq = rule.frequency || 'daily';
+  // 推进到符合 frequency 的下一个候选日
+  for (let i = 0; i < 8; i++) {
+    const probe = new Date(candidate);
+    probe.setDate(candidate.getDate() + i);
+    if (probe.getTime() <= now.getTime()) continue;
+    if (matchesFrequency(probe, freq)) return probe;
+  }
+  return candidate;
+}
+
+function matchesFrequency(date, freq) {
+  const day = date.getDay(); // 0=Sun, 1=Mon, ... 6=Sat
+  if (freq === 'daily') return true;
+  if (freq === 'weekdays') return day >= 1 && day <= 5;
+  if (freq === 'weekly') return day === 1;
+  return true;
+}
+
+// 调度单条规则的检查（每次触发后自动重新调度下次）
 function scheduleRuleCheck(rule) {
   if (!rule.enabled || !rule.triggerTime) return;
-  const triggerMs = new Date(rule.triggerTime).getTime();
+  const triggerDate = nextTriggerDate(rule);
+  const triggerMs = triggerDate.getTime();
   const advanceMs = (rule.advanceMinutes || 0) * 60_000;
   const fireAt = triggerMs - advanceMs;
   const delay = fireAt - Date.now();
   if (delay > 0 && delay < 24 * 3600_000) {
     setTimeout(() => fireReminderRule(rule.id), delay);
-    console.log(`[Scheduler] 规则 ${rule.id} 将在 ${Math.round(delay/1000)}s 后触发`);
+    console.log(`[Scheduler] 规则 ${rule.id} 将在 ${Math.round(delay/1000)}s 后触发（${triggerDate.toLocaleString()} 本地）`);
+  } else if (delay <= 0) {
+    // 防御性：若当前时间已过计划触发时间，立即触发一次并重新调度
+    setTimeout(() => fireReminderRule(rule.id), 1000);
   }
 }
 
@@ -946,8 +1096,8 @@ function scheduleRuleCheck(rule) {
 async function fireReminderRule(ruleId) {
   const rule = reminderRules.find(r => r.id === ruleId);
   if (!rule || !rule.enabled) return;
-  // 用 (date|frequency) 作为去重 key
-  const fireKey = `${new Date().toISOString().slice(0, 13)}|${rule.frequency}`;
+  // 用 (本地日期|frequency) 作为去重 key（避免跨时区/午夜的边界问题）
+  const fireKey = `${formatLocalDateKey(new Date())}|${rule.frequency}`;
   if (rule.lastTriggeredKey === fireKey) return; // 本时段已触发
   const user = users.find(u => u.id === rule.userId);
   if (!user) return;
@@ -984,7 +1134,18 @@ async function fireReminderRule(ruleId) {
   if (rule.frequency === 'once') {
     rule.enabled = false;
     saveData();
+  } else {
+    // 关键修复：循环规则在触发后重新调度下一次
+    scheduleRuleCheck(rule);
   }
+}
+
+// 生成 "YYYY-MM-DD" 本地日期 key
+function formatLocalDateKey(d) {
+  const y = d.getFullYear();
+  const mo = String(d.getMonth() + 1).padStart(2, '0');
+  const da = String(d.getDate()).padStart(2, '0');
+  return `${y}-${mo}-${da}`;
 }
 
 // 启动时恢复所有未触发的规则
@@ -1125,11 +1286,27 @@ function ensureAdminFields() {
   if (!Array.isArray(adminLogs)) adminLogs = [];
   if (!settings) {
     settings = {
-      site: { name: '智慧学习平台', description: '一站式个人学习管理', contact: 'admin@example.com' },
-      security: { passwordMinLength: 6, maxLoginAttempts: 5, lockoutMinutes: 15, sessionTimeoutHours: 24 },
-      mail: { from: 'no-reply@example.com', smtpHost: '', smtpPort: 465, smtpUser: '', smtpSecure: true }
+      site: { name: '智慧学习平台', subtitle: '一站式个人学习管理', description: '一站式个人学习管理', icp: '', supportEmail: 'admin@example.com', maintenance: false },
+      security: { tokenTtlDays: 7, passwordMinLen: 6, maxLoginFail: 5, allowRegister: true, requireApproval: false },
+      mail: { enabled: false, host: '', port: 465, secure: true, from: 'no-reply@example.com', user: '', pass: '' }
     };
   }
+  // 兼容旧字段迁移
+  if (!settings.site.subtitle) settings.site.subtitle = '';
+  if (!settings.site.icp) settings.site.icp = '';
+  if (!settings.site.supportEmail) settings.site.supportEmail = settings.site.contact || '';
+  if (settings.site.maintenance === undefined) settings.site.maintenance = false;
+  if (settings.security.tokenTtlDays === undefined) settings.security.tokenTtlDays = 7;
+  if (settings.security.passwordMinLen === undefined) settings.security.passwordMinLen = settings.security.passwordMinLength || 6;
+  if (settings.security.maxLoginFail === undefined) settings.security.maxLoginFail = settings.security.maxLoginAttempts || 5;
+  if (settings.security.allowRegister === undefined) settings.security.allowRegister = true;
+  if (settings.security.requireApproval === undefined) settings.security.requireApproval = false;
+  if (settings.mail.enabled === undefined) settings.mail.enabled = false;
+  if (settings.mail.host === undefined) settings.mail.host = settings.mail.smtpHost || '';
+  if (settings.mail.port === undefined) settings.mail.port = settings.mail.smtpPort || 465;
+  if (settings.mail.secure === undefined) settings.mail.secure = settings.mail.smtpSecure !== false;
+  if (settings.mail.user === undefined) settings.mail.user = settings.mail.smtpUser || '';
+  if (settings.mail.pass === undefined) settings.mail.pass = '';
   if (!Array.isArray(backups)) backups = [];
 }
 ensureAdminFields();
@@ -1308,19 +1485,40 @@ app.get('/api/admin/settings', requireAdmin, (req, res) => {
   res.json(settings);
 });
 
+// 公开设置（登录页/注册页可用，仅返回安全相关的公开字段）
+app.get('/api/settings/public', (req, res) => {
+  res.json({
+    siteName: settings?.site?.name || '智慧学习平台',
+    siteSubtitle: settings?.site?.subtitle || '',
+    siteDescription: settings?.site?.description || '',
+    icp: settings?.site?.icp || '',
+    supportEmail: settings?.site?.supportEmail || '',
+    maintenance: settings?.site?.maintenance === true,
+    allowRegister: settings?.security?.allowRegister !== false,
+    passwordMinLen: settings?.security?.passwordMinLen || 6
+  });
+});
+
 app.put('/api/admin/settings', requireAdmin, (req, res) => {
   const body = req.body || {};
+  const changed = [];
   if (body.site) {
-    settings.site = { ...settings.site, ...body.site };
+    Object.assign(settings.site, body.site);
+    changed.push('site');
   }
   if (body.security) {
-    settings.security = { ...settings.security, ...body.security };
+    Object.assign(settings.security, body.security);
+    changed.push('security');
+    // 若关闭注册或开启审核，记录日志
+    if (body.security.allowRegister === false) changed.push('allowRegister=false');
+    if (body.security.requireApproval === true) changed.push('requireApproval=true');
   }
   if (body.mail) {
-    settings.mail = { ...settings.mail, ...body.mail };
+    Object.assign(settings.mail, body.mail);
+    changed.push('mail');
   }
   saveData();
-  logAdminAction(req.currentUser, 'settings.update', '', { keys: Object.keys(body) });
+  logAdminAction(req.currentUser, 'settings.update', '', { keys: changed });
   res.json({ success: true, settings });
 });
 
@@ -1574,6 +1772,8 @@ app.use('/uploads', express.static(UPLOAD_DIR));
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
+  // 启动时迁移历史 triggerTime（ISO 字符串 → "HH:mm"）
+  try { migrateReminderRulesTimeFormat(); } catch (e) { console.error('Migration failed:', e.message); }
   // 启动时恢复所有启用的提醒规则
   if (typeof resumeScheduledRules === 'function') {
     resumeScheduledRules();

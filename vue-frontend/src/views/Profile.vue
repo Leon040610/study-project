@@ -641,7 +641,7 @@ async function resetAvatarHandler() {
 }
 
 function goToReminders() {
-  router.push('/admin/announcements')
+  router.push('/reminders')
 }
 
 onMounted(() => {
