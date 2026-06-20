@@ -19,32 +19,28 @@
             <el-button size="small" @click="goToday">今天</el-button>
           </div>
           <div class="calendar-grid">
-            <div class="calendar-header">
-              <div v-for="day in weekDays" :key="day" class="day-header">{{ day }}</div>
-            </div>
-            <div class="calendar-body">
-              <div
-                v-for="(day, index) in calendarDays"
-                :key="index"
-                class="day-cell"
-                :class="{
-                  'other-month': !day.isCurrentMonth,
-                  'today': day.isToday,
-                  'selected': isSelected(day),
-                  'has-task': day.tasks.length > 0
-                }"
-                @click="selectDate(day)"
-              >
-                <span class="day-number">{{ day.date }}</span>
-                <div v-if="day.tasks.length > 0" class="task-indicators">
-                  <div
-                    v-for="(task, i) in day.tasks.slice(0, 3)"
-                    :key="i"
-                    class="task-indicator"
-                    :class="{ completed: dataStore.isTaskCompletedOnDate(task, day.fullDate) }"
-                  ></div>
-                  <span v-if="day.tasks.length > 3" class="more-tasks">{{ day.tasks.length - 3 }}+</span>
-                </div>
+            <div v-for="day in weekDays" :key="day" class="day-header">{{ day }}</div>
+            <div
+              v-for="(day, index) in calendarDays"
+              :key="index"
+              class="day-cell"
+              :class="{
+                'other-month': !day.isCurrentMonth,
+                'today': day.isToday,
+                'selected': isSelected(day),
+                'has-task': day.tasks.length > 0
+              }"
+              @click="selectDate(day)"
+            >
+              <span class="day-number">{{ day.date }}</span>
+              <div v-if="day.tasks.length > 0" class="task-indicators">
+                <div
+                  v-for="(task, i) in day.tasks.slice(0, 3)"
+                  :key="i"
+                  class="task-indicator"
+                  :class="{ completed: dataStore.isTaskCompletedOnDate(task, day.fullDate) }"
+                ></div>
+                <span v-if="day.tasks.length > 3" class="more-tasks">{{ day.tasks.length - 3 }}+</span>
               </div>
             </div>
           </div>
@@ -306,13 +302,15 @@ onUnmounted(() => {
 
 <style scoped>
 .calendar-page {
-  padding: var(--space-6);
+  padding: var(--space-3) var(--space-4);
+  display: flex;
+  flex-direction: column;
 }
 
 .calendar-container {
   display: grid;
-  grid-template-columns: 1fr 400px;
-  gap: var(--space-6);
+  grid-template-columns: minmax(0, 1.4fr) minmax(320px, 0.9fr);
+  gap: var(--space-4);
 }
 
 .card-header-flex {
@@ -328,64 +326,53 @@ onUnmounted(() => {
 }
 
 .calendar-wrapper {
-  padding: var(--space-4);
+  padding: var(--space-1) var(--space-2);
 }
 
 .calendar-nav {
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: var(--space-4);
-  margin-bottom: var(--space-6);
+  gap: var(--space-2);
+  margin-bottom: var(--space-1);
 }
 
 .current-month {
-  font-size: var(--text-lg);
+  font-size: var(--text-base);
   font-weight: 700;
   color: var(--text-primary);
-  min-width: 140px;
+  min-width: 120px;
   text-align: center;
   letter-spacing: -0.01em;
 }
 
 .calendar-grid {
-  display: flex;
-  flex-direction: column;
-}
-
-.calendar-header {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: var(--space-1);
-  margin-bottom: var(--space-2);
 }
 
 .day-header {
   text-align: center;
-  padding: var(--space-3);
-  font-size: var(--text-sm);
+  padding: var(--space-1) 0;
+  font-size: var(--text-xs);
   font-weight: 600;
   color: var(--text-secondary);
 }
 
-.calendar-body {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: var(--space-1);
-}
-
 .day-cell {
-  aspect-ratio: 1;
+  min-height: 68px;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
   align-items: center;
-  padding: var(--space-2);
+  padding: var(--space-1);
   border-radius: var(--radius-md);
   cursor: pointer;
   position: relative;
   background: var(--bg-surface-hover);
   transition: all var(--transition-fast);
+  box-sizing: border-box;
 }
 
 .day-cell:hover {
@@ -405,12 +392,13 @@ onUnmounted(() => {
   background: var(--color-primary);
   color: white;
   border-radius: var(--radius-full);
-  width: 28px;
-  height: 28px;
+  width: 26px;
+  height: 26px;
   display: flex;
   justify-content: center;
   align-items: center;
-  font-weight: 600;
+  font-weight: 700;
+  font-size: var(--text-sm);
 }
 
 .day-cell.selected {
@@ -448,22 +436,29 @@ onUnmounted(() => {
 
 .day-number {
   font-size: var(--text-sm);
+  font-weight: 600;
   color: var(--text-primary);
+  line-height: 1.2;
+  margin-top: 2px;
 }
 
 .task-indicators {
   display: flex;
-  gap: 2px;
-  margin-top: var(--space-1);
+  gap: 1px;
+  margin-top: 1px;
   align-items: center;
+  flex-wrap: wrap;
+  justify-content: center;
+  max-width: 100%;
 }
 
 .task-indicator {
-  width: 6px;
-  height: 6px;
+  width: 4px;
+  height: 4px;
   border-radius: var(--radius-full);
   background: var(--color-primary);
   transition: background var(--transition-fast);
+  flex-shrink: 0;
 }
 
 .task-indicator.completed {
@@ -471,15 +466,25 @@ onUnmounted(() => {
 }
 
 .more-tasks {
-  font-size: 10px;
+  font-size: 9px;
   color: var(--text-tertiary);
-  margin-left: 2px;
+  margin-left: 1px;
+  line-height: 1;
 }
 
 .tasks-panel {
-  height: fit-content;
-  position: sticky;
-  top: 80px;
+  max-height: 560px;
+  display: flex;
+  flex-direction: column;
+}
+
+.tasks-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .empty-state {
@@ -495,24 +500,20 @@ onUnmounted(() => {
   margin-top: var(--space-3);
 }
 
-.tasks-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-}
-
 .task-item {
   display: flex;
   align-items: center;
   gap: var(--space-3);
   padding: var(--space-4);
-  background: var(--bg-surface-hover);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
   border-radius: var(--radius-md);
   transition: all var(--transition-fast);
 }
 
 .task-item:hover {
   background: var(--color-primary-light);
+  border-color: var(--color-primary);
   transform: translateX(2px);
 }
 
@@ -537,51 +538,71 @@ onUnmounted(() => {
 }
 
 /* ---- 响应式 ---- */
-@media (max-width: 1024px) {
+@media (max-width: 1280px) {
   .calendar-container {
     grid-template-columns: 1fr;
   }
 
   .tasks-panel {
-    position: static;
+    max-height: none;
+  }
+
+  .tasks-list {
+    overflow: visible;
+  }
+}
+
+@media (max-width: 1024px) {
+  .day-cell {
+    min-height: 60px;
   }
 }
 
 @media (max-width: 768px) {
   .calendar-page {
-    padding: var(--space-4);
+    padding: var(--space-3);
+  }
+
+  .calendar-container {
+    gap: var(--space-3);
   }
 
   .calendar-wrapper {
-    padding: var(--space-2);
+    padding: var(--space-1) var(--space-2);
   }
 
   .calendar-nav {
-    gap: var(--space-2);
-    margin-bottom: var(--space-4);
+    gap: var(--space-1);
+    margin-bottom: var(--space-1);
   }
 
   .current-month {
-    font-size: var(--text-base);
-    min-width: 100px;
+    font-size: var(--text-sm);
+    min-width: 90px;
   }
 
   .day-header {
-    padding: var(--space-2);
-    font-size: var(--text-xs);
+    padding: var(--space-1) 0;
+    font-size: 10px;
   }
 
   .day-cell {
-    padding: var(--space-1);
+    min-height: 52px;
+    padding: 2px;
   }
 
   .day-number {
     font-size: var(--text-xs);
+    margin-top: 1px;
   }
 
   .task-indicator {
-    width: 4px;
-    height: 4px;
+    width: 3px;
+    height: 3px;
+  }
+
+  .more-tasks {
+    font-size: 8px;
   }
 
   .dialog-mobile {

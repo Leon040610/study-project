@@ -253,7 +253,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, onBeforeUnmount } from 'vue'
 import { api } from '@/utils/api'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Bell, Setting, Document } from '@element-plus/icons-vue'
@@ -559,10 +559,15 @@ async function toggleRule(rule: ReminderRule) {
 }
 
 onMounted(() => {
+  console.log('[Reminders] Component mounted')
   fetchPrefs()
   fetchRules()
   fetchLogs()
   fetchStats()
+})
+
+onBeforeUnmount(() => {
+  console.log('[Reminders] Component about to unmount')
 })
 </script>
 

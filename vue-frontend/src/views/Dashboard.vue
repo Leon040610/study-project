@@ -52,9 +52,9 @@
     <div class="chart-row">
       <el-card class="chart-card">
         <template #header>
-          <span class="card-title">学习时长统计</span>
+          <span class="card-title">近 7 天任务完成趋势</span>
         </template>
-        <div ref="studyTimeChart" class="chart-container"></div>
+        <div ref="weeklyTrendChart" class="chart-container"></div>
       </el-card>
       <el-card class="chart-card">
         <template #header>
@@ -185,7 +185,7 @@ const stats = reactive({
 })
 
 const announcements = ref<AnnouncementItem[]>([])
-const studyTimeChart = ref<HTMLElement | null>(null)
+const weeklyTrendChart = ref<HTMLElement | null>(null)
 const taskChart = ref<HTMLElement | null>(null)
 
 const todayTasks = computed(() => dataStore.todayTasks)
@@ -238,27 +238,75 @@ function initCharts() {
   const completedCount = dataStore.tasks.filter(t => dataStore.isTaskCompletedOnDate(t, today)).length
   const inProgressCount = dataStore.tasks.filter(t => !dataStore.isTaskCompletedOnDate(t, today)).length
 
-  if (studyTimeChart.value) {
-    const chart = echarts.init(studyTimeChart.value)
-    const studyData = dataStore.tasks.slice(0, 7).map(t => dataStore.isTaskCompletedOnDate(t, today) ? 60 : 30)
+  if (weeklyTrendChart.value) {
+    const chart = echarts.init(weeklyTrendChart.value)
+
+    // 计算近 7 天的真实任务数据
+    const dayLabels: string[] = []
+    const dayTotals: number[] = []
+    const dayCompleted: number[] = []
+    const cursor = new Date()
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(cursor)
+      d.setDate(cursor.getDate() - i)
+      const y = d.getFullYear()
+      const m = String(d.getMonth() + 1).padStart(2, '0')
+      const dd = String(d.getDate()).padStart(2, '0')
+      const ds = `${y}-${m}-${dd}`
+      dayLabels.push(`${m}/${dd}`)
+
+      // 当天涉及的任务总数（按 date / startDate ~ endDate 范围）
+      const total = dataStore.tasks.filter(t => {
+        if (t.startDate && t.endDate) return ds >= t.startDate && ds <= t.endDate
+        return t.date === ds
+      }).length
+      dayTotals.push(total)
+
+      // 当天已完成的任务数
+      const done = dataStore.tasks.filter(t => dataStore.isTaskCompletedOnDate(t, ds)).length
+      dayCompleted.push(done)
+    }
+
     chart.setOption({
-      tooltip: { trigger: 'axis' },
-      grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
-      xAxis: { type: 'category', data: ['周一', '周二', '周三', '周四', '周五', '周六', '周日'] },
-      yAxis: { type: 'value', name: '分钟' },
-      series: [{
-        data: studyData.length >= 7 ? studyData : [0, 0, 0, 0, 0, 0, 0],
-        type: 'line',
-        smooth: true,
-        areaStyle: {
-          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-            { offset: 0, color: 'rgba(79, 70, 229, 0.3)' },
-            { offset: 1, color: 'rgba(79, 70, 229, 0.05)' }
-          ])
+      tooltip: {
+        trigger: 'axis',
+        axisPointer: { type: 'shadow' }
+      },
+      legend: {
+        bottom: 0,
+        textStyle: { color: themeStore.isDark ? '#e2e8f0' : '#374151', fontSize: 12 }
+      },
+      grid: { left: '3%', right: '4%', top: '8%', bottom: '18%', containLabel: true },
+      xAxis: {
+        type: 'category',
+        data: dayLabels,
+        axisLine: { lineStyle: { color: themeStore.isDark ? '#475569' : '#cbd5e1' } },
+        axisLabel: { color: themeStore.isDark ? '#94a3b8' : '#64748b', fontSize: 11 }
+      },
+      yAxis: {
+        type: 'value',
+        name: '任务数',
+        nameTextStyle: { color: themeStore.isDark ? '#94a3b8' : '#64748b', fontSize: 11 },
+        axisLine: { show: false },
+        axisLabel: { color: themeStore.isDark ? '#94a3b8' : '#64748b', fontSize: 11 },
+        splitLine: { lineStyle: { color: themeStore.isDark ? '#334155' : '#e2e8f0', type: 'dashed' } }
+      },
+      series: [
+        {
+          name: '计划任务',
+          type: 'bar',
+          data: dayTotals,
+          itemStyle: { color: 'rgba(148, 163, 184, 0.45)', borderRadius: [4, 4, 0, 0] },
+          barWidth: '32%'
         },
-        lineStyle: { color: '#4f46e5', width: 3 },
-        itemStyle: { color: '#4f46e5' }
-      }]
+        {
+          name: '已完成',
+          type: 'bar',
+          data: dayCompleted,
+          itemStyle: { color: '#10b981', borderRadius: [4, 4, 0, 0] },
+          barWidth: '32%'
+        }
+      ]
     })
   }
 

@@ -409,12 +409,31 @@ async function deletePlan(plan: Plan) {
   ElMessage.success('删除成功')
 }
 
-// 判断任务在计划视图中今天的勾选状态
-// 复选框应展示"今天"这一天的勾选情况，而非"整个任务完全完成"的状态
-// 这样用户点击复选框才能看到即时的勾选/取消效果（与 Calendar 行为一致）
+// 判断任务在计划视图中应显示的勾选状态
+// 设计目标：让所有周期任务都能在勾选/取消后立即看到视觉反馈
+// - 若今天在任务周期内：按"今天"这一天的勾选状态展示（与 Calendar 行为一致）
+// - 若今天不在周期内：按"整个周期是否完全完成"展示，
+//   这样用户点击后能立即看到打勾/划线效果
 function isTaskCompletedToday(task: Task): boolean {
   const today = formatDate(new Date())
-  return dataStore.isTaskCompletedOnDate(task, today)
+
+  // 今天在任务周期内：按"今天"的勾选状态展示
+  if (isTodayInTaskPeriod(task, today)) {
+    return dataStore.isTaskCompletedOnDate(task, today)
+  }
+
+  // 今天不在周期内：按整个周期的完成状态展示
+  // 这样勾选非今日任务后，UI 也能立即反馈打勾和划线效果
+  return dataStore.isTaskFullyCompleted(task)
+}
+
+// 判断指定日期是否在任务周期内
+function isTodayInTaskPeriod(task: Task, today: string): boolean {
+  if (task.startDate && task.endDate) {
+    return today >= task.startDate && today <= task.endDate
+  }
+  // 兼容旧数据：使用 date 字段
+  return task.date === today
 }
 
 function toggleTask(task: Task, completed: boolean) {
@@ -521,9 +540,16 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 12px;
+  padding: 10px 12px;
   background: var(--bg-surface);
+  border: 1px solid var(--border-default);
   border-radius: 8px;
+  transition: all var(--transition-fast);
+}
+
+.task-item:hover {
+  border-color: var(--color-primary);
+  background: var(--color-primary-light, rgba(99, 102, 241, 0.05));
 }
 
 .task-item.completed {

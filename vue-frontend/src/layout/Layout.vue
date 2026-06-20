@@ -14,13 +14,14 @@
         <el-button v-if="isMobile" class="sidebar-close" :icon="Close" circle size="small" @click="sidebarOpen = false" />
       </div>
       <el-menu
-        :default-active="activeMenu"
-        mode="vertical"
-        background-color="transparent"
-        text-color="rgba(255,255,255,0.7)"
-        active-text-color="#fff"
-        @select="handleMenuSelect"
-      >
+          router
+          :default-active="activeMenu"
+          mode="vertical"
+          background-color="transparent"
+          text-color="rgba(255,255,255,0.7)"
+          active-text-color="#fff"
+          @select="handleMenuSelect"
+        >
         <el-menu-item index="/dashboard">
           <el-icon><Monitor /></el-icon>
           <span>首页</span>
@@ -127,11 +128,7 @@
         </div>
       </header>
       <div class="main-body">
-        <router-view v-slot="{ Component }">
-          <transition name="fade" mode="out-in">
-            <component :is="Component" />
-          </transition>
-        </router-view>
+        <router-view :key="$route.fullPath" />
       </div>
     </main>
 
@@ -162,7 +159,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onMounted, onUnmounted } from 'vue'
+import { computed, ref, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useThemeStore } from '@/stores/theme'
@@ -209,8 +206,21 @@ const pageTitleMap: Record<string, string> = {
 
 const pageTitle = computed(() => pageTitleMap[route.path] || '学习计划助手')
 
+// 调试：监听路由变化
+watch(
+  () => route.fullPath,
+  (newPath, oldPath) => {
+    console.log('[Layout] Route changed:', oldPath, '→', newPath)
+    console.log('[Layout] route.name:', route.name)
+    console.log('[Layout] route.matched:', route.matched.map(m => m.path))
+  },
+  { immediate: true }
+)
+
 function handleMenuSelect(index: string) {
-  router.push(index)
+  console.log('[Layout] handleMenuSelect called with index:', index)
+  console.log('[Layout] current route.path:', route.path)
+  // router 属性已启用，导航由 el-menu 内置的 router-link 处理
   if (isMobile.value) sidebarOpen.value = false
 }
 
@@ -430,6 +440,12 @@ onUnmounted(() => {
   overflow-y: auto;
 }
 
+.route-wrapper {
+  min-height: 100%;
+  width: 100%;
+  position: relative;
+}
+
 /* ---- 消息中心 ---- */
 .empty-notifications {
   display: flex;
@@ -522,5 +538,13 @@ onUnmounted(() => {
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
+}
+
+/* 旧页面淡出时使用绝对定位，避免新页面布局被挤压 */
+.fade-leave-active {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
 }
 </style>
