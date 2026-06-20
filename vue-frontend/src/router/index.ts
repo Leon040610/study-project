@@ -15,42 +15,7 @@ const router = createRouter({
       children: [
         {
           path: '',
-          redirect: '/dashboard'
-        },
-        {
-          path: '/dashboard',
-          name: 'Dashboard',
-          component: () => import('@/views/Dashboard.vue')
-        },
-        {
-          path: '/goals',
-          name: 'Goals',
-          component: () => import('@/views/Goals.vue')
-        },
-        {
-          path: '/plans',
-          name: 'Plans',
-          component: () => import('@/views/Plans.vue')
-        },
-        {
-          path: '/calendar',
-          name: 'Calendar',
-          component: () => import('@/views/Calendar.vue')
-        },
-        {
-          path: '/resources',
-          name: 'Resources',
-          component: () => import('@/views/Resources.vue')
-        },
-        {
-          path: '/posts',
-          name: 'Posts',
-          component: () => import('@/views/Posts.vue')
-        },
-        {
-          path: '/reminders',
-          name: 'Reminders',
-          component: () => import('@/views/Reminders.vue')
+          redirect: '/admin'
         },
         {
           path: '/profile',
@@ -86,6 +51,21 @@ const router = createRouter({
           path: '/admin/announcements',
           name: 'AdminAnnouncements',
           component: () => import('@/views/admin/AdminAnnouncements.vue')
+        },
+        {
+          path: '/admin/logs',
+          name: 'AdminLogs',
+          component: () => import('@/views/admin/AdminLogs.vue')
+        },
+        {
+          path: '/admin/settings',
+          name: 'AdminSettings',
+          component: () => import('@/views/admin/AdminSettings.vue')
+        },
+        {
+          path: '/admin/backup',
+          name: 'AdminBackup',
+          component: () => import('@/views/admin/AdminBackup.vue')
         }
       ]
     }
@@ -95,16 +75,19 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
   const authStore = useAuthStore()
   const isLoggedIn = authStore.isLoggedIn
+  const user = authStore.user
 
   if (to.path === '/login') {
     if (isLoggedIn) {
-      next('/dashboard')
+      next(user?.role === 'admin' ? '/admin' : '/profile')
     } else {
       next()
     }
   } else {
     if (!isLoggedIn) {
       next('/login')
+    } else if (to.matched.some(r => r.meta?.requiresAdmin) && user?.role !== 'admin') {
+      next('/profile')
     } else {
       next()
     }

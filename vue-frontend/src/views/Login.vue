@@ -83,7 +83,7 @@ async function handleSubmit() {
     if (isLogin.value) {
       await authStore.login(form.email, form.password)
       ElMessage.success('登录成功')
-      router.push('/dashboard')
+      router.push(authStore.user?.role === 'admin' ? '/admin' : '/profile')
     } else {
       await authStore.register({
         name: form.name,

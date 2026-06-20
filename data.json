@@ -2,30 +2,28 @@
   "users": [
     {
       "id": 1,
-      "name": "测试用户",
-      "email": "test1@x.com",
+      "name": "管理员",
+      "email": "admin@study.com",
       "phone": "",
-      "password": "123456",
-      "role": "student",
-      "createdAt": "2026-06-20T12:25:10.917Z"
+      "password": "admin01",
+      "role": "admin",
+      "createdAt": "2026-06-20T12:25:10.917Z",
+      "customCategories": [
+        "考研资料"
+      ],
+      "avatar": null,
+      "avatarUpdatedAt": "2026-06-20T15:09:31.267Z"
     },
     {
       "id": 2,
       "name": "Yu",
       "email": "yuleon0406@163.com",
-      "phone": "",
+      "phone": "13910961092",
       "password": "123456",
       "role": "student",
-      "createdAt": "2026-06-20T12:28:08.645Z"
-    },
-    {
-      "id": 3,
-      "name": "test",
-      "email": "test@123.com",
-      "phone": "",
-      "password": "123456",
-      "role": "student",
-      "createdAt": "2026-06-20T12:34:43.298Z"
+      "createdAt": "2026-06-20T12:28:08.645Z",
+      "avatar": "/uploads/avatars/2_1781968223090.png",
+      "avatarUpdatedAt": "2026-06-20T15:10:23.099Z"
     }
   ],
   "goals": [],
@@ -34,26 +32,13 @@
   "reminders": [],
   "posts": [
     {
-      "id": "p1",
-      "userId": 1,
-      "authorName": "测试用户",
-      "title": "测试帖子",
-      "content": "内容",
-      "category": "学习心得",
-      "viewCount": 0,
-      "commentCount": 0,
-      "likes": 0,
-      "likedUsers": [],
-      "createdAt": "2026-06-20T12:25:10.939Z"
-    },
-    {
       "id": "p2",
       "userId": 2,
       "authorName": "Yu",
       "title": "学习",
       "content": "四级",
       "category": "学习心得",
-      "viewCount": 4,
+      "viewCount": 9,
       "commentCount": 1,
       "likes": 1,
       "likedUsers": [
@@ -241,6 +226,292 @@
         "to": "yuleon0406@163.com",
         "messageId": "<6578b1a9-d354-fe09-d162-eb5a2863c0b9@163.com>"
       }
+    },
+    {
+      "id": "log_1781961634531_f8yu",
+      "userId": 2,
+      "taskId": "test_task",
+      "channel": "email",
+      "status": "sent",
+      "attempts": 1,
+      "maxAttempts": 3,
+      "createdAt": "2026-06-20T13:20:33.939Z",
+      "sentAt": "2026-06-20T13:20:34.531Z",
+      "payload": {
+        "taskTitle": "测试提醒 - 学习任务即将到期",
+        "taskDescription": "这是一条测试通知，验证提醒功能是否正常工作。",
+        "dueDate": "2026-06-20T13:50:33.939Z",
+        "priority": "normal",
+        "planTitle": "测试计划"
+      },
+      "details": {
+        "to": "yuleon0406@163.com",
+        "messageId": "<3351458d-91b1-8425-e467-eddfde4d6a5e@163.com>"
+      }
+    },
+    {
+      "id": "log_1781961668006_ja8q",
+      "userId": 2,
+      "taskId": "test_task",
+      "channel": "email",
+      "status": "sent",
+      "attempts": 1,
+      "maxAttempts": 3,
+      "createdAt": "2026-06-20T13:21:07.031Z",
+      "sentAt": "2026-06-20T13:21:08.006Z",
+      "payload": {
+        "taskTitle": "测试提醒 - 学习任务即将到期",
+        "taskDescription": "这是一条测试通知，验证提醒功能是否正常工作。",
+        "dueDate": "2026-06-20T13:51:07.031Z",
+        "priority": "normal",
+        "planTitle": "测试计划"
+      },
+      "details": {
+        "to": "yuleon0406@163.com",
+        "messageId": "<8b71a378-3680-6f1a-fd88-a3acb7d946b2@163.com>"
+      }
+    },
+    {
+      "id": "log_1781962293271_jvzj",
+      "userId": 1,
+      "taskId": "test_task",
+      "channel": "push",
+      "status": "sent",
+      "attempts": 1,
+      "maxAttempts": 3,
+      "createdAt": "2026-06-20T13:31:33.270Z",
+      "sentAt": "2026-06-20T13:31:33.271Z",
+      "payload": {
+        "taskTitle": "测试提醒 - 学习任务即将到期",
+        "taskDescription": "这是一条测试通知，验证提醒功能是否正常工作。",
+        "dueDate": "2026-06-20T14:01:33.270Z",
+        "priority": "normal",
+        "planTitle": "测试计划"
+      },
+      "details": {
+        "userId": 1,
+        "content": "测试提醒 - 学习任务即将到期"
+      }
+    },
+    {
+      "id": "log_1781962294173_79ou",
+      "userId": 1,
+      "taskId": "test_task",
+      "channel": "email",
+      "status": "sent",
+      "attempts": 1,
+      "maxAttempts": 3,
+      "createdAt": "2026-06-20T13:31:33.275Z",
+      "sentAt": "2026-06-20T13:31:34.173Z",
+      "payload": {
+        "taskTitle": "测试提醒 - 学习任务即将到期",
+        "taskDescription": "这是一条测试通知，验证提醒功能是否正常工作。",
+        "dueDate": "2026-06-20T14:01:33.275Z",
+        "priority": "normal",
+        "planTitle": "测试计划"
+      },
+      "details": {
+        "to": "test1@x.com",
+        "messageId": "<64cdef25-e0c3-e503-013b-bbef1d1d8f16@163.com>"
+      }
+    },
+    {
+      "id": "log_1781962294749_stid",
+      "userId": 1,
+      "taskId": "test_task",
+      "channel": "email",
+      "status": "sent",
+      "attempts": 1,
+      "maxAttempts": 3,
+      "createdAt": "2026-06-20T13:31:34.176Z",
+      "sentAt": "2026-06-20T13:31:34.749Z",
+      "payload": {
+        "taskTitle": "测试提醒 - 学习任务即将到期",
+        "taskDescription": "这是一条测试通知，验证提醒功能是否正常工作。",
+        "dueDate": "2026-06-20T14:01:34.176Z",
+        "priority": "normal",
+        "planTitle": "测试计划"
+      },
+      "details": {
+        "to": "test1@x.com",
+        "messageId": "<02b0e600-1be7-6c9d-1f0b-0128d90c0b43@163.com>"
+      }
+    },
+    {
+      "id": "log_1781962294750_vic0",
+      "userId": 1,
+      "taskId": "test_task",
+      "channel": "push",
+      "status": "sent",
+      "attempts": 1,
+      "maxAttempts": 3,
+      "createdAt": "2026-06-20T13:31:34.176Z",
+      "sentAt": "2026-06-20T13:31:34.750Z",
+      "payload": {
+        "taskTitle": "测试提醒 - 学习任务即将到期",
+        "taskDescription": "这是一条测试通知，验证提醒功能是否正常工作。",
+        "dueDate": "2026-06-20T14:01:34.176Z",
+        "priority": "normal",
+        "planTitle": "测试计划"
+      },
+      "details": {
+        "userId": 1,
+        "content": "测试提醒 - 学习任务即将到期"
+      }
+    },
+    {
+      "id": "log_1781962343688_gc0x",
+      "userId": 1,
+      "taskId": "test_task",
+      "channel": "push",
+      "status": "sent",
+      "attempts": 1,
+      "maxAttempts": 3,
+      "createdAt": "2026-06-20T13:32:23.687Z",
+      "sentAt": "2026-06-20T13:32:23.688Z",
+      "payload": {
+        "taskTitle": "测试提醒 - 学习任务即将到期",
+        "taskDescription": "这是一条测试通知，验证提醒功能是否正常工作。",
+        "dueDate": "2026-06-20T14:02:23.687Z",
+        "priority": "normal",
+        "planTitle": "测试计划"
+      },
+      "details": {
+        "userId": 1,
+        "content": "测试提醒 - 学习任务即将到期"
+      }
+    },
+    {
+      "id": "log_1781962344917_q8p9",
+      "userId": 1,
+      "taskId": "test_task",
+      "channel": "email",
+      "status": "sent",
+      "attempts": 1,
+      "maxAttempts": 3,
+      "createdAt": "2026-06-20T13:32:23.691Z",
+      "sentAt": "2026-06-20T13:32:24.917Z",
+      "payload": {
+        "taskTitle": "测试提醒 - 学习任务即将到期",
+        "taskDescription": "这是一条测试通知，验证提醒功能是否正常工作。",
+        "dueDate": "2026-06-20T14:02:23.691Z",
+        "priority": "normal",
+        "planTitle": "测试计划"
+      },
+      "details": {
+        "to": "test1@x.com",
+        "messageId": "<0e0c24c7-3535-3151-d015-328976b0d9b5@163.com>"
+      }
+    },
+    {
+      "id": "log_1781962345476_26f7",
+      "userId": 1,
+      "taskId": "test_task",
+      "channel": "email",
+      "status": "sent",
+      "attempts": 1,
+      "maxAttempts": 3,
+      "createdAt": "2026-06-20T13:32:24.920Z",
+      "sentAt": "2026-06-20T13:32:25.476Z",
+      "payload": {
+        "taskTitle": "测试提醒 - 学习任务即将到期",
+        "taskDescription": "这是一条测试通知，验证提醒功能是否正常工作。",
+        "dueDate": "2026-06-20T14:02:24.920Z",
+        "priority": "normal",
+        "planTitle": "测试计划"
+      },
+      "details": {
+        "to": "test1@x.com",
+        "messageId": "<64e9d434-2800-1efb-7509-42966a507854@163.com>"
+      }
+    },
+    {
+      "id": "log_1781962345476_gtaf",
+      "userId": 1,
+      "taskId": "test_task",
+      "channel": "push",
+      "status": "sent",
+      "attempts": 1,
+      "maxAttempts": 3,
+      "createdAt": "2026-06-20T13:32:24.920Z",
+      "sentAt": "2026-06-20T13:32:25.476Z",
+      "payload": {
+        "taskTitle": "测试提醒 - 学习任务即将到期",
+        "taskDescription": "这是一条测试通知，验证提醒功能是否正常工作。",
+        "dueDate": "2026-06-20T14:02:24.920Z",
+        "priority": "normal",
+        "planTitle": "测试计划"
+      },
+      "details": {
+        "userId": 1,
+        "content": "测试提醒 - 学习任务即将到期"
+      }
+    },
+    {
+      "id": "log_1781962669053_o8rw",
+      "userId": 2,
+      "taskId": "test_task",
+      "channel": "push",
+      "status": "sent",
+      "attempts": 1,
+      "maxAttempts": 3,
+      "createdAt": "2026-06-20T13:37:49.052Z",
+      "sentAt": "2026-06-20T13:37:49.053Z",
+      "payload": {
+        "taskTitle": "测试提醒 - 学习任务即将到期",
+        "taskDescription": "这是一条测试通知，验证提醒功能是否正常工作。",
+        "dueDate": "2026-06-20T14:07:49.052Z",
+        "priority": "normal",
+        "planTitle": "测试计划"
+      },
+      "details": {
+        "userId": 2,
+        "content": "测试提醒 - 学习任务即将到期"
+      }
+    },
+    {
+      "id": "log_1781968119902_v7uj",
+      "userId": 1,
+      "taskId": "test_task",
+      "channel": "push",
+      "status": "sent",
+      "attempts": 1,
+      "maxAttempts": 3,
+      "createdAt": "2026-06-20T15:08:39.901Z",
+      "sentAt": "2026-06-20T15:08:39.902Z",
+      "payload": {
+        "taskTitle": "测试提醒 - 学习任务即将到期",
+        "taskDescription": "这是一条测试通知，验证提醒功能是否正常工作。",
+        "dueDate": "2026-06-20T15:38:39.901Z",
+        "priority": "normal",
+        "planTitle": "测试计划"
+      },
+      "details": {
+        "userId": 1,
+        "content": "测试提醒 - 学习任务即将到期"
+      }
+    },
+    {
+      "id": "log_1781968156947_m7cr",
+      "userId": 1,
+      "taskId": "test_task",
+      "channel": "push",
+      "status": "sent",
+      "attempts": 1,
+      "maxAttempts": 3,
+      "createdAt": "2026-06-20T15:09:16.947Z",
+      "sentAt": "2026-06-20T15:09:16.947Z",
+      "payload": {
+        "taskTitle": "测试提醒 - 学习任务即将到期",
+        "taskDescription": "这是一条测试通知，验证提醒功能是否正常工作。",
+        "dueDate": "2026-06-20T15:39:16.947Z",
+        "priority": "normal",
+        "planTitle": "测试计划"
+      },
+      "details": {
+        "userId": 1,
+        "content": "测试提醒 - 学习任务即将到期"
+      }
     }
   ],
   "userPreferences": [
@@ -252,6 +523,15 @@
       "quietHoursStart": "22:00",
       "quietHoursEnd": "07:00",
       "updatedAt": "2026-06-20T12:30:27.139Z"
+    },
+    {
+      "userId": 1,
+      "email": "test1@x.com",
+      "defaultChannel": "both",
+      "advanceMinutes": 30,
+      "quietHoursStart": "22:00",
+      "quietHoursEnd": "07:00",
+      "updatedAt": "2026-06-20T15:08:37.907Z"
     }
   ],
   "reminderRules": [
@@ -392,57 +672,148 @@
       "fileUrl": "",
       "author": "社区贡献",
       "createdAt": "2026-06-08"
+    }
+  ],
+  "adminLogs": [
+    {
+      "id": "log_1781973215708_kyfdf",
+      "actor": "admin@study.com",
+      "actorId": 1,
+      "action": "settings.update",
+      "target": "",
+      "meta": {
+        "keys": [
+          "site",
+          "security",
+          "mail"
+        ]
+      },
+      "ip": "",
+      "createdAt": "2026-06-20T16:33:35.708Z"
     },
     {
-      "id": "r100",
-      "title": "测试资源",
-      "description": "desc",
-      "category": "其他",
-      "type": "document",
-      "author": "匿名用户",
-      "downloadCount": 0,
-      "rating": 0,
-      "fileUrl": "",
-      "createdAt": "2026-06-20T12:25:10.935Z"
+      "id": "log_1781973112284_o0wwj",
+      "actor": "admin@study.com",
+      "actorId": 1,
+      "action": "backup.create",
+      "target": "bk_1781973112283",
+      "meta": {
+        "filename": "backup-2026-06-20T16-31-52-281Z.json"
+      },
+      "ip": "",
+      "createdAt": "2026-06-20T16:31:52.284Z"
     },
     {
-      "id": "r101",
-      "title": "我的上传测试资源",
-      "description": "通过 API 上传",
-      "category": "编程开发",
-      "type": "document",
-      "author": "匿名用户",
-      "downloadCount": 1,
-      "rating": 0,
-      "fileUrl": "/api/resources/file/1781958373214_c9grtzc_test-upload.txt",
-      "createdAt": "2026-06-20T12:26:13.227Z"
+      "id": "log_1781969375189_ms21a",
+      "actor": "test1@x.com",
+      "actorId": 1,
+      "action": "backup.create",
+      "target": "bk_1781969375188",
+      "meta": {
+        "filename": "backup-2026-06-20T15-29-35-185Z.json"
+      },
+      "ip": "",
+      "createdAt": "2026-06-20T15:29:35.189Z"
     },
     {
-      "id": "r102",
-      "title": "四级",
-      "description": "",
-      "category": "其他",
-      "type": "other",
-      "author": "匿名用户",
-      "downloadCount": 1,
-      "rating": 0,
-      "fileUrl": "/api/resources/file/1781958665260_8lxheku_思维导图.png",
-      "createdAt": "2026-06-20T12:31:05.521Z"
+      "id": "log_1781969341050_ca3x8",
+      "actor": "test1@x.com",
+      "actorId": 1,
+      "action": "settings.update",
+      "target": "",
+      "meta": {
+        "keys": [
+          "mail",
+          "site",
+          "security"
+        ]
+      },
+      "ip": "",
+      "createdAt": "2026-06-20T15:29:01.050Z"
     },
     {
-      "id": "r103",
-      "title": "测试图片资源",
-      "description": "这是一张测试图片，包含详细描述信息。\n\n支持多行文字输入。",
-      "category": "前端开发",
-      "type": "ebook",
-      "author": "匿名用户",
-      "downloadCount": 1,
-      "rating": 0,
-      "fileUrl": "/api/resources/file/1781959587569_9w92ch1_test-img.png",
-      "mimeType": "image/png",
-      "fileSize": 70,
-      "originalName": "test-img.png",
-      "createdAt": "2026-06-20T12:46:27.575Z"
+      "id": "log_1781969341016_0hct9",
+      "actor": "test1@x.com",
+      "actorId": 1,
+      "action": "backup.create",
+      "target": "bk_1781969341014",
+      "meta": {
+        "filename": "backup-2026-06-20T15-29-01-013Z.json"
+      },
+      "ip": "",
+      "createdAt": "2026-06-20T15:29:01.016Z"
+    }
+  ],
+  "settings": {
+    "site": {
+      "name": "????X",
+      "description": "一站式个人学习管理",
+      "contact": "admin@example.com",
+      "subtitle": "",
+      "icp": "",
+      "supportEmail": "",
+      "maintenance": false
+    },
+    "security": {
+      "passwordMinLength": 6,
+      "maxLoginAttempts": 5,
+      "lockoutMinutes": 15,
+      "sessionTimeoutHours": 24,
+      "tokenTtlDays": 14,
+      "passwordMinLen": 6,
+      "maxLoginFail": 5,
+      "allowRegister": true,
+      "requireApproval": false
+    },
+    "mail": {
+      "from": "no-reply@example.com",
+      "smtpHost": "",
+      "smtpPort": 465,
+      "smtpUser": "",
+      "smtpSecure": true,
+      "enabled": true,
+      "host": "",
+      "port": 465,
+      "secure": true,
+      "user": "",
+      "pass": ""
+    }
+  },
+  "backups": [
+    {
+      "id": "bk_1781973112283",
+      "name": "backup-2026-06-20T16-31-52-281Z.json",
+      "filename": "backup-2026-06-20T16-31-52-281Z.json",
+      "size": 23731,
+      "operator": "admin@study.com",
+      "createdBy": "admin@study.com",
+      "createdAt": "2026-06-20T16:31:52.281Z",
+      "snapshot": {
+        "userCount": 2,
+        "postCount": 1,
+        "resourceCount": 8
+      }
+    },
+    {
+      "id": "bk_1781969375188",
+      "name": "backup-2026-06-20T15-29-35-185Z.json",
+      "filename": "backup-2026-06-20T15-29-35-185Z.json",
+      "size": 24815,
+      "operator": "test1@x.com",
+      "createdBy": "test1@x.com",
+      "createdAt": "2026-06-20T15:29:35.185Z",
+      "snapshot": {
+        "userCount": 3,
+        "postCount": 1,
+        "resourceCount": 12
+      }
+    },
+    {
+      "id": "bk_1781969341014",
+      "filename": "backup-2026-06-20T15-29-01-013Z.json",
+      "size": 23848,
+      "operator": "test1@x.com",
+      "createdAt": "2026-06-20T15:29:01.013Z"
     }
   ],
   "userIdCounter": 4,
@@ -450,8 +821,8 @@
   "planIdCounter": 1,
   "taskIdCounter": 1,
   "reminderIdCounter": 1,
-  "postIdCounter": 3,
-  "commentIdCounter": 2,
+  "postIdCounter": 28,
+  "commentIdCounter": 3,
   "resourceIdCounter": 104,
   "ruleIdCounter": 3
 }

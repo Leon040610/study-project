@@ -55,6 +55,51 @@ const upload = multer({
   limits: { fileSize: 50 * 1024 * 1024 } // 50MB
 });
 
+// ========== 头像上传（独立 multer 实例） ==========
+const AVATAR_DIR = path.join(__dirname, 'uploads', 'avatars');
+if (!fs.existsSync(AVATAR_DIR)) {
+  fs.mkdirSync(AVATAR_DIR, { recursive: true });
+}
+const avatarStorage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, AVATAR_DIR),
+  filename: (req, file, cb) => {
+    let userId = 'guest';
+    try {
+      const auth = (req.headers && req.headers.authorization) || '';
+      if (auth.startsWith('Bearer ')) {
+        const u = tokenUserMap.get(auth.substring(7));
+        if (u) userId = String(u.id);
+      }
+    } catch (e) { /* ignore */ }
+    const extRaw = (file.originalname || '').toLowerCase();
+    const ext = extRaw.endsWith('.png') ? '.png'
+      : extRaw.endsWith('.webp') ? '.webp'
+      : extRaw.endsWith('.jpeg') ? '.jpg'
+      : path.extname(file.originalname || '').toLowerCase() || '.jpg';
+    cb(null, userId + '_' + Date.now() + ext);
+  }
+});
+const avatarUpload = multer({
+  storage: avatarStorage,
+  limits: { fileSize: 3 * 1024 * 1024 }, // 3MB
+  fileFilter: (req, file, cb) => {
+    const mt = (file.mimetype || '').toLowerCase();
+    const ok = /^image\/(png|jpe?g|webp)$/.test(mt);
+    cb(ok ? null : new Error('仅支持 PNG / JPG / JPEG / WEBP 图片'), ok);
+  }
+});
+
+// ========== 资源分类常量 ==========
+const PRESET_CATEGORIES = [
+  '编程开发', '数据科学', '数据库', '网络技术',
+  '前端开发', '后端开发', '移动开发', '人工智能',
+  '操作系统', '项目管理', '设计创意', '其他'
+];
+const RESERVED_CATEGORIES = [
+  'admin', 'system', 'root', 'all', '全部', '默认', '系统', '管理'
+];
+const CATEGORY_PATTERN = /^[\u4e00-\u9fa5A-Za-z0-9 _\-+]+$/;
+
 // ========== JSON 文件持久化 ==========
 const DATA_FILE = path.join(__dirname, 'data.json');
 
@@ -113,6 +158,7 @@ function saveData() {
     const data = {
       users, goals, plans, tasks, reminders, posts, comments, notificationLogs,
       userPreferences, reminderRules, announcements, resources,
+      adminLogs, settings, backups,
       userIdCounter, goalIdCounter, planIdCounter, taskIdCounter, reminderIdCounter,
       postIdCounter, commentIdCounter, resourceIdCounter, ruleIdCounter
     };
@@ -128,6 +174,9 @@ let goals = persisted.goals || [];
 let plans = persisted.plans || [];
 let tasks = persisted.tasks || [];
 let reminders = persisted.reminders || [];
+let adminLogs = persisted.adminLogs || [];
+let settings = persisted.settings || null;
+let backups = persisted.backups || [];
 let posts = persisted.posts || [];
 let comments = persisted.comments || [];
 let notificationLogs = persisted.notificationLogs || [];
@@ -231,6 +280,62 @@ app.post('/api/auth/change-password', (req, res) => {
   res.json({ message: '密码修改成功' });
 });
 
+// ========== 头像上传 / 重置 ==========
+app.post('/api/auth/avatar', (req, res) => {
+  avatarUpload.single('avatar')(req, res, (err) => {
+    if (err) {
+      return res.status(400).json({ message: err.message || '上传失败' });
+    }
+    const user = getUserFromToken(req);
+    if (!user) return res.status(401).json({ message: '未登录' });
+    if (!req.file) return res.status(400).json({ message: '未上传文件' });
+
+    // 删除旧头像
+    if (user.avatar) {
+      try {
+        const oldPath = path.join(__dirname, user.avatar.replace(/^\//, ''));
+        if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+      } catch (e) { /* ignore */ }
+    }
+
+    const relUrl = '/uploads/avatars/' + req.file.filename;
+    user.avatar = relUrl;
+    user.avatarUpdatedAt = new Date().toISOString();
+    const dbUser = users.find(u => u.id === user.id);
+    if (dbUser) {
+      dbUser.avatar = relUrl;
+      dbUser.avatarUpdatedAt = user.avatarUpdatedAt;
+      saveData();
+    }
+    res.json({
+      success: true,
+      avatar: relUrl,
+      avatarUpdatedAt: user.avatarUpdatedAt,
+      message: '头像已更新'
+    });
+  });
+});
+
+app.delete('/api/auth/avatar', (req, res) => {
+  const user = getUserFromToken(req);
+  if (!user) return res.status(401).json({ message: '未登录' });
+  if (user.avatar) {
+    try {
+      const oldPath = path.join(__dirname, user.avatar.replace(/^\//, ''));
+      if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+    } catch (e) { /* ignore */ }
+  }
+  user.avatar = null;
+  user.avatarUpdatedAt = new Date().toISOString();
+  const dbUser = users.find(u => u.id === user.id);
+  if (dbUser) {
+    dbUser.avatar = null;
+    dbUser.avatarUpdatedAt = user.avatarUpdatedAt;
+    saveData();
+  }
+  res.json({ success: true, message: '头像已重置为默认' });
+});
+
 // ========== 学习目标 ==========
 app.get('/api/goals', (req, res) => res.json(goals));
 
@@ -326,6 +431,66 @@ app.delete('/api/tasks/:id', (req, res) => {
 
 // ========== 公告 ==========
 app.get('/api/announcements', (req, res) => res.json(announcements));
+
+// ========== 资源分类（用户自定义） ==========
+
+// 列出所有分类：预设 + 当前用户自定义
+app.get('/api/resources/categories', (req, res) => {
+  const user = getUserFromToken(req);
+  const custom = (user && Array.isArray(user.customCategories)) ? user.customCategories : [];
+  // 收集所有资源中实际使用到的分类（兜底兼容已有数据）
+  const used = Array.from(new Set(resources.map(r => r.category).filter(Boolean)));
+  const merged = Array.from(new Set([...PRESET_CATEGORIES, ...used, ...custom]));
+  res.json({ preset: PRESET_CATEGORIES, custom, all: merged });
+});
+
+// 创建自定义分类
+app.post('/api/resources/categories', (req, res) => {
+  const user = getUserFromToken(req);
+  if (!user) return res.status(401).json({ message: '未登录' });
+  const name = ((req.body && req.body.name) || '').trim();
+  if (!name) return res.status(400).json({ message: '类别名称不能为空' });
+  if (name.length < 2 || name.length > 20) {
+    return res.status(400).json({ message: '类别名称长度需在 2-20 字符之间' });
+  }
+  if (!CATEGORY_PATTERN.test(name)) {
+    return res.status(400).json({ message: '类别名称仅支持中英文、数字、空格、下划线、连字符' });
+  }
+  if (RESERVED_CATEGORIES.includes(name.toLowerCase())) {
+    return res.status(400).json({ message: '该名称为系统保留关键词，不可使用' });
+  }
+  if (!Array.isArray(user.customCategories)) user.customCategories = [];
+  if (PRESET_CATEGORIES.includes(name) || user.customCategories.includes(name)) {
+    return res.status(409).json({ message: '该类别已存在' });
+  }
+  if (user.customCategories.length >= 20) {
+    return res.status(400).json({ message: '自定义类别最多 20 个' });
+  }
+  user.customCategories.push(name);
+  const dbUser = users.find(u => u.id === user.id);
+  if (dbUser) {
+    dbUser.customCategories = user.customCategories;
+    saveData();
+  }
+  res.json({ success: true, name, categories: user.customCategories });
+});
+
+// 删除自定义分类
+app.delete('/api/resources/categories/:name', (req, res) => {
+  const user = getUserFromToken(req);
+  if (!user) return res.status(401).json({ message: '未登录' });
+  const name = decodeURIComponent(req.params.name || '').trim();
+  if (!Array.isArray(user.customCategories)) user.customCategories = [];
+  const idx = user.customCategories.indexOf(name);
+  if (idx === -1) return res.status(404).json({ message: '自定义类别不存在' });
+  user.customCategories.splice(idx, 1);
+  const dbUser = users.find(u => u.id === user.id);
+  if (dbUser) {
+    dbUser.customCategories = user.customCategories;
+    saveData();
+  }
+  res.json({ success: true, categories: user.customCategories });
+});
 
 // ========== 资源模块 ==========
 
@@ -875,8 +1040,9 @@ app.post('/api/reminders/test', async (req, res) => {
   const user = getUserFromToken(req);
   if (!user) return res.status(401).json({ message: '未登录' });
   const prefs = userPreferences.find(p => p.userId === user.id);
-  const channel = (prefs && prefs.defaultChannel) || 'both';
-  // both: 邮件 + 站内推送（站内推送总是可达）
+  // 优先使用请求体中的 channel（前端当前选中的渠道），其次用户偏好，最后默认 both
+  const reqChannel = (req.body && req.body.channel) || '';
+  const channel = reqChannel || (prefs && prefs.defaultChannel) || 'both';
   const channels = channel === 'both' ? ['email', 'push'] : [channel];
 
   const now = new Date().toISOString();
@@ -951,14 +1117,460 @@ app.get('/api/auth/captcha', (req, res) => {
   });
 });
 
-// 静态资源
-app.use('/uploads', express.static(UPLOAD_DIR));
+// ========== 管理员模块 ==========
+// 角色：user（默认）/ admin
+// 数据结构：{ adminLogs: [], settings: {site, security, mail}, backups: [] }
 
-app.use(express.static(path.join(__dirname)));
+function ensureAdminFields() {
+  if (!Array.isArray(adminLogs)) adminLogs = [];
+  if (!settings) {
+    settings = {
+      site: { name: '智慧学习平台', description: '一站式个人学习管理', contact: 'admin@example.com' },
+      security: { passwordMinLength: 6, maxLoginAttempts: 5, lockoutMinutes: 15, sessionTimeoutHours: 24 },
+      mail: { from: 'no-reply@example.com', smtpHost: '', smtpPort: 465, smtpUser: '', smtpSecure: true }
+    };
+  }
+  if (!Array.isArray(backups)) backups = [];
+}
+ensureAdminFields();
 
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
+function logAdminAction(actor, action, target, meta = {}) {
+  adminLogs.unshift({
+    id: 'log_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
+    actor: actor ? actor.email : 'system',
+    actorId: actor ? actor.id : null,
+    action,
+    target: target ? String(target) : '',
+    meta,
+    ip: '',
+    createdAt: new Date().toISOString()
+  });
+  if (adminLogs.length > 1000) adminLogs.length = 1000;
+  saveData();
+}
+
+function requireAdmin(req, res, next) {
+  const user = getUserFromToken(req);
+  if (!user) return res.status(401).json({ message: '未登录' });
+  if (user.role !== 'admin') return res.status(403).json({ message: '需要管理员权限' });
+  req.currentUser = user;
+  next();
+}
+
+const BACKUP_DIR = path.join(__dirname, 'backups');
+if (!fs.existsSync(BACKUP_DIR)) fs.mkdirSync(BACKUP_DIR, { recursive: true });
+
+// 管理端：统计
+app.get('/api/admin/stats', requireAdmin, (req, res) => {
+  const now = Date.now();
+  const last7d = now - 7 * 86400000;
+  const last30d = now - 30 * 86400000;
+  const newUsers7d = users.filter(u => new Date(u.createdAt || 0).getTime() > last7d).length;
+  const newUsers30d = users.filter(u => new Date(u.createdAt || 0).getTime() > last30d).length;
+  const posts7d = posts.filter(p => new Date(p.createdAt || 0).getTime() > last7d).length;
+  const resources7d = resources.filter(r => new Date(r.createdAt || 0).getTime() > last7d).length;
+  // 按分类统计资源
+  const categoryMap = {};
+  for (const r of resources) {
+    const k = r.category || '未分类';
+    categoryMap[k] = (categoryMap[k] || 0) + 1;
+  }
+  // 按日期统计活跃度（最近 14 天）
+  const daily = [];
+  for (let i = 13; i >= 0; i--) {
+    const d = new Date(now - i * 86400000);
+    const key = d.toISOString().slice(0, 10);
+    const nextKey = new Date(now - (i - 1) * 86400000).toISOString().slice(0, 10);
+    const uCount = users.filter(u => (u.createdAt || '').slice(0, 10) === key).length;
+    const pCount = posts.filter(p => (p.createdAt || '').slice(0, 10) >= key && (p.createdAt || '').slice(0, 10) < nextKey).length;
+    const rCount = resources.filter(r => (r.createdAt || '').slice(0, 10) >= key && (r.createdAt || '').slice(0, 10) < nextKey).length;
+    daily.push({ date: key, users: uCount, posts: pCount, resources: rCount });
+  }
+  res.json({
+    userTotal: users.length,
+    userDisabled: users.filter(u => u.disabled).length,
+    newUsers7d,
+    newUsers30d,
+    postTotal: posts.length,
+    postPending: posts.filter(p => p.status === 'pending').length,
+    posts7d,
+    resourceTotal: resources.length,
+    resources7d,
+    downloadTotal: resources.reduce((s, r) => s + (r.downloadCount || 0), 0),
+    likeTotal: posts.reduce((s, p) => s + (p.likes || 0), 0),
+    commentTotal: posts.reduce((s, p) => s + (p.comments ? p.comments.length : 0), 0),
+    resourceByCategory: Object.entries(categoryMap).map(([name, value]) => ({ name, value })),
+    daily
+  });
 });
+
+// 管理端：用户列表（搜索 + 分页）
+app.get('/api/admin/users', requireAdmin, (req, res) => {
+  const { q = '', page = 1, pageSize = 10, role = '', status = '' } = req.query;
+  let list = users.slice();
+  if (q) {
+    const k = String(q).toLowerCase();
+    list = list.filter(u =>
+      (u.email || '').toLowerCase().includes(k) ||
+      (u.name || '').toLowerCase().includes(k) ||
+      (u.studentId || '').toLowerCase().includes(k)
+    );
+  }
+  if (role) list = list.filter(u => (u.role || 'user') === role);
+  if (status === 'active') list = list.filter(u => !u.disabled);
+  if (status === 'disabled') list = list.filter(u => u.disabled);
+  list.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+  const total = list.length;
+  const p = Math.max(1, parseInt(page));
+  const ps = Math.max(1, Math.min(50, parseInt(pageSize)));
+  const items = list.slice((p - 1) * ps, p * ps).map(u => ({
+    id: u.id,
+    email: u.email,
+    name: u.name,
+    studentId: u.studentId,
+    role: u.role || 'user',
+    disabled: !!u.disabled,
+    avatar: u.avatar,
+    createdAt: u.createdAt
+  }));
+  res.json({ total, page: p, pageSize: ps, items });
+});
+
+app.put('/api/admin/users/:id/role', requireAdmin, (req, res) => {
+  const { role } = req.body || {};
+  if (!['user', 'admin'].includes(role)) return res.status(400).json({ message: '非法角色' });
+  const u = users.find(x => x.id === req.params.id);
+  if (!u) return res.status(404).json({ message: '用户不存在' });
+  u.role = role;
+  saveData();
+  logAdminAction(req.currentUser, 'user.role.change', u.id, { role });
+  res.json({ success: true, role: u.role });
+});
+
+app.put('/api/admin/users/:id/status', requireAdmin, (req, res) => {
+  const { disabled } = req.body || {};
+  const u = users.find(x => x.id === req.params.id);
+  if (!u) return res.status(404).json({ message: '用户不存在' });
+  u.disabled = !!disabled;
+  saveData();
+  logAdminAction(req.currentUser, u.disabled ? 'user.disable' : 'user.enable', u.id, {});
+  res.json({ success: true, disabled: u.disabled });
+});
+
+app.delete('/api/admin/users/:id', requireAdmin, (req, res) => {
+  const u = users.find(x => x.id === req.params.id);
+  if (!u) return res.status(404).json({ message: '用户不存在' });
+  if (u.id === req.currentUser.id) return res.status(400).json({ message: '不能删除自己' });
+  users = users.filter(x => x.id !== u.id);
+  // 连带清理
+  resources = resources.filter(r => r.userId !== u.id);
+  posts = posts.filter(p => p.userId !== u.id);
+  saveData();
+  logAdminAction(req.currentUser, 'user.delete', u.id, { email: u.email });
+  res.json({ success: true });
+});
+
+// 管理端：操作日志
+app.get('/api/admin/logs', requireAdmin, (req, res) => {
+  const { q = '', action = '', page = 1, pageSize = 20 } = req.query;
+  let list = adminLogs.slice();
+  if (action) list = list.filter(l => l.action === action);
+  if (q) {
+    const k = String(q).toLowerCase();
+    list = list.filter(l =>
+      (l.actor || '').toLowerCase().includes(k) ||
+      (l.target || '').toLowerCase().includes(k) ||
+      (l.action || '').toLowerCase().includes(k)
+    );
+  }
+  const total = list.length;
+  const p = Math.max(1, parseInt(page));
+  const ps = Math.max(1, Math.min(200, parseInt(pageSize)));
+  const items = list.slice((p - 1) * ps, p * ps);
+  res.json({ total, page: p, pageSize: ps, items });
+});
+
+app.get('/api/admin/logs/export', requireAdmin, (req, res) => {
+  logAdminAction(req.currentUser, 'logs.export', '', {});
+  const lines = ['id,time,actor,action,target,meta'];
+  for (const l of adminLogs) {
+    const meta = JSON.stringify(l.meta || {}).replace(/"/g, '""');
+    lines.push([l.id, l.createdAt, l.actor, l.action, l.target, '"' + meta + '"'].join(','));
+  }
+  const csv = '\uFEFF' + lines.join('\n');
+  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+  res.setHeader('Content-Disposition', 'attachment; filename="admin-logs.csv"');
+  res.send(csv);
+});
+
+// 管理端：系统设置
+app.get('/api/admin/settings', requireAdmin, (req, res) => {
+  res.json(settings);
+});
+
+app.put('/api/admin/settings', requireAdmin, (req, res) => {
+  const body = req.body || {};
+  if (body.site) {
+    settings.site = { ...settings.site, ...body.site };
+  }
+  if (body.security) {
+    settings.security = { ...settings.security, ...body.security };
+  }
+  if (body.mail) {
+    settings.mail = { ...settings.mail, ...body.mail };
+  }
+  saveData();
+  logAdminAction(req.currentUser, 'settings.update', '', { keys: Object.keys(body) });
+  res.json({ success: true, settings });
+});
+
+// 管理端：备份与恢复
+app.post('/api/admin/backup', requireAdmin, (req, res) => {
+  const ts = new Date().toISOString().replace(/[:.]/g, '-');
+  const filename = `backup-${ts}.json`;
+  const filepath = path.join(BACKUP_DIR, filename);
+  const payload = {
+    version: 1,
+    createdAt: new Date().toISOString(),
+    data: {
+      users, goals, plans, tasks, reminders, posts, comments, notificationLogs,
+      userPreferences, reminderRules, announcements, resources,
+      adminLogs, settings, backups
+    }
+  };
+  fs.writeFileSync(filepath, JSON.stringify(payload, null, 2), 'utf-8');
+  const stat = fs.statSync(filepath);
+  const item = {
+    id: 'bk_' + Date.now(),
+    name: filename,
+    filename,
+    size: stat.size,
+    operator: req.currentUser.email,
+    createdBy: req.currentUser.email,
+    createdAt: payload.createdAt,
+    snapshot: {
+      userCount: users.length,
+      postCount: posts.length,
+      resourceCount: resources.length
+    }
+  };
+  backups.unshift(item);
+  if (backups.length > 50) {
+    for (const old of backups.slice(50)) {
+      try {
+        const p = path.join(BACKUP_DIR, old.filename);
+        if (fs.existsSync(p)) fs.unlinkSync(p);
+      } catch (e) { /* ignore */ }
+    }
+    backups = backups.slice(0, 50);
+  }
+  saveData();
+  logAdminAction(req.currentUser, 'backup.create', item.id, { filename });
+  res.json({ success: true, backup: item });
+});
+
+app.get('/api/admin/backups', requireAdmin, (req, res) => {
+  res.json({ items: backups });
+});
+
+app.post('/api/admin/backup/restore', requireAdmin, (req, res) => {
+  const { id } = req.body || {};
+  const item = backups.find(b => b.id === id);
+  if (!item) return res.status(404).json({ message: '备份不存在' });
+  const filepath = path.join(BACKUP_DIR, item.filename);
+  if (!fs.existsSync(filepath)) return res.status(404).json({ message: '备份文件已丢失' });
+  try {
+    const payload = JSON.parse(fs.readFileSync(filepath, 'utf-8'));
+    if (!payload.data) throw new Error('备份文件格式错误');
+    const d = payload.data;
+    if (Array.isArray(d.users)) users = d.users;
+    if (Array.isArray(d.goals)) goals = d.goals;
+    if (Array.isArray(d.plans)) plans = d.plans;
+    if (Array.isArray(d.tasks)) tasks = d.tasks;
+    if (Array.isArray(d.reminders)) reminders = d.reminders;
+    if (Array.isArray(d.posts)) posts = d.posts;
+    if (Array.isArray(d.comments)) comments = d.comments;
+    if (Array.isArray(d.notificationLogs)) notificationLogs = d.notificationLogs;
+    if (Array.isArray(d.userPreferences)) userPreferences = d.userPreferences;
+    if (Array.isArray(d.reminderRules)) reminderRules = d.reminderRules;
+    if (Array.isArray(d.announcements)) announcements = d.announcements;
+    if (Array.isArray(d.resources)) resources = d.resources;
+    if (Array.isArray(d.adminLogs)) adminLogs = d.adminLogs;
+    if (d.settings) settings = d.settings;
+    if (Array.isArray(d.backups)) backups = d.backups;
+    ensureAdminFields();
+    saveData();
+    logAdminAction(req.currentUser, 'backup.restore', item.id, { filename: item.filename });
+    res.json({ success: true });
+  } catch (e) {
+    res.status(400).json({ message: '恢复失败: ' + e.message });
+  }
+});
+
+app.delete('/api/admin/backup/:id', requireAdmin, (req, res) => {
+  const item = backups.find(b => b.id === req.params.id);
+  if (!item) return res.status(404).json({ message: '备份不存在' });
+  try {
+    const p = path.join(BACKUP_DIR, item.filename);
+    if (fs.existsSync(p)) fs.unlinkSync(p);
+  } catch (e) { /* ignore */ }
+  backups = backups.filter(b => b.id !== item.id);
+  saveData();
+  logAdminAction(req.currentUser, 'backup.delete', item.id, { filename: item.filename });
+  res.json({ success: true });
+});
+
+app.get('/api/admin/backup/:id/download', requireAdmin, (req, res) => {
+  const item = backups.find(b => b.id === req.params.id);
+  if (!item) return res.status(404).json({ message: '备份不存在' });
+  const filepath = path.join(BACKUP_DIR, item.filename);
+  if (!fs.existsSync(filepath)) return res.status(404).json({ message: '备份文件已丢失' });
+  res.download(filepath, item.name + '.json');
+  logAdminAction(req.currentUser, 'backup.download', item.id, { filename: item.filename });
+});
+
+// 管理端：帖子列表（筛选 + 分页）
+app.get('/api/admin/posts', requireAdmin, (req, res) => {
+  const { q = '', status = '', author = '', page = 1, pageSize = 10, sort = 'newest' } = req.query;
+  let list = posts.slice();
+  if (status) list = list.filter(p => (p.status || 'published') === status);
+  if (author) list = list.filter(p => p.author === author || p.userEmail === author);
+  if (q) {
+    const k = String(q).toLowerCase();
+    list = list.filter(p =>
+      (p.title || '').toLowerCase().includes(k) ||
+      (p.content || '').toLowerCase().includes(k) ||
+      (p.author || '').toLowerCase().includes(k)
+    );
+  }
+  if (sort === 'newest') list.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+  if (sort === 'oldest') list.sort((a, b) => new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime());
+  if (sort === 'likes') list.sort((a, b) => (b.likes || 0) - (a.likes || 0));
+  const total = list.length;
+  const p = Math.max(1, parseInt(page));
+  const ps = Math.max(1, Math.min(50, parseInt(pageSize)));
+  res.json({ total, page: p, pageSize: ps, items: list.slice((p - 1) * ps, p * ps) });
+});
+
+app.put('/api/admin/posts/:id', requireAdmin, (req, res) => {
+  const post = posts.find(x => x.id === req.params.id);
+  if (!post) return res.status(404).json({ message: '帖子不存在' });
+  const { title, content, status, category } = req.body || {};
+  if (title !== undefined) post.title = title;
+  if (content !== undefined) post.content = content;
+  if (status !== undefined) post.status = status;
+  if (category !== undefined) post.category = category;
+  post.updatedAt = new Date().toISOString();
+  saveData();
+  logAdminAction(req.currentUser, 'post.update', post.id, { status: post.status });
+  res.json({ success: true, post });
+});
+
+app.put('/api/admin/posts/:id/review', requireAdmin, (req, res) => {
+  const post = posts.find(x => x.id === req.params.id);
+  if (!post) return res.status(404).json({ message: '帖子不存在' });
+  const { approved } = req.body || {};
+  post.status = approved ? 'published' : 'rejected';
+  post.reviewedAt = new Date().toISOString();
+  post.reviewedBy = req.currentUser.email;
+  saveData();
+  logAdminAction(req.currentUser, approved ? 'post.approve' : 'post.reject', post.id, {});
+  res.json({ success: true, status: post.status });
+});
+
+app.post('/api/admin/posts/batch-delete', requireAdmin, (req, res) => {
+  const { ids = [] } = req.body || {};
+  if (!Array.isArray(ids) || ids.length === 0) return res.status(400).json({ message: '请选择要删除的帖子' });
+  const before = posts.length;
+  posts = posts.filter(p => !ids.includes(p.id));
+  const removed = before - posts.length;
+  saveData();
+  logAdminAction(req.currentUser, 'post.batch.delete', ids.join(','), { count: removed });
+  res.json({ success: true, removed });
+});
+
+// 管理端：资源列表（搜索 + 分页）
+app.get('/api/admin/resources', requireAdmin, (req, res) => {
+  const { q = '', category = '', page = 1, pageSize = 10 } = req.query;
+  let list = resources.slice();
+  if (category) list = list.filter(r => r.category === category);
+  if (q) {
+    const k = String(q).toLowerCase();
+    list = list.filter(r =>
+      (r.title || '').toLowerCase().includes(k) ||
+      (r.description || '').toLowerCase().includes(k) ||
+      (r.uploader || '').toLowerCase().includes(k)
+    );
+  }
+  list.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+  const total = list.length;
+  const p = Math.max(1, parseInt(page));
+  const ps = Math.max(1, Math.min(50, parseInt(pageSize)));
+  res.json({ total, page: p, pageSize: ps, items: list.slice((p - 1) * ps, p * ps), categories: PRESET_CATEGORIES });
+});
+
+app.put('/api/admin/resources/:id', requireAdmin, (req, res) => {
+  const r = resources.find(x => x.id === req.params.id);
+  if (!r) return res.status(404).json({ message: '资源不存在' });
+  const { title, description, category, type, fileUrl, fileName } = req.body || {};
+  if (title !== undefined) r.title = title;
+  if (description !== undefined) r.description = description;
+  if (category !== undefined) r.category = category;
+  if (type !== undefined) r.type = type;
+  if (fileUrl !== undefined) r.fileUrl = fileUrl;
+  if (fileName !== undefined) r.fileName = fileName;
+  r.updatedAt = new Date().toISOString();
+  saveData();
+  logAdminAction(req.currentUser, 'resource.update', r.id, {});
+  res.json({ success: true, resource: r });
+});
+
+app.post('/api/admin/resources/batch-delete', requireAdmin, (req, res) => {
+  const { ids = [] } = req.body || {};
+  if (!Array.isArray(ids) || ids.length === 0) return res.status(400).json({ message: '请选择要删除的资源' });
+  const before = resources.length;
+  resources = resources.filter(r => !ids.includes(r.id));
+  const removed = before - resources.length;
+  saveData();
+  logAdminAction(req.currentUser, 'resource.batch.delete', ids.join(','), { count: removed });
+  res.json({ success: true, removed });
+});
+
+app.post('/api/admin/resources/batch-upload', requireAdmin, (req, res) => {
+  upload.array('files', 20)(req, res, (err) => {
+    if (err) return res.status(400).json({ message: err.message || '上传失败' });
+    if (!req.files || req.files.length === 0) return res.status(400).json({ message: '未上传文件' });
+    const category = ((req.body && req.body.category) || '其他').trim();
+    const type = ((req.body && req.body.type) || 'document').trim();
+    const created = [];
+    for (const f of req.files) {
+      const id = 'r_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+      const r = {
+        id,
+        title: f.originalname,
+        description: '',
+        category,
+        type,
+        fileUrl: '/uploads/' + f.filename,
+        fileName: f.originalname,
+        fileSize: f.size,
+        uploader: req.currentUser.email,
+        userId: req.currentUser.id,
+        downloadCount: 0,
+        rating: 0,
+        createdAt: new Date().toISOString()
+      };
+      resources.unshift(r);
+      created.push(r);
+    }
+    saveData();
+    logAdminAction(req.currentUser, 'resource.batch.upload', '', { count: created.length, category });
+    res.json({ success: true, count: created.length, items: created });
+  });
+});
+
+// 静态资源（仅服务 uploads 等显式目录，根路径 fallback 已移除）
+app.use('/uploads', express.static(UPLOAD_DIR));
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);

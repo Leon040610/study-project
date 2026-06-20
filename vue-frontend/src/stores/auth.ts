@@ -50,6 +50,36 @@ export const useAuthStore = defineStore('auth', () => {
     return response
   }
 
+  async function updateAvatar(file: File | Blob, fileName: string) {
+    const formData = new FormData()
+    formData.append('avatar', file, fileName)
+    const headers: Record<string, string> = {}
+    if (token.value) headers.Authorization = 'Bearer ' + token.value
+    const res = await fetch('/api/auth/avatar', {
+      method: 'POST',
+      body: formData,
+      headers
+    })
+    const data = await res.json()
+    if (!res.ok) {
+      throw new Error(data.message || '头像上传失败')
+    }
+    if (user.value) {
+      user.value.avatar = data.avatar
+      user.value.avatarUpdatedAt = data.avatarUpdatedAt
+    }
+    return data
+  }
+
+  async function resetAvatar() {
+    const response: any = await api.delete('/auth/avatar')
+    if (user.value) {
+      user.value.avatar = undefined
+      user.value.avatarUpdatedAt = undefined
+    }
+    return response
+  }
+
   async function getCaptcha() {
     const response = await api.get('/auth/captcha')
     return response
@@ -65,6 +95,8 @@ export const useAuthStore = defineStore('auth', () => {
     getProfile,
     logout,
     updateProfile,
+    updateAvatar,
+    resetAvatar,
     getCaptcha
   }
 })
@@ -76,6 +108,9 @@ export interface UserInfo {
   phone?: string
   role: 'student' | 'admin'
   created_at: string
+  avatar?: string
+  avatarUpdatedAt?: string
+  customCategories?: string[]
 }
 
 export interface RegisterData {

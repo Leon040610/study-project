@@ -5,7 +5,14 @@
       <div class="profile-header">
         <div class="avatar-wrapper">
           <div class="avatar">
-            <el-icon :size="40"><User /></el-icon>
+            <img
+              v-if="avatarUrl"
+              :src="avatarUrl"
+              :alt="user.name"
+              class="avatar-img"
+              @error="onAvatarError"
+            />
+            <el-icon v-else :size="40"><User /></el-icon>
           </div>
           <el-button type="primary" size="small" @click="changeAvatar">
             <el-icon><Camera /></el-icon>
@@ -180,21 +187,96 @@
         </div>
       </div>
     </el-card>
+
+    <!-- 头像上传模态对话框 -->
+    <el-dialog
+      v-model="avatarDialogVisible"
+      title="更换头像"
+      width="640px"
+      :close-on-click-modal="false"
+      @closed="closeAvatarDialog"
+    >
+      <div class="avatar-upload-panel">
+        <div v-if="!avatarSourceUrl" class="upload-dropzone">
+          <el-upload
+            :auto-upload="false"
+            :show-file-list="false"
+            accept="image/png,image/jpeg,image/jpg,image/webp"
+            :on-change="handleAvatarFileChange"
+            drag
+          >
+            <el-icon class="el-icon--upload"><Upload /></el-icon>
+            <div class="el-upload__text">
+              将图片拖到此处，或<em>点击选择文件</em>
+            </div>
+            <template #tip>
+              <div class="el-upload__tip">
+                支持 PNG / JPG / JPEG / WEBP 格式，文件大小不超过 2MB
+              </div>
+            </template>
+          </el-upload>
+        </div>
+
+        <div v-else class="crop-stage">
+          <div class="crop-canvas-wrap">
+            <canvas
+              ref="cropCanvasEl"
+              class="crop-canvas"
+              width="400"
+              height="400"
+              @pointerdown="onCropPointerDown"
+              @pointermove="onCropPointerMove"
+              @pointerup="onCropPointerUp"
+              @pointerleave="onCropPointerUp"
+            />
+            <div class="crop-info">
+              拖动方框选择裁剪区域（建议正方形）
+            </div>
+          </div>
+          <div class="crop-preview-wrap">
+            <div class="crop-preview-label">预览效果</div>
+            <div class="crop-preview">
+              <canvas ref="cropPreviewEl" width="200" height="200" />
+            </div>
+            <div class="crop-preview-meta">
+              <div>输出尺寸: 200 × 200</div>
+              <div>源文件: {{ avatarSourceName }}</div>
+            </div>
+            <el-button class="crop-replace-btn" text @click="replaceAvatarImage">
+              <el-icon><Refresh /></el-icon><span>重新选择</span>
+            </el-button>
+          </div>
+        </div>
+      </div>
+      <template #footer>
+        <el-button @click="resetAvatarHandler" plain>
+          <el-icon><RefreshLeft /></el-icon><span>恢复默认头像</span>
+        </el-button>
+        <el-button @click="avatarDialogVisible = false">取消</el-button>
+        <el-button
+          type="primary"
+          :loading="avatarUploading"
+          :disabled="!avatarSourceUrl"
+          @click="confirmAvatarUpload"
+        >确认更换</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, computed } from 'vue'
+import { ref, reactive, onMounted, onUnmounted, computed, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useDataStore } from '@/stores/data'
 import { useThemeStore } from '@/stores/theme'
 import { api } from '@/utils/api'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   User, Camera, Brush, EditPen, Lock, DataLine,
   FolderOpened, CircleCheck, Aim, Document,
-  Sunny, Moon, Monitor, Bell, Setting
+  Sunny, Moon, Monitor, Bell, Setting,
+  Upload, Refresh, RefreshLeft
 } from '@element-plus/icons-vue'
 
 const router = useRouter()
@@ -216,6 +298,37 @@ const user = computed(() => authStore.user || {
   role: 'student' as const,
   created_at: ''
 })
+
+// 头像 URL：加 ?t= 时间戳防止浏览器缓存
+const avatarUrl = computed(() => {
+  const u = user.value as any
+  if (!u || !u.avatar) return ''
+  const sep = u.avatar.includes('?') ? '&' : '?'
+  return u.avatar + sep + 't=' + (u.avatarUpdatedAt || Date.now())
+})
+
+// ========== 头像上传 / 裁剪 ==========
+const avatarDialogVisible = ref(false)
+const avatarUploading = ref(false)
+const avatarSourceUrl = ref('')
+const avatarSourceName = ref('')
+const cropCanvasEl = ref<HTMLCanvasElement | null>(null)
+const cropPreviewEl = ref<HTMLCanvasElement | null>(null)
+// cropState 在 400x400 canvas 坐标系下表达方框位置
+const cropState = reactive({
+  x: 100, y: 100, size: 200
+})
+const cropDrag = reactive({ active: false, offsetX: 0, offsetY: 0 })
+let sourceImage: HTMLImageElement | null = null
+let sourceScale = 1
+let sourceOffsetX = 0
+let sourceOffsetY = 0
+const objectUrlsToRevoke: string[] = []
+
+function onAvatarError() {
+  // 加载失败时仅记录警告，不要清空 avatar 字段
+  console.warn('[Profile] 头像加载失败')
+}
 
 const form = reactive({
   name: '',
@@ -310,16 +423,237 @@ async function changePassword() {
 }
 
 function changeAvatar() {
-  ElMessage.info('头像上传功能开发中')
+  avatarDialogVisible.value = true
+}
+
+function closeAvatarDialog() {
+  if (avatarSourceUrl.value) {
+    try { URL.revokeObjectURL(avatarSourceUrl.value) } catch { /* ignore */ }
+  }
+  avatarSourceUrl.value = ''
+  avatarSourceName.value = ''
+  sourceImage = null
+  cropState.x = 100
+  cropState.y = 100
+  cropState.size = 200
+}
+
+function replaceAvatarImage() {
+  if (avatarSourceUrl.value) {
+    try { URL.revokeObjectURL(avatarSourceUrl.value) } catch { /* ignore */ }
+  }
+  avatarSourceUrl.value = ''
+  avatarSourceName.value = ''
+  sourceImage = null
+}
+
+async function handleAvatarFileChange(file: any) {
+  const raw: File | undefined = file && file.raw
+  if (!raw) return
+  // 客户端预校验：格式 + 大小
+  const allowed = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp']
+  if (!allowed.includes(raw.type)) {
+    ElMessage.error('仅支持 PNG / JPG / JPEG / WEBP 格式')
+    return
+  }
+  if (raw.size > 2 * 1024 * 1024) {
+    ElMessage.error('图片大小不能超过 2MB')
+    return
+  }
+  avatarSourceName.value = raw.name || 'avatar'
+  const url = URL.createObjectURL(raw)
+  objectUrlsToRevoke.push(url)
+  avatarSourceUrl.value = url
+
+  // 加载图片
+  await nextTick()
+  const img = new Image()
+  img.onload = () => {
+    sourceImage = img
+    // 计算适配 400x400 的缩放
+    const s = Math.min(400 / img.width, 400 / img.height)
+    sourceScale = s
+    sourceOffsetX = (400 - img.width * s) / 2
+    sourceOffsetY = (400 - img.height * s) / 2
+    // 默认裁剪框：正方形居中
+    const size = Math.min(400, 400 * 0.8)
+    cropState.size = size
+    cropState.x = (400 - size) / 2
+    cropState.y = (400 - size) / 2
+    drawCropCanvas()
+  }
+  img.onerror = () => {
+    ElMessage.error('图片加载失败，请尝试其他文件')
+    avatarSourceUrl.value = ''
+  }
+  img.src = url
+}
+
+function drawCropCanvas() {
+  const canvas = cropCanvasEl.value
+  if (!canvas) return
+  const ctx = canvas.getContext('2d')
+  if (!ctx) return
+  ctx.clearRect(0, 0, 400, 400)
+  // 背景
+  ctx.fillStyle = '#0f172a'
+  ctx.fillRect(0, 0, 400, 400)
+  if (sourceImage) {
+    ctx.drawImage(sourceImage, sourceOffsetX, sourceOffsetY, sourceImage.width * sourceScale, sourceImage.height * sourceScale)
+  }
+  // 暗角
+  ctx.fillStyle = 'rgba(15, 23, 42, 0.55)'
+  ctx.fillRect(0, 0, 400, 400)
+  // 还原选区内
+  if (sourceImage) {
+    ctx.save()
+    ctx.beginPath()
+    ctx.rect(cropState.x, cropState.y, cropState.size, cropState.size)
+    ctx.clip()
+    ctx.drawImage(sourceImage, sourceOffsetX, sourceOffsetY, sourceImage.width * sourceScale, sourceImage.height * sourceScale)
+    ctx.restore()
+  }
+  // 选框边框
+  ctx.strokeStyle = '#3b82f6'
+  ctx.lineWidth = 2
+  ctx.strokeRect(cropState.x + 1, cropState.y + 1, cropState.size - 2, cropState.size - 2)
+  // 1/3 宫格参考线
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)'
+  ctx.lineWidth = 1
+  for (let i = 1; i <= 2; i++) {
+    const x = cropState.x + (cropState.size * i) / 3
+    const y = cropState.y + (cropState.size * i) / 3
+    ctx.beginPath(); ctx.moveTo(x, cropState.y); ctx.lineTo(x, cropState.y + cropState.size); ctx.stroke()
+    ctx.beginPath(); ctx.moveTo(cropState.x, y); ctx.lineTo(cropState.x + cropState.size, y); ctx.stroke()
+  }
+  // 角点
+  const corners: [number, number][] = [
+    [cropState.x, cropState.y],
+    [cropState.x + cropState.size, cropState.y],
+    [cropState.x, cropState.y + cropState.size],
+    [cropState.x + cropState.size, cropState.y + cropState.size]
+  ]
+  ctx.fillStyle = '#3b82f6'
+  for (const [cx, cy] of corners) {
+    ctx.beginPath(); ctx.arc(cx, cy, 4, 0, Math.PI * 2); ctx.fill()
+  }
+
+  drawCropPreview()
+}
+
+function drawCropPreview() {
+  const canvas = cropPreviewEl.value
+  if (!canvas) return
+  const ctx = canvas.getContext('2d')
+  if (!ctx) return
+  ctx.clearRect(0, 0, 200, 200)
+  if (!sourceImage) {
+    ctx.fillStyle = '#f1f5f9'
+    ctx.fillRect(0, 0, 200, 200)
+    return
+  }
+  // 裁剪坐标系转换：canvas(400) -> 源图 -> 200x200 输出
+  ctx.fillStyle = '#ffffff'
+  ctx.fillRect(0, 0, 200, 200)
+  const ratio = 200 / cropState.size
+  ctx.drawImage(
+    sourceImage,
+    (cropState.x - sourceOffsetX) / sourceScale,
+    (cropState.y - sourceOffsetY) / sourceScale,
+    cropState.size / sourceScale,
+    cropState.size / sourceScale,
+    0, 0, 200, 200
+  )
+}
+
+function onCropPointerDown(e: PointerEvent) {
+  const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
+  const x = (e.clientX - rect.left) * (400 / rect.width)
+  const y = (e.clientY - rect.top) * (400 / rect.height)
+  // 命中选区则开始拖动
+  if (x >= cropState.x && x <= cropState.x + cropState.size &&
+      y >= cropState.y && y <= cropState.y + cropState.size) {
+    cropDrag.active = true
+    cropDrag.offsetX = x - cropState.x
+    cropDrag.offsetY = y - cropState.y
+    ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
+  }
+}
+
+function onCropPointerMove(e: PointerEvent) {
+  if (!cropDrag.active) return
+  const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
+  const x = (e.clientX - rect.left) * (400 / rect.width)
+  const y = (e.clientY - rect.top) * (400 / rect.height)
+  cropState.x = Math.max(0, Math.min(400 - cropState.size, x - cropDrag.offsetX))
+  cropState.y = Math.max(0, Math.min(400 - cropState.size, y - cropDrag.offsetY))
+  drawCropCanvas()
+}
+
+function onCropPointerUp(e: PointerEvent) {
+  if (cropDrag.active) {
+    try { (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId) } catch { /* ignore */ }
+  }
+  cropDrag.active = false
+}
+
+async function confirmAvatarUpload() {
+  if (!sourceImage || !cropPreviewEl.value) {
+    ElMessage.warning('请先选择图片')
+    return
+  }
+  avatarUploading.value = true
+  try {
+    // 导出 200x200 PNG Blob
+    const blob: Blob = await new Promise((resolve, reject) => {
+      cropPreviewEl.value!.toBlob((b) => {
+        if (b) resolve(b)
+        else reject(new Error('图像导出失败'))
+      }, 'image/png', 0.95)
+    })
+    const data = await authStore.updateAvatar(blob, (avatarSourceName.value || 'avatar') + '.png')
+    ElMessage.success(data.message || '头像已更新')
+    avatarDialogVisible.value = false
+  } catch (e: any) {
+    ElMessage.error(typeof e === 'string' ? e : (e && e.message) || '上传失败')
+  } finally {
+    avatarUploading.value = false
+  }
+}
+
+async function resetAvatarHandler() {
+  try {
+    await ElMessageBox.confirm('确定恢复为默认头像吗？', '提示', {
+      type: 'warning',
+      confirmButtonText: '恢复',
+      cancelButtonText: '取消'
+    })
+  } catch {
+    return
+  }
+  try {
+    await authStore.resetAvatar()
+    ElMessage.success('已恢复默认头像')
+    avatarDialogVisible.value = false
+  } catch {
+    ElMessage.error('恢复失败')
+  }
 }
 
 function goToReminders() {
-  router.push('/reminders')
+  router.push('/admin/announcements')
 }
 
 onMounted(() => {
   syncUserForm()
   fetchStats()
+})
+
+onUnmounted(() => {
+  for (const url of objectUrlsToRevoke) {
+    try { URL.revokeObjectURL(url) } catch { /* ignore */ }
+  }
+  objectUrlsToRevoke.length = 0
 })
 </script>
 
@@ -614,6 +948,117 @@ onMounted(() => {
 
 @media (max-width: 480px) {
   .stats-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ========== 头像相关 ========== */
+.avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  display: block;
+}
+
+.avatar-upload-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.upload-dropzone {
+  width: 100%;
+  min-height: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.crop-stage {
+  display: grid;
+  grid-template-columns: 1fr 220px;
+  gap: var(--space-4);
+  align-items: start;
+}
+
+.crop-canvas-wrap {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.crop-canvas {
+  width: 100%;
+  max-width: 400px;
+  aspect-ratio: 1 / 1;
+  border-radius: var(--radius-md);
+  background: #0f172a;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.crop-canvas:active {
+  cursor: grabbing;
+}
+
+.crop-info {
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+  text-align: center;
+}
+
+.crop-preview-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  background: var(--bg-base);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-default);
+}
+
+.crop-preview-label {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.crop-preview {
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #f1f5f9;
+  box-shadow: 0 0 0 1px var(--border-default);
+}
+
+.crop-preview canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.crop-preview-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+  text-align: center;
+  word-break: break-all;
+}
+
+.crop-replace-btn {
+  font-size: var(--text-xs);
+}
+
+@media (max-width: 640px) {
+  .crop-stage {
     grid-template-columns: 1fr;
   }
 }
