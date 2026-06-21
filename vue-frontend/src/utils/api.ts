@@ -36,7 +36,11 @@ instance.interceptors.response.use(
 )
 
 export const api = {
-  get: (url: string, params?: object) => instance.get(url, { params }),
+  get: (url: string, params?: object) => {
+    // 兼容两种调用方式：api.get(url, { q: 'x' }) 和 api.get(url, { params: { q: 'x' } })
+    const config = params && (params as any).params ? params : { params }
+    return instance.get(url, config)
+  },
   post: (url: string, data?: object) => instance.post(url, data),
   put: (url: string, data?: object) => instance.put(url, data),
   delete: (url: string) => instance.delete(url)

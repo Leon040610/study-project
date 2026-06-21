@@ -99,7 +99,14 @@
       <div class="sidebar-footer">
         <div class="user-info">
           <div class="avatar">
-            <el-icon :size="20"><User /></el-icon>
+            <img
+              v-if="userAvatarUrl"
+              :src="userAvatarUrl"
+              :alt="authStore.user?.name"
+              class="avatar-img"
+              @error="onAvatarError"
+            />
+            <el-icon v-else :size="20"><User /></el-icon>
           </div>
           <div class="user-detail">
             <p class="user-name">{{ authStore.user?.name || '用户' }}</p>
@@ -127,6 +134,10 @@
                 <Moon v-else />
               </el-icon>
             </el-button>
+            <el-button class="guide-btn" @click="showGuide = true" aria-label="使用指南">
+              <el-icon :size="18"><QuestionFilled /></el-icon>
+              <span class="guide-btn-text">使用指南</span>
+            </el-button>
             <el-badge :value="notificationCount" class="notification-badge" :hidden="notificationCount === 0">
               <el-button class="notification-btn" @click="showNotifications = true" aria-label="消息中心">
                 <el-icon :size="20"><Bell /></el-icon>
@@ -147,22 +158,33 @@
         <p>暂无消息</p>
       </div>
       <div v-else class="notifications-list">
-        <div v-for="notification in notifications" :key="notification.id" class="notification-item">
-          <el-tag :type="notification.type === 'reminder' ? 'warning' : 'info'" size="small">
-            {{ notification.type === 'reminder' ? '提醒' : '通知' }}
+        <div
+          v-for="notification in notifications"
+          :key="notification.id"
+          class="notification-item"
+          :class="{ unread: !notification.read }"
+          @click="markNotificationRead(notification)"
+        >
+          <el-tag :type="getNotifTagType(notification.type)" size="small">
+            {{ getNotifTagText(notification.type) }}
           </el-tag>
           <div class="notification-content">
             <h4>{{ notification.title }}</h4>
             <p>{{ notification.content }}</p>
-            <span class="notification-time">{{ notification.time }}</span>
+            <span class="notification-time">{{ formatNotifTime(notification.createdAt) }}</span>
           </div>
+          <span v-if="!notification.read" class="unread-dot"></span>
         </div>
       </div>
       <template #footer>
-        <el-button @click="clearNotifications" type="danger">清空消息</el-button>
+        <el-button v-if="notifications.length > 0" @click="markAllRead">全部已读</el-button>
+        <el-button v-if="notifications.length > 0" @click="clearNotifications" type="danger">清空消息</el-button>
         <el-button @click="showNotifications = false">关闭</el-button>
       </template>
     </el-dialog>
+
+    <!-- 使用指南对话框 -->
+    <UserGuideDialog v-model="showGuide" />
   </div>
 </template>
 
@@ -171,10 +193,12 @@ import { computed, ref, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useThemeStore } from '@/stores/theme'
+import { api } from '@/utils/api'
+import UserGuideDialog from '@/components/UserGuideDialog.vue'
 import {
   Monitor, Aim, FolderOpened, Calendar, Document, ChatLineSquare,
   User, Setting, DataAnalysis, Bell, Switch, Reading, Close, Menu,
-  Sunny, Moon
+  Sunny, Moon, QuestionFilled
 } from '@element-plus/icons-vue'
 
 const authStore = useAuthStore()
@@ -183,17 +207,39 @@ const router = useRouter()
 const route = useRoute()
 
 const showNotifications = ref(false)
+const showGuide = ref(false)
 const isMobile = ref(false)
 const sidebarOpen = ref(false)
 
-const notifications = ref([
-  { id: '1', type: 'reminder', title: '学习提醒', content: '今日有3个任务待完成，请及时处理', time: '10分钟前' },
-  { id: '2', type: 'notice', title: '系统通知', content: '您的学习计划"考研数学复习"进度已达到65%', time: '1小时前' },
-  { id: '3', type: 'reminder', title: '任务提醒', content: '任务"复习Python基础语法"即将到期', time: '2小时前' }
-])
+// 消息中心通知列表（从后端加载）
+interface UserNotification {
+  id: string
+  type: string         // reminder | notice | task | plan | goal
+  title: string
+  content: string
+  read: boolean
+  createdAt: string
+  refType?: string | null
+  refId?: string | null
+}
+const notifications = ref<UserNotification[]>([])
+let notifTimer: ReturnType<typeof setInterval> | null = null
 
-const notificationCount = computed(() => notifications.value.length)
+// 未读消息数量（角标）
+const notificationCount = computed(() => notifications.value.filter(n => !n.read).length)
 const activeMenu = computed(() => route.path)
+
+// 头像 URL：加 ?t= 时间戳防止浏览器缓存
+const userAvatarUrl = computed(() => {
+  const u = authStore.user as any
+  if (!u || !u.avatar) return ''
+  const sep = u.avatar.includes('?') ? '&' : '?'
+  return u.avatar + sep + 't=' + (u.avatarUpdatedAt || Date.now())
+})
+
+function onAvatarError() {
+  console.warn('[Layout] 头像加载失败')
+}
 
 const pageTitleMap: Record<string, string> = {
   '/dashboard': '首页',
@@ -239,8 +285,88 @@ function handleLogout() {
   router.push('/login')
 }
 
-function clearNotifications() {
-  notifications.value = []
+// 格式化通知时间为相对时间描述
+function formatNotifTime(s: string): string {
+  if (!s) return ''
+  const d = new Date(s)
+  if (isNaN(d.getTime())) return s
+  const diff = Date.now() - d.getTime()
+  const min = Math.floor(diff / 60000)
+  if (min < 1) return '刚刚'
+  if (min < 60) return `${min}分钟前`
+  const hour = Math.floor(min / 60)
+  if (hour < 24) return `${hour}小时前`
+  const day = Math.floor(hour / 24)
+  if (day < 7) return `${day}天前`
+  const y = d.getFullYear()
+  const m = d.getMonth() + 1
+  const dd = d.getDate()
+  return `${y}年${m}月${dd}日`
+}
+
+// 通知类型对应的标签
+function getNotifTagType(type: string): string {
+  switch (type) {
+    case 'task': return 'success'
+    case 'plan': return 'primary'
+    case 'goal': return 'warning'
+    case 'reminder': return 'warning'
+    default: return 'info'
+  }
+}
+function getNotifTagText(type: string): string {
+  switch (type) {
+    case 'task': return '任务'
+    case 'plan': return '计划'
+    case 'goal': return '目标'
+    case 'reminder': return '提醒'
+    default: return '通知'
+  }
+}
+
+// 从后端加载通知
+async function fetchNotifications() {
+  if (!authStore.isLoggedIn) return
+  try {
+    const data = await api.get('/notifications', { limit: 50 })
+    if (Array.isArray(data)) {
+      notifications.value = data as UserNotification[]
+    }
+  } catch (e) {
+    // 静默失败，避免影响主界面
+    console.warn('[Layout] 加载通知失败', e)
+  }
+}
+
+// 标记单条通知为已读
+async function markNotificationRead(n: UserNotification) {
+  if (n.read) return
+  try {
+    await api.put(`/notifications/${n.id}/read`)
+    n.read = true
+  } catch (e) {
+    console.warn('[Layout] 标记已读失败', e)
+  }
+}
+
+// 全部标记已读
+async function markAllRead() {
+  try {
+    await api.put('/notifications/read-all')
+    notifications.value.forEach(n => { n.read = true })
+  } catch (e) {
+    console.warn('[Layout] 全部标记已读失败', e)
+  }
+}
+
+// 清空当前用户通知
+async function clearNotifications() {
+  try {
+    await api.delete('/notifications')
+    notifications.value = []
+  } catch (e) {
+    console.warn('[Layout] 清空通知失败', e)
+  }
 }
 
 function checkMobile() {
@@ -250,10 +376,17 @@ function checkMobile() {
 onMounted(() => {
   checkMobile()
   window.addEventListener('resize', checkMobile)
+  // 加载通知并启动定时轮询（每 60 秒刷新一次）
+  fetchNotifications()
+  notifTimer = setInterval(fetchNotifications, 60000)
 })
 
 onUnmounted(() => {
   window.removeEventListener('resize', checkMobile)
+  if (notifTimer) {
+    clearInterval(notifTimer)
+    notifTimer = null
+  }
 })
 </script>
 
@@ -333,6 +466,15 @@ onUnmounted(() => {
   justify-content: center;
   align-items: center;
   flex-shrink: 0;
+  overflow: hidden;
+}
+
+.avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  display: block;
 }
 
 .user-name {
@@ -439,6 +581,41 @@ onUnmounted(() => {
   transform: rotate(15deg);
 }
 
+/* 使用指南按钮 */
+.guide-btn {
+  border: none !important;
+  background: var(--bg-surface-hover) !important;
+  height: 40px;
+  padding: 0 var(--space-3) !important;
+  border-radius: var(--radius-full) !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all var(--transition-fast) !important;
+  font-size: 14px;
+}
+
+.guide-btn:hover {
+  background: var(--color-primary-light) !important;
+  color: var(--color-primary) !important;
+}
+
+.guide-btn-text {
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+  .guide-btn-text {
+    display: none;
+  }
+  .guide-btn {
+    width: 40px;
+    padding: 0 !important;
+  }
+}
+
 .header-actions {
   display: flex;
   align-items: center;
@@ -479,10 +656,26 @@ onUnmounted(() => {
   background: var(--bg-surface-hover);
   border-radius: var(--radius-md);
   transition: background var(--transition-fast);
+  cursor: pointer;
+  position: relative;
 }
 
 .notification-item:hover {
   background: var(--color-primary-light);
+}
+
+.notification-item.unread {
+  background: var(--color-primary-light);
+}
+
+.unread-dot {
+  position: absolute;
+  top: var(--space-3);
+  right: var(--space-3);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-danger, #ef4444);
 }
 
 .notification-content h4 {

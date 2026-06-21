@@ -21,7 +21,9 @@
             {{ (scope.row.content || '').slice(0, 50) }}{{ (scope.row.content || '').length > 50 ? '...' : '' }}
           </template>
         </el-table-column>
-        <el-table-column prop="created_at" label="发布时间" width="180" />
+        <el-table-column label="发布时间" width="180">
+          <template #default="scope">{{ formatTime(scope.row.created_at || scope.row.createdAt) }}</template>
+        </el-table-column>
         <el-table-column label="操作" width="150" fixed="right">
           <template #default="scope">
             <el-button size="small" @click="editAnnouncement(scope.row)">编辑</el-button>
@@ -109,6 +111,14 @@ function getPriorityText(priority: string) {
     'low': '一般'
   }
   return map[priority] || '普通'
+}
+
+function formatTime(s?: string) {
+  if (!s) return '-'
+  const d = new Date(s)
+  if (isNaN(d.getTime())) return s
+  const pad = (n: number) => n < 10 ? '0' + n : '' + n
+  return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日 ${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 
 async function fetchAnnouncements() {

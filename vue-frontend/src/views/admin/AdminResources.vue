@@ -94,6 +94,24 @@
         <el-form-item label="资源描述">
           <el-input v-model="form.description" type="textarea" :rows="3" placeholder="请输入资源描述" />
         </el-form-item>
+        <el-form-item label="资源文件">
+          <el-upload
+            :auto-upload="true"
+            :show-file-list="false"
+            :http-request="handleEditFileUpload"
+            :accept="acceptList"
+          >
+            <el-button type="primary" plain>选择新文件替换</el-button>
+            <template #tip>
+              <div class="el-upload__tip" v-if="form.fileName">
+                当前文件：{{ form.fileName }}
+              </div>
+              <div class="el-upload__tip" v-else>
+                当前文件URL：{{ form.fileUrl || '无' }}
+              </div>
+            </template>
+          </el-upload>
+        </el-form-item>
         <el-form-item label="文件URL">
           <el-input v-model="form.fileUrl" placeholder="/uploads/xxx" />
         </el-form-item>
@@ -204,6 +222,29 @@ function openEdit(row: any) {
     fileUrl: row.fileUrl || '', fileName: row.fileName || ''
   })
   editVisible.value = true
+}
+
+async function handleEditFileUpload(options: any) {
+  const file = options.file
+  if (!file) return
+  try {
+    const fd = new FormData()
+    fd.append('file', file)
+    fd.append('category', form.category || '其他')
+    fd.append('type', form.type || 'document')
+    const token = localStorage.getItem('token') || ''
+    const res = await fetch('/api/resources/upload', {
+      method: 'POST', body: fd,
+      headers: { Authorization: 'Bearer ' + token }
+    })
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.message || '文件上传失败')
+    form.fileUrl = data.fileUrl || data.url || ''
+    form.fileName = data.fileName || file.name
+    ElMessage.success('文件上传成功，点击保存以应用更改')
+  } catch (e: any) {
+    ElMessage.error(e?.message || '文件上传失败')
+  }
 }
 
 async function saveEdit() {

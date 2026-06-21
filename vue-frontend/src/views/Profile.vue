@@ -75,8 +75,8 @@
       </div>
     </el-card>
 
-    <!-- 学习提醒快捷入口 -->
-    <el-card class="form-card">
+    <!-- 学习提醒快捷入口（仅普通用户可见） -->
+    <el-card v-if="!isAdmin" class="form-card">
       <template #header>
         <span class="card-title">
           <el-icon><Bell /></el-icon>
@@ -140,8 +140,8 @@
       </el-form>
     </el-card>
 
-    <!-- 学习统计 -->
-    <el-card class="stats-card">
+    <!-- 学习统计（仅普通用户可见） -->
+    <el-card v-if="!isAdmin" class="stats-card">
       <template #header>
         <span class="card-title">
           <el-icon><DataLine /></el-icon>
@@ -298,6 +298,9 @@ const user = computed(() => authStore.user || {
   role: 'student' as const,
   created_at: ''
 })
+
+// 管理员身份标识：用于在管理员个人页面隐藏学习提醒和学习统计模块
+const isAdmin = computed(() => user.value.role === 'admin')
 
 // 头像 URL：加 ?t= 时间戳防止浏览器缓存
 const avatarUrl = computed(() => {
@@ -470,16 +473,21 @@ async function handleAvatarFileChange(file: any) {
   const img = new Image()
   img.onload = () => {
     sourceImage = img
-    // 计算适配 400x400 的缩放
+    // 计算适配 400x400 的缩放（contain 模式，可能留边）
     const s = Math.min(400 / img.width, 400 / img.height)
     sourceScale = s
     sourceOffsetX = (400 - img.width * s) / 2
     sourceOffsetY = (400 - img.height * s) / 2
-    // 默认裁剪框：正方形居中
-    const size = Math.min(400, 400 * 0.8)
+    // 图片在 400x400 canvas 中的实际边界
+    const imgLeft = sourceOffsetX
+    const imgTop = sourceOffsetY
+    const imgW = img.width * s
+    const imgH = img.height * s
+    // 默认裁剪框：在图片范围内取最大正方形（留 10% 边距），居中
+    const size = Math.min(imgW, imgH) * 0.9
     cropState.size = size
-    cropState.x = (400 - size) / 2
-    cropState.y = (400 - size) / 2
+    cropState.x = imgLeft + (imgW - size) / 2
+    cropState.y = imgTop + (imgH - size) / 2
     drawCropCanvas()
   }
   img.onerror = () => {
@@ -552,10 +560,8 @@ function drawCropPreview() {
     ctx.fillRect(0, 0, 200, 200)
     return
   }
+  // 不填充白色背景，避免非正方形图片或边缘像素产生白边
   // 裁剪坐标系转换：canvas(400) -> 源图 -> 200x200 输出
-  ctx.fillStyle = '#ffffff'
-  ctx.fillRect(0, 0, 200, 200)
-  const ratio = 200 / cropState.size
   ctx.drawImage(
     sourceImage,
     (cropState.x - sourceOffsetX) / sourceScale,
@@ -585,8 +591,13 @@ function onCropPointerMove(e: PointerEvent) {
   const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
   const x = (e.clientX - rect.left) * (400 / rect.width)
   const y = (e.clientY - rect.top) * (400 / rect.height)
-  cropState.x = Math.max(0, Math.min(400 - cropState.size, x - cropDrag.offsetX))
-  cropState.y = Math.max(0, Math.min(400 - cropState.size, y - cropDrag.offsetY))
+  // 约束裁剪框始终在图片范围内，避免裁到空白区域产生白边
+  const imgLeft = sourceOffsetX
+  const imgTop = sourceOffsetY
+  const imgRight = sourceOffsetX + (sourceImage ? sourceImage.width * sourceScale : 0)
+  const imgBottom = sourceOffsetY + (sourceImage ? sourceImage.height * sourceScale : 0)
+  cropState.x = Math.max(imgLeft, Math.min(imgRight - cropState.size, x - cropDrag.offsetX))
+  cropState.y = Math.max(imgTop, Math.min(imgBottom - cropState.size, y - cropDrag.offsetY))
   drawCropCanvas()
 }
 
@@ -646,7 +657,8 @@ function goToReminders() {
 
 onMounted(() => {
   syncUserForm()
-  fetchStats()
+  // 学习统计模块仅对普通用户展示，管理员不加载统计数据
+  if (!isAdmin.value) fetchStats()
 })
 
 onUnmounted(() => {

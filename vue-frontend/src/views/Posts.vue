@@ -24,10 +24,19 @@
       <el-card v-for="post in filteredPosts" :key="post.id" class="post-card">
         <div class="post-header">
           <div class="author-info">
-            <div class="avatar">👤</div>
+            <div class="avatar">
+              <img
+                v-if="post.authorAvatar"
+                :src="post.authorAvatar"
+                :alt="post.authorName"
+                class="avatar-img"
+                @error="onAvatarError"
+              />
+              <span v-else>👤</span>
+            </div>
             <div class="author-detail">
               <span class="author-name">{{ post.authorName }}</span>
-              <span class="post-time">{{ post.createdAt }}</span>
+              <span class="post-time">{{ formatTime(post.createdAt) }}</span>
             </div>
           </div>
           <el-tag>{{ post.category }}</el-tag>
@@ -83,10 +92,19 @@
       <div v-if="selectedPost" class="post-detail">
         <div class="detail-header">
           <div class="author-info">
-            <div class="avatar">👤</div>
+            <div class="avatar">
+              <img
+                v-if="selectedPost.authorAvatar"
+                :src="selectedPost.authorAvatar"
+                :alt="selectedPost.authorName"
+                class="avatar-img"
+                @error="onAvatarError"
+              />
+              <span v-else>👤</span>
+            </div>
             <div class="author-detail">
               <span class="author-name">{{ selectedPost.authorName }}</span>
-              <span class="post-time">{{ selectedPost.createdAt }}</span>
+              <span class="post-time">{{ formatTime(selectedPost.createdAt) }}</span>
             </div>
           </div>
           <el-tag>{{ selectedPost.category }}</el-tag>
@@ -112,11 +130,23 @@
           </div>
           <div v-else class="comments-list">
             <div v-for="comment in selectedPost.comments" :key="comment.id" class="comment-item">
-              <div class="comment-header">
-                <span class="comment-author">{{ comment.authorName }}</span>
-                <span class="comment-time">{{ comment.createdAt }}</span>
+              <div class="comment-avatar">
+                <img
+                  v-if="comment.authorAvatar"
+                  :src="comment.authorAvatar"
+                  :alt="comment.authorName"
+                  class="avatar-img"
+                  @error="onAvatarError"
+                />
+                <span v-else>👤</span>
               </div>
-              <p>{{ comment.content }}</p>
+              <div class="comment-body">
+                <div class="comment-header">
+                  <span class="comment-author">{{ comment.authorName }}</span>
+                  <span class="comment-time">{{ formatTime(comment.createdAt) }}</span>
+                </div>
+                <p>{{ comment.content }}</p>
+              </div>
             </div>
           </div>
           <el-form :model="commentForm" @submit.prevent="submitComment">
@@ -141,6 +171,7 @@ import { Plus, Search, Star, ChatLineSquare } from '@element-plus/icons-vue'
 interface Comment {
   id: string
   authorName: string
+  authorAvatar?: string
   content: string
   createdAt: string
 }
@@ -151,6 +182,7 @@ interface Post {
   content: string
   category: string
   authorName: string
+  authorAvatar?: string
   viewCount: number
   commentCount: number
   likes: number
@@ -195,6 +227,19 @@ const filteredPosts = computed(() => {
   })
 })
 
+function onAvatarError() {
+  console.warn('[Posts] 头像加载失败')
+}
+
+// 格式化时间为本地友好显示：2026年6月21日 10:39:01
+function formatTime(time: string): string {
+  if (!time) return ''
+  const d = new Date(time)
+  if (isNaN(d.getTime())) return time
+  const pad = (n: number) => n < 10 ? '0' + n : '' + n
+  return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日 ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
+}
+
 async function fetchPosts() {
   loading.value = true
   try {
@@ -202,6 +247,7 @@ async function fetchPosts() {
     // 规范化字段：后端 likedUsers 数组 → 前端 liked 布尔
     posts.value = (data || []).map((p: any) => ({
       ...p,
+      authorAvatar: p.authorAvatar || '',
       liked: false,
       comments: p.comments || []
     }))
@@ -234,6 +280,7 @@ async function handleSubmit() {
     if (newPost) {
       posts.value.unshift({
         ...newPost,
+        authorAvatar: newPost.authorAvatar || '',
         liked: false,
         comments: []
       })
@@ -256,7 +303,11 @@ function viewPost(post: Post) {
       selectedPost.value.viewCount = detail.viewCount
       selectedPost.value.likes = detail.likes
       selectedPost.value.liked = detail.liked
-      selectedPost.value.comments = detail.comments || []
+      selectedPost.value.authorAvatar = detail.authorAvatar || selectedPost.value.authorAvatar
+      selectedPost.value.comments = (detail.comments || []).map((c: any) => ({
+        ...c,
+        authorAvatar: c.authorAvatar || ''
+      }))
     }
   }).catch(() => {})
 }
@@ -278,13 +329,17 @@ async function submitComment() {
   try {
     const newComment = await api.post(`/posts/${selectedPost.value.id}/comments`, { content }) as any
     if (newComment) {
-      selectedPost.value.comments.push(newComment)
+      selectedPost.value.comments.push({
+        ...newComment,
+        authorAvatar: newComment.authorAvatar || ''
+      })
       selectedPost.value.commentCount++
     } else {
       // 失败时使用本地评论
       const fallback: Comment = {
         id: Date.now().toString(),
         authorName: '我',
+        authorAvatar: '',
         content,
         createdAt: new Date().toISOString()
       }
@@ -298,6 +353,7 @@ async function submitComment() {
     const fallback: Comment = {
       id: Date.now().toString(),
       authorName: '我',
+      authorAvatar: '',
       content,
       createdAt: new Date().toISOString()
     }
@@ -381,6 +437,16 @@ fetchPosts()
   justify-content: center;
   align-items: center;
   font-size: 20px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  display: block;
 }
 
 .author-detail {
@@ -500,9 +566,29 @@ fetchPosts()
 }
 
 .comment-item {
+  display: flex;
+  gap: 12px;
   padding: 16px;
   background: var(--bg-surface);
   border-radius: 8px;
+}
+
+.comment-avatar {
+  width: 36px;
+  height: 36px;
+  background: var(--bg-surface-hover);
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 18px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.comment-body {
+  flex: 1;
+  min-width: 0;
 }
 
 .comment-header {
