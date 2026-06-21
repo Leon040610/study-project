@@ -50,9 +50,3 @@ npm-cache/
 # 临时文件
 *.tmp
 *.temp
-
-# 运行时数据（每次启动自动生成，不入库）
-data.json
-data.json.backup-*
-data.json.bak
-backups/
