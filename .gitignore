@@ -50,9 +50,3 @@ npm-cache/
 # 临时文件
 *.tmp
 *.temp
-
-# 误创建的文件夹（环境变量解析失败产生）
-%USERPROFILE%/
-
-# 克隆的 skill 仓库（不属于本项目）
-ui-ux-pro-max-skill/
