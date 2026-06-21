@@ -138,7 +138,29 @@
     <!-- 公告 -->
     <el-card class="announcements">
       <template #header>
-        <span class="card-title">系统公告</span>
+        <div class="announcement-header">
+          <span class="card-title">系统公告</span>
+          <div class="announcement-actions">
+            <el-button
+              v-if="announcements.length > 3"
+              text
+              type="primary"
+              size="small"
+              @click="announcementsExpanded = !announcementsExpanded"
+            >
+              {{ announcementsExpanded ? '收起' : `展开全部 (${announcements.length})` }}
+            </el-button>
+            <el-button
+              v-if="announcements.length > 0"
+              text
+              type="danger"
+              size="small"
+              @click="handleClearAllAnnouncements"
+            >
+              清除全部
+            </el-button>
+          </div>
+        </div>
       </template>
       <div v-if="announcements.length === 0" class="empty-state">
         <el-icon :size="48" color="var(--text-tertiary)"><Bell /></el-icon>
@@ -146,9 +168,10 @@
       </div>
       <div v-else class="announcement-list">
         <div
-          v-for="announcement in announcements"
+          v-for="announcement in displayedAnnouncements"
           :key="announcement.id"
           class="announcement-item"
+          @click="openAnnouncementDetail(announcement)"
         >
           <el-tag :type="getPriorityType(announcement.priority)" size="small" class="priority-tag">
             {{ getPriorityText(announcement.priority) }}
@@ -157,16 +180,40 @@
             <h4>{{ announcement.title }}</h4>
             <p>{{ announcement.content }}</p>
           </div>
-          <span class="announcement-time">{{ announcement.createdAt }}</span>
+          <span class="announcement-time">{{ formatAnnouncementTime(announcement.createdAt || announcement.created_at) }}</span>
         </div>
       </div>
     </el-card>
+
+    <!-- 公告详情对话框 -->
+    <el-dialog
+      v-model="announcementDetailVisible"
+      :title="currentAnnouncement?.title || '公告详情'"
+      width="560px"
+      class="announcement-detail-dialog"
+    >
+      <div v-if="currentAnnouncement" class="announcement-detail">
+        <div class="detail-meta">
+          <el-tag :type="getPriorityType(currentAnnouncement.priority)" size="small">
+            {{ getPriorityText(currentAnnouncement.priority) }}
+          </el-tag>
+          <span class="detail-time">
+            发布时间：{{ formatAnnouncementTime(currentAnnouncement.createdAt || currentAnnouncement.created_at) }}
+          </span>
+        </div>
+        <div class="detail-body">{{ currentAnnouncement.content }}</div>
+      </div>
+      <template #footer>
+        <el-button @click="announcementDetailVisible = false">关闭</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, reactive, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { api } from '@/utils/api'
 import * as echarts from 'echarts'
 import { useDataStore } from '@/stores/data'
@@ -185,6 +232,17 @@ const stats = reactive({
 })
 
 const announcements = ref<AnnouncementItem[]>([])
+// 公告展开状态：默认折叠仅显示3条，展开后显示全部
+const announcementsExpanded = ref(false)
+const displayedAnnouncements = computed(() =>
+  announcementsExpanded.value ? announcements.value : announcements.value.slice(0, 3)
+)
+// 公告详情对话框
+const announcementDetailVisible = ref(false)
+const currentAnnouncement = ref<AnnouncementItem | null>(null)
+// 本地已清除公告 ID 集合（用户端隐藏，不影响后端数据）
+const clearedAnnouncementIds = ref<Set<string>>(new Set())
+const CLEARED_ANNOUNCEMENTS_KEY = 'dashboard_cleared_announcement_ids'
 const weeklyTrendChart = ref<HTMLElement | null>(null)
 const taskChart = ref<HTMLElement | null>(null)
 
@@ -196,7 +254,78 @@ interface AnnouncementItem {
   title: string
   content: string
   priority: string
-  createdAt: string
+  createdAt?: string
+  created_at?: string
+}
+
+// 格式化公告时间：ISO 字符串 → "YYYY年M月D日 HH:MM"
+function formatAnnouncementTime(s?: string): string {
+  if (!s) return ''
+  const d = new Date(s)
+  if (isNaN(d.getTime())) return s
+  const y = d.getFullYear()
+  const m = d.getMonth() + 1
+  const day = d.getDate()
+  const hh = String(d.getHours()).padStart(2, '0')
+  const mm = String(d.getMinutes()).padStart(2, '0')
+  return `${y}年${m}月${day}日 ${hh}:${mm}`
+}
+
+// 打开公告详情对话框
+function openAnnouncementDetail(a: AnnouncementItem) {
+  currentAnnouncement.value = a
+  announcementDetailVisible.value = true
+}
+
+// 从 localStorage 加载已清除公告 ID
+function loadClearedAnnouncementIds() {
+  try {
+    const raw = localStorage.getItem(CLEARED_ANNOUNCEMENTS_KEY)
+    if (raw) {
+      const arr = JSON.parse(raw)
+      if (Array.isArray(arr)) {
+        clearedAnnouncementIds.value = new Set(arr)
+      }
+    }
+  } catch {
+    clearedAnnouncementIds.value = new Set()
+  }
+}
+
+// 持久化已清除公告 ID
+function saveClearedAnnouncementIds() {
+  try {
+    localStorage.setItem(
+      CLEARED_ANNOUNCEMENTS_KEY,
+      JSON.stringify(Array.from(clearedAnnouncementIds.value))
+    )
+  } catch {
+    // 忽略存储异常
+  }
+}
+
+// 清除全部公告（带确认机制）
+async function handleClearAllAnnouncements() {
+  try {
+    await ElMessageBox.confirm(
+      `确定要清除全部 ${announcements.value.length} 条公告吗？清除后将不再显示这些公告。`,
+      '清除全部公告',
+      {
+        confirmButtonText: '确定清除',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }
+    )
+  } catch {
+    // 用户取消
+    return
+  }
+  // 记录已清除的公告 ID（用户端隐藏，不影响后端数据）
+  announcements.value.forEach(a => clearedAnnouncementIds.value.add(a.id))
+  saveClearedAnnouncementIds()
+  announcements.value = []
+  announcementsExpanded.value = false
+  ElMessage.success('已清除全部公告')
 }
 
 async function fetchData() {
@@ -217,13 +346,16 @@ async function fetchData() {
     { id: '3', title: '学习提醒', content: '请及时完成本周学习任务，保持学习进度。', priority: 'normal', createdAt: '2026-06-13' }
   ]
 
+  // 加载本地已清除公告 ID，过滤后展示
+  loadClearedAnnouncementIds()
   try {
     const announcementsData = await api.get('/announcements')
-    announcements.value = (announcementsData && Array.isArray(announcementsData) && announcementsData.length > 0)
-      ? announcementsData.slice(0, 3)
+    const raw = (announcementsData && Array.isArray(announcementsData) && announcementsData.length > 0)
+      ? announcementsData
       : defaultAnnouncements
+    announcements.value = raw.filter((a: AnnouncementItem) => !clearedAnnouncementIds.value.has(a.id))
   } catch {
-    announcements.value = defaultAnnouncements
+    announcements.value = defaultAnnouncements.filter((a: AnnouncementItem) => !clearedAnnouncementIds.value.has(a.id))
   }
 }
 
@@ -572,6 +704,18 @@ watch(() => themeStore.isDark, () => {
 }
 
 /* ---- 公告 ---- */
+.announcement-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.announcement-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
 .announcement-list {
   display: flex;
   flex-direction: column;
@@ -585,11 +729,36 @@ watch(() => themeStore.isDark, () => {
   padding: var(--space-4);
   background: var(--bg-surface-hover);
   border-radius: var(--radius-md);
-  transition: background var(--transition-fast);
+  transition: background var(--transition-fast), box-shadow var(--transition-fast);
+  cursor: pointer;
 }
 
 .announcement-item:hover {
   background: var(--color-primary-light);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+
+/* 公告详情对话框 */
+.announcement-detail .detail-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--border-default);
+}
+
+.announcement-detail .detail-time {
+  font-size: var(--text-sm);
+  color: var(--text-tertiary);
+}
+
+.announcement-detail .detail-body {
+  font-size: var(--text-base);
+  line-height: 1.7;
+  color: var(--text-primary);
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 .priority-tag {

@@ -24,13 +24,13 @@
             </div>
           </div>
         </template>
-        <svg :viewBox="`0 0 ${chartW} ${chartH}`" class="line-chart" preserveAspectRatio="none">
+        <svg :viewBox="`0 0 ${chartW} ${chartH}`" class="line-chart" preserveAspectRatio="xMidYMid meet">
           <g v-for="g in gridLines" :key="'g' + g.y">
-            <line :x1="padX" :y1="g.y" :x2="chartW - padX" :y2="g.y" :stroke="gridStroke" stroke-dasharray="2 3" />
-            <text :x="padX - 6" :y="g.y + 4" font-size="10" :fill="axisLabelFill" text-anchor="end">{{ g.label }}</text>
+            <line :x1="padLeft" :y1="g.y" :x2="chartW - padRight" :y2="g.y" :stroke="gridStroke" stroke-dasharray="2 3" />
+            <text :x="padLeft - 6" :y="g.y + 4" font-size="10" :fill="axisLabelFill" text-anchor="end">{{ g.label }}</text>
           </g>
           <g v-for="(d, i) in daily" :key="'x' + i">
-            <text :x="xAt(i)" :y="chartH - padX + 16" font-size="10" :fill="axisLabelFill" text-anchor="middle">
+            <text :x="xAt(i)" :y="chartH - padBottom + 16" font-size="10" :fill="axisLabelFill" text-anchor="middle">
               {{ d.date.slice(5) }}
             </text>
           </g>
@@ -132,10 +132,12 @@ const categoryChart = computed(() => stats.value.resourceByCategory || [])
 
 const palette = ['#3b82f6', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6', '#06b6d4', '#ef4444', '#84cc16']
 
-const chartW = 720
-const chartH = 240
-const padX = 30
-const padY = 24
+const chartW = 700
+const chartH = 220
+const padLeft = 36
+const padRight = 12
+const padTop = 16
+const padBottom = 36
 
 const maxY = computed(() => {
   const m = Math.max(1, ...daily.value.flatMap(d => [d.users, d.posts, d.resources]))
@@ -143,11 +145,11 @@ const maxY = computed(() => {
 })
 
 function xAt(i: number) {
-  if (daily.value.length <= 1) return chartW / 2
-  return padX + (i * (chartW - padX * 2)) / (daily.value.length - 1)
+  if (daily.value.length <= 1) return (chartW + padLeft - padRight) / 2
+  return padLeft + (i * (chartW - padLeft - padRight)) / (daily.value.length - 1)
 }
 function yAt(v: number) {
-  return padY + (1 - v / maxY.value) * (chartH - padY * 2)
+  return padTop + (1 - v / maxY.value) * (chartH - padTop - padBottom)
 }
 const gridLines = computed(() => {
   const lines: { y: number; label: string }[] = []
@@ -225,7 +227,7 @@ onMounted(load)
 .legend { display: flex; gap: 12px; font-size: 12px; color: var(--el-text-color-regular); }
 .legend-item { display: inline-flex; align-items: center; gap: 4px; }
 .legend-item i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; }
-.line-chart { width: 100%; height: 240px; }
+.line-chart { width: 100%; height: auto; max-height: 260px; display: block; }
 
 .grid-2 {
   display: grid;

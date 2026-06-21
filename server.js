@@ -112,6 +112,7 @@ const defaultData = {
   posts: [],
   comments: [],
   notificationLogs: [],
+  userNotifications: [],
   userPreferences: [],
   reminderRules: [],
   announcements: [
@@ -157,7 +158,7 @@ function saveData() {
   try {
     const data = {
       users, goals, plans, tasks, reminders, posts, comments, notificationLogs,
-      userPreferences, reminderRules, announcements, resources,
+      userNotifications, userPreferences, reminderRules, announcements, resources,
       adminLogs, settings, backups,
       userIdCounter, goalIdCounter, planIdCounter, taskIdCounter, reminderIdCounter,
       postIdCounter, commentIdCounter, resourceIdCounter, ruleIdCounter
@@ -180,6 +181,7 @@ let backups = persisted.backups || [];
 let posts = persisted.posts || [];
 let comments = persisted.comments || [];
 let notificationLogs = persisted.notificationLogs || [];
+let userNotifications = persisted.userNotifications || [];
 let userPreferences = persisted.userPreferences || [];
 let reminderRules = persisted.reminderRules || [];
 let announcements = persisted.announcements || defaultData.announcements;
@@ -228,6 +230,38 @@ function authMiddleware(req, res, next) {
   next();
 }
 
+// 构建包含头像等完整字段的安全用户对象（不包含 password）
+function buildUserResponse(dbUser) {
+  if (!dbUser) return null;
+  return {
+    id: dbUser.id,
+    name: dbUser.name,
+    email: dbUser.email,
+    phone: dbUser.phone || '',
+    role: dbUser.role,
+    created_at: dbUser.createdAt || dbUser.created_at,
+    avatar: dbUser.avatar || undefined,
+    avatarUpdatedAt: dbUser.avatarUpdatedAt || undefined,
+    customCategories: dbUser.customCategories || undefined
+  };
+}
+
+// 将数据库用户同步到 tokenUserMap（保留 token 关联，更新可变字段）
+function syncTokenUser(token, dbUser) {
+  if (!token || !dbUser) return;
+  tokenUserMap.set(token, {
+    id: dbUser.id,
+    name: dbUser.name,
+    email: dbUser.email,
+    phone: dbUser.phone,
+    role: dbUser.role,
+    created_at: dbUser.createdAt || dbUser.created_at,
+    avatar: dbUser.avatar || undefined,
+    avatarUpdatedAt: dbUser.avatarUpdatedAt || undefined,
+    customCategories: dbUser.customCategories || undefined
+  });
+}
+
 // 认证接口
 app.post('/api/auth/register', (req, res) => {
   const { name, email, phone, password } = req.body;
@@ -259,11 +293,11 @@ app.post('/api/auth/register', (req, res) => {
   saveData();
   // 需审核的账号不直接发 token
   if (requireApproval) {
-    return res.json({ token: null, user: { id: user.id, name: user.name, email: user.email, phone: user.phone, role: 'student', status: 'pending', created_at: user.createdAt }, message: '注册成功，等待管理员审核' });
+    return res.json({ token: null, user: buildUserResponse(user), message: '注册成功，等待管理员审核' });
   }
   const token = generateToken(email);
-  tokenUserMap.set(token, { id: user.id, name: user.name, email: user.email, phone: user.phone, role: user.role, created_at: user.createdAt });
-  res.json({ token, user: { id: user.id, name: user.name, email: user.email, phone: user.phone, role: 'student', created_at: user.createdAt } });
+  syncTokenUser(token, user);
+  res.json({ token, user: buildUserResponse(user) });
 });
 
 app.post('/api/auth/login', (req, res) => {
@@ -284,8 +318,8 @@ app.post('/api/auth/login', (req, res) => {
     return res.status(403).json({ message: '账号已被禁用' });
   }
   const token = generateToken(email);
-  tokenUserMap.set(token, { id: user.id, name: user.name, email: user.email, phone: user.phone, role: user.role, created_at: user.createdAt });
-  res.json({ token, user: { id: user.id, name: user.name, email: user.email, phone: user.phone, role: user.role, created_at: user.createdAt } });
+  syncTokenUser(token, user);
+  res.json({ token, user: buildUserResponse(user) });
 });
 
 app.post('/api/auth/logout', (req, res) => {
@@ -299,19 +333,33 @@ app.post('/api/auth/logout', (req, res) => {
 app.get('/api/auth/profile', (req, res) => {
   const user = getUserFromToken(req);
   if (!user) return res.status(401).json({ message: '未登录' });
+  // 优先从数据库读取完整字段（包含 avatar 等持久化字段）
+  const dbUser = users.find(u => u.id === user.id);
+  if (dbUser) {
+    // 同步回 tokenUserMap，保证后续请求也能拿到最新头像
+    const authHeader = req.headers.authorization;
+    const token = authHeader && authHeader.startsWith('Bearer ') ? authHeader.substring(7) : null;
+    if (token) syncTokenUser(token, dbUser);
+    return res.json(buildUserResponse(dbUser));
+  }
   res.json(user);
 });
 
 app.put('/api/auth/profile', (req, res) => {
   const user = getUserFromToken(req);
   if (!user) return res.status(401).json({ message: '未登录' });
+  const dbUser = users.find(u => u.id === user.id);
   if (req.body.phone !== undefined) user.phone = req.body.phone;
   if (req.body.name) user.name = req.body.name;
-  const dbUser = users.find(u => u.email === user.email);
   if (dbUser) {
     if (req.body.phone !== undefined) dbUser.phone = req.body.phone;
     if (req.body.name) dbUser.name = req.body.name;
     saveData();
+    // 同步 tokenUserMap
+    const authHeader = req.headers.authorization;
+    const token = authHeader && authHeader.startsWith('Bearer ') ? authHeader.substring(7) : null;
+    if (token) syncTokenUser(token, dbUser);
+    return res.json(buildUserResponse(dbUser));
   }
   res.json(user);
 });
@@ -395,8 +443,37 @@ app.post('/api/goals', (req, res) => {
 app.put('/api/goals/:id', (req, res) => {
   const goal = goals.find(g => String(g.id) === String(req.params.id));
   if (!goal) return res.status(404).json({ message: '目标不存在' });
+  const user = getUserFromToken(req);
+  const wasProgress = Number(goal.progress) || 0;
+  const wasCompleted = goal.status === '已完成' || goal.status === 'completed' || goal.status === '已达成';
   Object.assign(goal, req.body);
   saveData();
+  // 目标完成时推送通知
+  const isCompleted = goal.status === '已完成' || goal.status === 'completed' || goal.status === '已达成';
+  if (!wasCompleted && isCompleted && user) {
+    pushUserNotification(user.id, {
+      type: 'goal',
+      title: '目标已完成',
+      content: `学习目标"${goal.title || ''}"已达成`,
+      refType: 'goal',
+      refId: goal.id
+    });
+  }
+  // 目标进度变化推送（每完成 25% 推送一次）
+  const newProgress = Number(goal.progress) || 0;
+  if (user && newProgress > wasProgress && goal.progress !== undefined) {
+    const milestones = [25, 50, 75, 100];
+    const hitMilestones = milestones.filter(m => wasProgress < m && newProgress >= m);
+    for (const m of hitMilestones) {
+      pushUserNotification(user.id, {
+        type: 'goal',
+        title: '目标进度更新',
+        content: `学习目标"${goal.title || ''}"进度已达到 ${m}%`,
+        refType: 'goal',
+        refId: goal.id
+      });
+    }
+  }
   res.json(goal);
 });
 
@@ -407,30 +484,70 @@ app.delete('/api/goals/:id', (req, res) => {
 });
 
 // ========== 学习计划 ==========
-app.get('/api/plans', (req, res) => res.json(plans));
+app.get('/api/plans', (req, res) => {
+  // 附加创建者名称，便于管理端展示
+  const result = plans.map(p => {
+    const author = users.find(u => String(u.id) === String(p.userId || p.user_id || ''));
+    return { ...p, userName: author ? author.name : '未知用户' };
+  });
+  res.json(result);
+});
 
 app.post('/api/plans', (req, res) => {
+  const user = getUserFromToken(req);
   const plan = {
     id: String(planIdCounter++),
     ...req.body,
+    userId: user ? user.id : (req.body.userId || null),
     createdAt: new Date().toISOString()
   };
   plans.push(plan);
   saveData();
-  res.json(plan);
+  const author = users.find(u => String(u.id) === String(plan.userId));
+  res.json({ ...plan, userName: author ? author.name : '未知用户' });
 });
 
 app.get('/api/plans/:id', (req, res) => {
   const plan = plans.find(p => String(p.id) === String(req.params.id));
   if (!plan) return res.status(404).json({ message: '计划不存在' });
-  res.json(plan);
+  const author = users.find(u => String(u.id) === String(plan.userId || plan.user_id || ''));
+  res.json({ ...plan, userName: author ? author.name : '未知用户' });
 });
 
 app.put('/api/plans/:id', (req, res) => {
   const plan = plans.find(p => String(p.id) === String(req.params.id));
   if (!plan) return res.status(404).json({ message: '计划不存在' });
+  const user = getUserFromToken(req);
+  const wasProgress = Number(plan.progress) || 0;
+  const wasCompleted = plan.status === '已完成' || plan.status === 'completed';
   Object.assign(plan, req.body);
   saveData();
+  // 计划完成时推送通知
+  const isCompleted = plan.status === '已完成' || plan.status === 'completed';
+  if (!wasCompleted && isCompleted && user) {
+    pushUserNotification(user.id, {
+      type: 'plan',
+      title: '计划已完成',
+      content: `学习计划"${plan.title || ''}"已全部完成`,
+      refType: 'plan',
+      refId: plan.id
+    });
+  }
+  // 计划进度变化推送（每完成 25% 推送一次）
+  const newProgress = Number(plan.progress) || 0;
+  if (user && newProgress > wasProgress && plan.progress !== undefined) {
+    const milestones = [25, 50, 75, 100];
+    const hitMilestones = milestones.filter(m => wasProgress < m && newProgress >= m);
+    for (const m of hitMilestones) {
+      pushUserNotification(user.id, {
+        type: 'plan',
+        title: '计划进度更新',
+        content: `学习计划"${plan.title || ''}"进度已达到 ${m}%`,
+        refType: 'plan',
+        refId: plan.id
+      });
+    }
+  }
   res.json(plan);
 });
 
@@ -458,8 +575,36 @@ app.post('/api/tasks', (req, res) => {
 app.put('/api/tasks/:id', (req, res) => {
   const task = tasks.find(t => String(t.id) === String(req.params.id));
   if (!task) return res.status(404).json({ message: '任务不存在' });
+  const user = getUserFromToken(req);
+  const wasCompleted = !!task.completed;
+  const wasProgress = Number(task.progress) || 0;
   Object.assign(task, req.body);
   saveData();
+  // 任务完成时推送通知
+  if (!wasCompleted && task.completed && user) {
+    pushUserNotification(user.id, {
+      type: 'task',
+      title: '任务已完成',
+      content: `任务"${task.title || ''}"已标记为完成`,
+      refType: 'task',
+      refId: task.id
+    });
+  }
+  // 任务进度变化推送（每完成 25% 推送一次）
+  const newProgress = Number(task.progress) || 0;
+  if (user && newProgress > wasProgress && task.progress !== undefined) {
+    const milestones = [25, 50, 75, 100];
+    const hitMilestones = milestones.filter(m => wasProgress < m && newProgress >= m);
+    for (const m of hitMilestones) {
+      pushUserNotification(user.id, {
+        type: 'task',
+        title: '任务进度更新',
+        content: `任务"${task.title || ''}"进度已达到 ${m}%`,
+        refType: 'task',
+        refId: task.id
+      });
+    }
+  }
   res.json(task);
 });
 
@@ -470,7 +615,14 @@ app.delete('/api/tasks/:id', (req, res) => {
 });
 
 // ========== 公告 ==========
-app.get('/api/announcements', (req, res) => res.json(announcements));
+app.get('/api/announcements', (req, res) => {
+  // 规范化字段名，确保所有公告都有 created_at 字段
+  const result = announcements.map(a => ({
+    ...a,
+    created_at: a.created_at || a.createdAt || ''
+  }));
+  res.json(result);
+});
 
 // 创建公告（仅管理员）
 app.post('/api/announcements', requireAdmin, (req, res) => {
@@ -494,7 +646,7 @@ app.post('/api/announcements', requireAdmin, (req, res) => {
 
 // 更新公告（仅管理员）
 app.put('/api/announcements/:id', requireAdmin, (req, res) => {
-  const item = announcements.find(a => a.id === req.params.id);
+  const item = announcements.find(a => String(a.id) === String(req.params.id));
   if (!item) return res.status(404).json({ message: '公告不存在' });
   const { title, content, priority } = req.body || {};
   if (title !== undefined) item.title = title;
@@ -508,11 +660,78 @@ app.put('/api/announcements/:id', requireAdmin, (req, res) => {
 
 // 删除公告（仅管理员）
 app.delete('/api/announcements/:id', requireAdmin, (req, res) => {
-  const idx = announcements.findIndex(a => a.id === req.params.id);
+  const idx = announcements.findIndex(a => String(a.id) === String(req.params.id));
   if (idx < 0) return res.status(404).json({ message: '公告不存在' });
   const [removed] = announcements.splice(idx, 1);
   saveData();
   logAdminAction(req.currentUser, 'announcement.delete', removed.id, {});
+  res.json({ success: true });
+});
+
+// ========== 资源分类（用户自定义） ==========
+
+// ========== 用户消息中心通知 ==========
+// 推送用户通知（任务/计划/目标完成等事件）
+function pushUserNotification(userId, { type, title, content, refType, refId }) {
+  if (!userId) return;
+  const notif = {
+    id: 'n_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
+    userId,
+    type: type || 'notice',          // reminder | notice | task | plan | goal
+    title,
+    content,
+    refType: refType || null,        // task | plan | goal
+    refId: refId || null,
+    read: false,
+    createdAt: new Date().toISOString()
+  };
+  userNotifications.unshift(notif);
+  // 限制单用户通知数量，避免无限增长
+  if (userNotifications.length > 200) userNotifications.length = 200;
+  saveData();
+  return notif;
+}
+
+// 获取当前用户的通知列表
+app.get('/api/notifications', (req, res) => {
+  const user = getUserFromToken(req);
+  if (!user) return res.status(401).json({ message: '未登录' });
+  const limit = parseInt(req.query.limit) || 50;
+  const list = userNotifications
+    .filter(n => String(n.userId) === String(user.id))
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+    .slice(0, limit);
+  res.json(list);
+});
+
+// 标记通知为已读
+app.put('/api/notifications/:id/read', (req, res) => {
+  const user = getUserFromToken(req);
+  if (!user) return res.status(401).json({ message: '未登录' });
+  const n = userNotifications.find(x => String(x.id) === String(req.params.id) && String(x.userId) === String(user.id));
+  if (!n) return res.status(404).json({ message: '通知不存在' });
+  n.read = true;
+  saveData();
+  res.json({ success: true });
+});
+
+// 全部标记已读
+app.put('/api/notifications/read-all', (req, res) => {
+  const user = getUserFromToken(req);
+  if (!user) return res.status(401).json({ message: '未登录' });
+  userNotifications.forEach(n => {
+    if (String(n.userId) === String(user.id)) n.read = true;
+  });
+  saveData();
+  res.json({ success: true });
+});
+
+// 清空当前用户通知
+app.delete('/api/notifications', (req, res) => {
+  const user = getUserFromToken(req);
+  if (!user) return res.status(401).json({ message: '未登录' });
+  userNotifications = userNotifications.filter(n => String(n.userId) !== String(user.id));
+  saveData();
   res.json({ success: true });
 });
 
@@ -719,6 +938,11 @@ app.get('/api/posts', (req, res) => {
   }
   // 倒序
   result.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  // 附加作者头像
+  result = result.map(p => {
+    const author = users.find(u => u.id === p.userId);
+    return { ...p, authorAvatar: author ? (author.avatar || '') : '' };
+  });
   res.json(result);
 });
 
@@ -733,7 +957,14 @@ app.get('/api/posts/:id', (req, res) => {
   // 是否点赞
   const user = getUserFromToken(req);
   const liked = user ? (post.likedUsers || []).includes(user.id) : false;
-  res.json({ ...post, comments: postComments, liked });
+  // 附加作者头像
+  const author = users.find(u => u.id === post.userId);
+  // 附加评论者头像
+  const commentsWithAvatar = postComments.map(c => {
+    const cAuthor = users.find(u => u.id === c.userId);
+    return { ...c, authorAvatar: cAuthor ? (cAuthor.avatar || '') : '' };
+  });
+  res.json({ ...post, authorAvatar: author ? (author.avatar || '') : '', comments: commentsWithAvatar, liked });
 });
 
 // 发布帖子
@@ -758,7 +989,7 @@ app.post('/api/posts', (req, res) => {
   };
   posts.push(post);
   saveData();
-  res.status(201).json(post);
+  res.status(201).json({ ...post, authorAvatar: user ? (user.avatar || '') : '' });
 });
 
 // 删除帖子
@@ -1280,7 +1511,99 @@ app.get('/api/auth/captcha', (req, res) => {
 
 // ========== 管理员模块 ==========
 // 角色：user（默认）/ admin
-// 数据结构：{ adminLogs: [], settings: {site, security, mail}, backups: [] }
+// 数据结构：{ adminLogs: [], settings: {site, security, mail, guide}, backups: [] }
+
+// 使用指南默认内容（HTML）
+const DEFAULT_GUIDE_CONTENT = `<h2>智能学习计划助手 - 使用指南</h2>
+<p>欢迎使用智能学习计划助手！本指南将详细介绍系统的使用流程、注意事项及各项功能说明，帮助您高效管理学习计划。</p>
+
+<h3>一、使用流程</h3>
+
+<h4>1. 创建学习目标</h4>
+<p>学习目标是您学习的最终方向，例如"通过英语四级考试"。</p>
+<ul>
+<li>进入左侧菜单的<strong>"学习目标"</strong>页面</li>
+<li>点击<strong>"新建目标"</strong>按钮</li>
+<li>填写目标标题、描述、分类（如语言学习、职业技能等）和目标日期</li>
+<li>点击<strong>"保存"</strong>完成创建</li>
+</ul>
+<p><em>提示：目标建议具体可衡量，例如"3个月内掌握Python基础"比"学Python"更有效。</em></p>
+
+<h4>2. 创建学习计划并关联目标</h4>
+<p>学习计划是为了实现目标而制定的具体执行方案。</p>
+<ul>
+<li>进入<strong>"学习计划"</strong>页面</li>
+<li>点击<strong>"新建计划"</strong>按钮</li>
+<li>填写计划标题、描述、起止时间</li>
+<li>在<strong>"关联目标"</strong>下拉框中选择已创建的学习目标</li>
+<li>点击<strong>"保存"</strong>完成创建</li>
+</ul>
+<p><em>提示：一个目标可以关联多个计划，系统会综合所有关联计划的进度自动计算目标进度。</em></p>
+
+<h4>3. 在计划中添加和设置任务</h4>
+<p>任务是计划下的具体执行项，例如"背50个单词"、"完成第1章习题"。</p>
+<ul>
+<li>在<strong>"学习计划"</strong>页面点击某个计划进入详情</li>
+<li>点击<strong>"添加任务"</strong>按钮</li>
+<li>填写任务标题、计划日期、预计时长</li>
+<li>可设置任务优先级（高/中/低）</li>
+<li>点击<strong>"保存"</strong>完成任务添加</li>
+</ul>
+
+<h4>4. 任务自动同步至日历视图</h4>
+<p>系统会自动将所有计划中的任务同步到日历视图，无需手动操作。</p>
+<ul>
+<li>进入<strong>"日历视图"</strong>页面</li>
+<li>可选择<strong>月视图</strong>、<strong>周视图</strong>或<strong>日视图</strong></li>
+<li>每个任务会按其计划日期显示在对应日期上</li>
+<li>不同优先级的任务用不同颜色标识</li>
+<li>点击日历中的任务可查看详情或直接标记完成</li>
+</ul>
+<p><em>机制说明：当您在计划中创建或修改任务时，日历视图会实时同步更新，确保您看到的是最新的任务安排。</em></p>
+
+<h4>5. 完成日历任务自动推进计划进度</h4>
+<p>当您在日历视图中完成每日任务时，系统会自动推进所属计划的进度。</p>
+<ul>
+<li>在日历视图中点击对应任务</li>
+<li>勾选<strong>"已完成"</strong>或点击完成按钮</li>
+<li>系统自动计算：计划进度 = 已完成任务数 / 总任务数 × 100%</li>
+<li>计划进度实时更新，无需手动调整</li>
+</ul>
+<p><em>例如：计划共有10个任务，完成5个后，计划进度自动显示为50%。</em></p>
+
+<h4>6. 计划进度同步推进目标进度</h4>
+<p>目标进度由所有关联计划的进度综合计算得出。</p>
+<ul>
+<li>系统自动计算：目标进度 = 所有关联计划进度的平均值</li>
+<li>当所有关联计划进度达到100%时，目标自动标记为"已达成"</li>
+<li>目标进度实时同步，无需手动维护</li>
+</ul>
+<p><em>例如：目标A关联了2个计划，计划1进度80%，计划2进度60%，则目标A进度为(80%+60%)/2=70%。</em></p>
+
+<h3>二、注意事项</h3>
+<ul>
+<li><strong>目标-计划-任务层级关系：</strong>建议按照"先目标→再计划→后任务"的顺序创建，确保层级关系清晰</li>
+<li><strong>任务日期：</strong>请合理设置任务计划日期，避免任务堆积在某一天</li>
+<li><strong>进度计算：</strong>删除任务会影响计划进度，请谨慎操作</li>
+<li><strong>消息中心：</strong>任务/计划/目标的完成和进度变化会自动推送通知到右上角消息中心</li>
+<li><strong>数据安全：</strong>建议定期备份重要数据，管理员可在系统设置中操作</li>
+</ul>
+
+<h3>三、功能说明</h3>
+<ul>
+<li><strong>首页：</strong>展示学习统计、今日任务、系统公告和近期目标</li>
+<li><strong>学习目标：</strong>创建、编辑、删除学习目标，查看进度</li>
+<li><strong>学习计划：</strong>管理学习计划，关联目标，添加任务</li>
+<li><strong>日历视图：</strong>月/周/日视图查看和完成任务</li>
+<li><strong>共享资源：</strong>上传和下载学习资料</li>
+<li><strong>帖子中心：</strong>学习交流社区</li>
+<li><strong>学习提醒：</strong>自定义提醒规则，定时推送</li>
+<li><strong>个人中心：</strong>管理个人信息、头像、密码</li>
+<li><strong>消息中心：</strong>查看系统通知、任务/计划/目标进度提醒</li>
+</ul>
+
+<p style="color:#888;margin-top:24px">如有其他疑问，请联系管理员或查阅系统公告。</p>`;
+
 
 function ensureAdminFields() {
   if (!Array.isArray(adminLogs)) adminLogs = [];
@@ -1288,7 +1611,8 @@ function ensureAdminFields() {
     settings = {
       site: { name: '智慧学习平台', subtitle: '一站式个人学习管理', description: '一站式个人学习管理', icp: '', supportEmail: 'admin@example.com', maintenance: false },
       security: { tokenTtlDays: 7, passwordMinLen: 6, maxLoginFail: 5, allowRegister: true, requireApproval: false },
-      mail: { enabled: false, host: '', port: 465, secure: true, from: 'no-reply@example.com', user: '', pass: '' }
+      mail: { enabled: false, host: '', port: 465, secure: true, from: 'no-reply@example.com', user: '', pass: '' },
+      guide: { content: DEFAULT_GUIDE_CONTENT, updatedAt: new Date().toISOString(), updatedBy: 'system' }
     };
   }
   // 兼容旧字段迁移
@@ -1307,6 +1631,39 @@ function ensureAdminFields() {
   if (settings.mail.secure === undefined) settings.mail.secure = settings.mail.smtpSecure !== false;
   if (settings.mail.user === undefined) settings.mail.user = settings.mail.smtpUser || '';
   if (settings.mail.pass === undefined) settings.mail.pass = '';
+  // 使用指南字段迁移
+  if (!settings.guide) {
+    settings.guide = { content: DEFAULT_GUIDE_CONTENT, updatedAt: new Date().toISOString(), updatedBy: 'system' };
+  }
+  // 从 .env 加载 SMTP 配置（.env 中的配置优先于 data.json）
+  if (process.env.SMTP_HOST) {
+    settings.mail.host = process.env.SMTP_HOST;
+    settings.mail.enabled = true;
+  }
+  if (process.env.SMTP_PORT) settings.mail.port = parseInt(process.env.SMTP_PORT, 10) || settings.mail.port;
+  if (process.env.SMTP_SECURE !== undefined) settings.mail.secure = process.env.SMTP_SECURE === 'true';
+  if (process.env.SMTP_USER) {
+    settings.mail.user = process.env.SMTP_USER;
+    // 若未单独配置发件人，则使用 SMTP_USER 作为发件人
+    if (!settings.mail.from || settings.mail.from === 'no-reply@example.com') {
+      settings.mail.from = process.env.SMTP_USER;
+    }
+  }
+  if (process.env.SMTP_PASS) settings.mail.pass = process.env.SMTP_PASS;
+  // 回填历史计划的 userId（旧数据无此字段）
+  if (Array.isArray(plans)) {
+    const firstStudent = users.find(u => u.role !== 'admin');
+    if (firstStudent) {
+      let backfilled = false;
+      for (const p of plans) {
+        if (p.userId === undefined && p.user_id === undefined) {
+          p.userId = firstStudent.id;
+          backfilled = true;
+        }
+      }
+      if (backfilled) saveData();
+    }
+  }
   if (!Array.isArray(backups)) backups = [];
 }
 ensureAdminFields();
@@ -1375,7 +1732,7 @@ app.get('/api/admin/stats', requireAdmin, (req, res) => {
     resources7d,
     downloadTotal: resources.reduce((s, r) => s + (r.downloadCount || 0), 0),
     likeTotal: posts.reduce((s, p) => s + (p.likes || 0), 0),
-    commentTotal: posts.reduce((s, p) => s + (p.comments ? p.comments.length : 0), 0),
+    commentTotal: comments.length,
     resourceByCategory: Object.entries(categoryMap).map(([name, value]) => ({ name, value })),
     daily
   });
@@ -1383,7 +1740,7 @@ app.get('/api/admin/stats', requireAdmin, (req, res) => {
 
 // 管理端：用户列表（搜索 + 分页）
 app.get('/api/admin/users', requireAdmin, (req, res) => {
-  const { q = '', page = 1, pageSize = 10, role = '', status = '' } = req.query;
+  const { q = '', page = 1, pageSize = 10, role = '', status = '', disabled = '' } = req.query;
   let list = users.slice();
   if (q) {
     const k = String(q).toLowerCase();
@@ -1393,9 +1750,14 @@ app.get('/api/admin/users', requireAdmin, (req, res) => {
       (u.studentId || '').toLowerCase().includes(k)
     );
   }
-  if (role) list = list.filter(u => (u.role || 'user') === role);
-  if (status === 'active') list = list.filter(u => !u.disabled);
-  if (status === 'disabled') list = list.filter(u => u.disabled);
+  if (role) {
+    // 兼容前端 'user' 与后端 'student' 的角色映射
+    const normalizedRole = role === 'user' ? 'student' : role;
+    list = list.filter(u => (u.role || 'student') === normalizedRole);
+  }
+  // 兼容前端 disabled 布尔参数和后端 status 字符串参数
+  if (disabled === 'true' || status === 'disabled') list = list.filter(u => u.disabled);
+  else if (disabled === 'false' || status === 'active') list = list.filter(u => !u.disabled);
   list.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
   const total = list.length;
   const p = Math.max(1, parseInt(page));
@@ -1405,7 +1767,7 @@ app.get('/api/admin/users', requireAdmin, (req, res) => {
     email: u.email,
     name: u.name,
     studentId: u.studentId,
-    role: u.role || 'user',
+    role: u.role || 'student',
     disabled: !!u.disabled,
     avatar: u.avatar,
     createdAt: u.createdAt
@@ -1415,18 +1777,19 @@ app.get('/api/admin/users', requireAdmin, (req, res) => {
 
 app.put('/api/admin/users/:id/role', requireAdmin, (req, res) => {
   const { role } = req.body || {};
-  if (!['user', 'admin'].includes(role)) return res.status(400).json({ message: '非法角色' });
-  const u = users.find(x => x.id === req.params.id);
+  if (!['user', 'admin', 'student'].includes(role)) return res.status(400).json({ message: '非法角色' });
+  const normalizedRole = role === 'user' ? 'student' : role;
+  const u = users.find(x => String(x.id) === String(req.params.id));
   if (!u) return res.status(404).json({ message: '用户不存在' });
-  u.role = role;
+  u.role = normalizedRole;
   saveData();
-  logAdminAction(req.currentUser, 'user.role.change', u.id, { role });
+  logAdminAction(req.currentUser, 'user.role.change', u.id, { role: normalizedRole });
   res.json({ success: true, role: u.role });
 });
 
 app.put('/api/admin/users/:id/status', requireAdmin, (req, res) => {
   const { disabled } = req.body || {};
-  const u = users.find(x => x.id === req.params.id);
+  const u = users.find(x => String(x.id) === String(req.params.id));
   if (!u) return res.status(404).json({ message: '用户不存在' });
   u.disabled = !!disabled;
   saveData();
@@ -1435,7 +1798,7 @@ app.put('/api/admin/users/:id/status', requireAdmin, (req, res) => {
 });
 
 app.delete('/api/admin/users/:id', requireAdmin, (req, res) => {
-  const u = users.find(x => x.id === req.params.id);
+  const u = users.find(x => String(x.id) === String(req.params.id));
   if (!u) return res.status(404).json({ message: '用户不存在' });
   if (u.id === req.currentUser.id) return res.status(400).json({ message: '不能删除自己' });
   users = users.filter(x => x.id !== u.id);
@@ -1522,6 +1885,60 @@ app.put('/api/admin/settings', requireAdmin, (req, res) => {
   res.json({ success: true, settings });
 });
 
+// ========== 使用指南 ==========
+// 公开接口：获取使用指南内容（登录用户均可访问）
+app.get('/api/guide', (req, res) => {
+  const content = settings?.guide?.content || DEFAULT_GUIDE_CONTENT;
+  const updatedAt = settings?.guide?.updatedAt || null;
+  const updatedBy = settings?.guide?.updatedBy || 'system';
+  res.json({ content, updatedAt, updatedBy });
+});
+
+// 管理员接口：更新使用指南内容（富文本 HTML）
+app.put('/api/admin/guide', requireAdmin, (req, res) => {
+  const { content } = req.body || {};
+  if (typeof content !== 'string') {
+    return res.status(400).json({ message: '内容不能为空' });
+  }
+  if (!settings.guide) settings.guide = {};
+  const previousLength = (settings.guide.content || '').length;
+  settings.guide.content = content;
+  settings.guide.updatedAt = new Date().toISOString();
+  settings.guide.updatedBy = req.currentUser.email;
+  saveData();
+  logAdminAction(req.currentUser, 'guide.update', '', {
+    contentLength: content.length,
+    previousLength,
+    diff: content.length - previousLength
+  });
+  res.json({
+    success: true,
+    guide: {
+      content: settings.guide.content,
+      updatedAt: settings.guide.updatedAt,
+      updatedBy: settings.guide.updatedBy
+    }
+  });
+});
+
+// 管理员接口：重置使用指南为默认内容
+app.post('/api/admin/guide/reset', requireAdmin, (req, res) => {
+  if (!settings.guide) settings.guide = {};
+  settings.guide.content = DEFAULT_GUIDE_CONTENT;
+  settings.guide.updatedAt = new Date().toISOString();
+  settings.guide.updatedBy = req.currentUser.email;
+  saveData();
+  logAdminAction(req.currentUser, 'guide.reset', '', { to: 'default' });
+  res.json({
+    success: true,
+    guide: {
+      content: settings.guide.content,
+      updatedAt: settings.guide.updatedAt,
+      updatedBy: settings.guide.updatedBy
+    }
+  });
+});
+
 // 管理端：备份与恢复
 app.post('/api/admin/backup', requireAdmin, (req, res) => {
   const ts = new Date().toISOString().replace(/[:.]/g, '-');
@@ -1589,6 +2006,7 @@ app.post('/api/admin/backup/restore', requireAdmin, (req, res) => {
     if (Array.isArray(d.posts)) posts = d.posts;
     if (Array.isArray(d.comments)) comments = d.comments;
     if (Array.isArray(d.notificationLogs)) notificationLogs = d.notificationLogs;
+    if (Array.isArray(d.userNotifications)) userNotifications = d.userNotifications;
     if (Array.isArray(d.userPreferences)) userPreferences = d.userPreferences;
     if (Array.isArray(d.reminderRules)) reminderRules = d.reminderRules;
     if (Array.isArray(d.announcements)) announcements = d.announcements;
@@ -1638,12 +2056,25 @@ app.get('/api/admin/posts', requireAdmin, (req, res) => {
     list = list.filter(p =>
       (p.title || '').toLowerCase().includes(k) ||
       (p.content || '').toLowerCase().includes(k) ||
-      (p.author || '').toLowerCase().includes(k)
+      (p.author || '').toLowerCase().includes(k) ||
+      (p.authorName || '').toLowerCase().includes(k)
     );
   }
   if (sort === 'newest') list.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
   if (sort === 'oldest') list.sort((a, b) => new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime());
   if (sort === 'likes') list.sort((a, b) => (b.likes || 0) - (a.likes || 0));
+  // 附加作者信息和评论数
+  list = list.map(p => {
+    const author = users.find(u => String(u.id) === String(p.userId || p.user_id || ''));
+    const commentCount = comments.filter(c => String(c.postId) === String(p.id)).length;
+    return {
+      ...p,
+      author: p.author || p.authorName || (author ? author.name : '未知'),
+      authorName: p.authorName || (author ? author.name : '未知'),
+      userEmail: author ? author.email : '',
+      commentCount
+    };
+  });
   const total = list.length;
   const p = Math.max(1, parseInt(page));
   const ps = Math.max(1, Math.min(50, parseInt(pageSize)));
@@ -1651,7 +2082,7 @@ app.get('/api/admin/posts', requireAdmin, (req, res) => {
 });
 
 app.put('/api/admin/posts/:id', requireAdmin, (req, res) => {
-  const post = posts.find(x => x.id === req.params.id);
+  const post = posts.find(x => String(x.id) === String(req.params.id));
   if (!post) return res.status(404).json({ message: '帖子不存在' });
   const { title, content, status, category } = req.body || {};
   if (title !== undefined) post.title = title;
@@ -1665,7 +2096,7 @@ app.put('/api/admin/posts/:id', requireAdmin, (req, res) => {
 });
 
 app.put('/api/admin/posts/:id/review', requireAdmin, (req, res) => {
-  const post = posts.find(x => x.id === req.params.id);
+  const post = posts.find(x => String(x.id) === String(req.params.id));
   if (!post) return res.status(404).json({ message: '帖子不存在' });
   const { approved } = req.body || {};
   post.status = approved ? 'published' : 'rejected';
@@ -1676,12 +2107,30 @@ app.put('/api/admin/posts/:id/review', requireAdmin, (req, res) => {
   res.json({ success: true, status: post.status });
 });
 
+app.delete('/api/admin/posts/:id', requireAdmin, (req, res) => {
+  const index = posts.findIndex(p => String(p.id) === String(req.params.id));
+  if (index === -1) return res.status(404).json({ message: '帖子不存在' });
+  const post = posts[index];
+  posts.splice(index, 1);
+  // 关联评论一起删除
+  for (let i = comments.length - 1; i >= 0; i--) {
+    if (String(comments[i].postId) === String(req.params.id)) {
+      comments.splice(i, 1);
+    }
+  }
+  saveData();
+  logAdminAction(req.currentUser, 'post.delete', post.id, { title: post.title });
+  res.json({ success: true });
+});
+
 app.post('/api/admin/posts/batch-delete', requireAdmin, (req, res) => {
   const { ids = [] } = req.body || {};
   if (!Array.isArray(ids) || ids.length === 0) return res.status(400).json({ message: '请选择要删除的帖子' });
   const before = posts.length;
   posts = posts.filter(p => !ids.includes(p.id));
   const removed = before - posts.length;
+  // 关联评论一起删除
+  comments = comments.filter(c => !ids.includes(c.postId));
   saveData();
   logAdminAction(req.currentUser, 'post.batch.delete', ids.join(','), { count: removed });
   res.json({ success: true, removed });
@@ -1708,7 +2157,7 @@ app.get('/api/admin/resources', requireAdmin, (req, res) => {
 });
 
 app.put('/api/admin/resources/:id', requireAdmin, (req, res) => {
-  const r = resources.find(x => x.id === req.params.id);
+  const r = resources.find(x => String(x.id) === String(req.params.id));
   if (!r) return res.status(404).json({ message: '资源不存在' });
   const { title, description, category, type, fileUrl, fileName } = req.body || {};
   if (title !== undefined) r.title = title;

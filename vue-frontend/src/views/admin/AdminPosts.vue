@@ -36,7 +36,7 @@
         <el-table-column label="作者" width="140">
           <template #default="{ row }">
             <el-icon><User /></el-icon>
-            <span style="margin-left: 4px">{{ row.author || row.userEmail || '-' }}</span>
+            <span style="margin-left: 4px">{{ row.author || row.authorName || row.userEmail || '-' }}</span>
           </template>
         </el-table-column>
         <el-table-column label="分类" width="120" prop="category" />
@@ -48,7 +48,7 @@
         <el-table-column label="互动" width="160">
           <template #default="{ row }">
             <span><el-icon><Star /></el-icon> {{ row.likes || 0 }}</span>
-            <span style="margin-left: 12px"><el-icon><ChatLineRound /></el-icon> {{ row.comments ? row.comments.length : 0 }}</span>
+            <span style="margin-left: 12px"><el-icon><ChatLineRound /></el-icon> {{ row.commentCount || 0 }}</span>
           </template>
         </el-table-column>
         <el-table-column label="发布时间" width="170">
@@ -181,7 +181,7 @@ async function confirmDelete(row: any) {
     )
   } catch { return }
   try {
-    await api.delete('/posts/' + row.id)
+    await api.delete('/admin/posts/' + row.id)
     ElMessage.success('已删除')
     reload()
   } catch (e: any) {
