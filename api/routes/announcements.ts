@@ -1,5 +1,6 @@
 import express from 'express';
 import { authenticate, requireAdmin } from '../middleware/auth';
+import { ArrayFileStore } from '../utils/fileStore';
 
 const router = express.Router();
 
@@ -12,7 +13,10 @@ interface Announcement {
   updated_at: string;
 }
 
-const announcements: Announcement[] = [
+const announcementStore = new ArrayFileStore<Announcement>('announcements');
+
+// 初始种子数据（仅在文件不存在时使用）
+const SEED_ANNOUNCEMENTS: Announcement[] = [
   {
     id: '1',
     title: '系统更新通知',
@@ -30,6 +34,10 @@ const announcements: Announcement[] = [
     updated_at: new Date('2026-06-14').toISOString(),
   },
 ];
+
+const announcements = announcementStore.load().length > 0
+  ? announcementStore.load()
+  : (announcementStore.save(SEED_ANNOUNCEMENTS), SEED_ANNOUNCEMENTS);
 
 router.get('/', (req, res) => {
   res.json(announcements);
@@ -55,6 +63,7 @@ router.post('/', authenticate, requireAdmin, (req, res) => {
   };
   
   announcements.push(announcement);
+  announcementStore.save(announcements);
   res.status(201).json(announcement);
 });
 
@@ -84,6 +93,7 @@ router.put('/:id', authenticate, requireAdmin, (req, res) => {
     priority: (priority as 'high' | 'normal' | 'low') || announcements[index].priority,
     updated_at: new Date().toISOString(),
   };
+  announcementStore.save(announcements);
   
   res.json(announcements[index]);
 });
@@ -96,6 +106,7 @@ router.delete('/:id', authenticate, requireAdmin, (req, res) => {
   }
   
   announcements.splice(index, 1);
+  announcementStore.save(announcements);
   res.json({ success: true });
 });
 

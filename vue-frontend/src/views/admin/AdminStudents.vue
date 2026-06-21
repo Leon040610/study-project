@@ -1,195 +1,166 @@
 <template>
   <div class="admin-students">
-    <div class="page-header">
-      <h2>学生管理</h2>
-      <el-button type="primary" @click="showCreateModal = true">
-        <el-icon><Plus /></el-icon>
-        <span>添加学生</span>
-      </el-button>
-    </div>
+    <h2 class="page-title">用户管理</h2>
 
-    <div class="filter-bar">
-      <el-input v-model="searchKeyword" placeholder="搜索学生" style="width: 200px;">
-        <template #prefix>
-          <el-icon><Search /></el-icon>
-        </template>
-      </el-input>
-      <el-select v-model="selectedRole" placeholder="选择角色">
-        <el-option label="全部" value="" />
-        <el-option label="学生" value="student" />
-        <el-option label="管理员" value="admin" />
-      </el-select>
-    </div>
+    <el-card>
+      <div class="filter-bar">
+        <el-input v-model="filters.q" placeholder="搜索邮箱/姓名" clearable style="width: 240px" @keyup.enter="reload" @clear="reload" />
+        <el-select v-model="filters.role" placeholder="全部角色" clearable style="width: 130px" @change="reload">
+          <el-option label="普通用户" value="user" />
+          <el-option label="管理员" value="admin" />
+        </el-select>
+        <el-select v-model="filters.disabled" placeholder="全部状态" clearable style="width: 130px" @change="reload">
+          <el-option label="正常" :value="false" />
+          <el-option label="已禁用" :value="true" />
+        </el-select>
+        <el-button type="primary" @click="reload">搜索</el-button>
+        <el-button @click="resetFilters">重置</el-button>
+      </div>
 
-    <el-table :data="filteredStudents" border>
-      <el-table-column prop="id" label="ID" width="80" />
-      <el-table-column prop="name" label="用户名" />
-      <el-table-column prop="email" label="邮箱" />
-      <el-table-column prop="phone" label="手机号" />
-      <el-table-column prop="role" label="角色">
-        <template #default="scope">
-          <el-tag :type="scope.row.role === 'admin' ? 'danger' : ''">{{ scope.row.role === 'admin' ? '管理员' : '学生' }}</el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column prop="created_at" label="注册时间" />
-      <el-table-column label="操作">
-        <template #default="scope">
-          <el-button size="small" @click="editStudent(scope.row)">编辑</el-button>
-          <el-button size="small" type="danger" @click="deleteStudent(scope.row)">删除</el-button>
-        </template>
-      </el-table-column>
-    </el-table>
+      <el-table v-loading="loading" :data="items" border stripe>
+        <el-table-column label="用户" min-width="200">
+          <template #default="{ row }">
+            <el-avatar :src="row.avatar" :size="32" style="vertical-align: middle">
+              <el-icon><User /></el-icon>
+            </el-avatar>
+            <div style="display:inline-block; margin-left:10px; vertical-align: middle">
+              <div style="font-weight:500">{{ row.name || row.email }}</div>
+              <div style="font-size:12px; color:#9ca3af">{{ row.email }}</div>
+            </div>
+          </template>
+        </el-table-column>
+        <el-table-column label="角色" width="120">
+          <template #default="{ row }">
+            <el-tag size="small" :type="row.role === 'admin' ? 'warning' : 'info'">
+              {{ row.role === 'admin' ? '管理员' : '用户' }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="状态" width="100">
+          <template #default="{ row }">
+            <el-tag size="small" :type="row.disabled ? 'danger' : 'success'">
+              {{ row.disabled ? '已禁用' : '正常' }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="注册时间" width="170">
+          <template #default="{ row }">{{ formatDate(row.createdAt) }}</template>
+        </el-table-column>
+        <el-table-column label="操作" width="260" fixed="right">
+          <template #default="{ row }">
+            <el-button size="small" link type="primary" @click="changeRole(row)">
+              {{ row.role === 'admin' ? '降为用户' : '升为管理员' }}
+            </el-button>
+            <el-button size="small" link :type="row.disabled ? 'success' : 'danger'" @click="toggleStatus(row)">
+              {{ row.disabled ? '启用' : '禁用' }}
+            </el-button>
+            <el-button size="small" link type="danger" @click="confirmDelete(row)">删除</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
 
-    <el-dialog v-model="showCreateModal" :title="editingStudent ? '编辑学生' : '添加学生'" width="500px">
-      <el-form :model="form" :rules="rules" ref="formRef" label-width="100px">
-        <el-form-item label="用户名" prop="name">
-          <el-input v-model="form.name" placeholder="请输入用户名" />
-        </el-form-item>
-        <el-form-item label="邮箱" prop="email">
-          <el-input v-model="form.email" type="email" placeholder="请输入邮箱" />
-        </el-form-item>
-        <el-form-item label="手机号" prop="phone">
-          <el-input v-model="form.phone" type="tel" placeholder="请输入手机号" />
-        </el-form-item>
-        <el-form-item label="密码" prop="password">
-          <el-input v-model="form.password" type="password" placeholder="请输入密码" />
-        </el-form-item>
-        <el-form-item label="角色" prop="role">
-          <el-select v-model="form.role">
-            <el-option label="学生" value="student" />
-            <el-option label="管理员" value="admin" />
-          </el-select>
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="showCreateModal = false">取消</el-button>
-        <el-button type="primary" @click="handleSubmit">确定</el-button>
-      </template>
-    </el-dialog>
+      <div class="pagination-wrap">
+        <el-pagination
+          v-model:current-page="filters.page"
+          v-model:page-size="filters.pageSize"
+          :total="total"
+          :page-sizes="[10, 20, 50]"
+          layout="total, sizes, prev, pager, next, jumper"
+          @current-change="reload"
+          @size-change="reload"
+        />
+      </div>
+    </el-card>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { User } from '@element-plus/icons-vue'
 import { api } from '@/utils/api'
-import { ElMessage } from 'element-plus'
-import { Plus, Search } from '@element-plus/icons-vue'
 
-interface Student {
-  id: string
-  name: string
-  email: string
-  phone?: string
-  role: string
-  created_at: string
-}
+const items = ref<any[]>([])
+const total = ref(0)
+const loading = ref(false)
+const filters = reactive({ q: '', role: '', disabled: '' as any, page: 1, pageSize: 10 })
 
-const students = ref<Student[]>([])
-const searchKeyword = ref('')
-const selectedRole = ref('')
-const showCreateModal = ref(false)
-const editingStudent = ref<Student | null>(null)
-const formRef = ref()
+function formatDate(s: string) { return s ? new Date(s).toLocaleString('zh-CN') : '-' }
 
-const form = reactive({
-  name: '',
-  email: '',
-  phone: '',
-  password: '',
-  role: 'student'
-})
-
-const rules = {
-  name: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
-  email: [
-    { required: true, message: '请输入邮箱', trigger: 'blur' },
-    { type: 'email', message: '请输入正确的邮箱格式', trigger: 'blur' }
-  ],
-  password: [{ required: true, message: '请输入密码', trigger: 'blur' }],
-  role: [{ required: true, message: '请选择角色', trigger: 'blur' }]
-}
-
-const filteredStudents = computed(() => {
-  return students.value.filter(s => {
-    const matchKeyword = !searchKeyword.value || s.name.toLowerCase().includes(searchKeyword.value.toLowerCase()) || s.email.toLowerCase().includes(searchKeyword.value.toLowerCase())
-    const matchRole = !selectedRole.value || s.role === selectedRole.value
-    return matchKeyword && matchRole
-  })
-})
-
-async function fetchStudents() {
+async function reload() {
+  loading.value = true
   try {
-    const data = await api.get('/admin/students')
-    students.value = data || []
-  } catch {
-    students.value = [
-      { id: '1', name: '小明', email: 'xiaoming@test.com', phone: '13800138001', role: 'student', created_at: '2026-06-16' },
-      { id: '2', name: '小红', email: 'xiaohong@test.com', phone: '13800138002', role: 'student', created_at: '2026-06-15' },
-      { id: '3', name: '小刚', email: 'xiaogang@test.com', phone: '13800138003', role: 'student', created_at: '2026-06-14' },
-      { id: '4', name: '小李', email: 'xiaoli@test.com', phone: '13800138004', role: 'student', created_at: '2026-06-13' },
-      { id: '5', name: '小华', email: 'xiaohua@test.com', phone: '13800138005', role: 'student', created_at: '2026-06-12' },
-      { id: '6', name: '管理员', email: 'admin@test.com', phone: '13800138000', role: 'admin', created_at: '2026-06-01' }
-    ]
+    const data: any = await api.get('/admin/users', { params: filters })
+    items.value = data.items || []
+    total.value = data.total || 0
+  } catch (e: any) {
+    ElMessage.error(e?.message || '加载失败')
+  } finally {
+    loading.value = false
   }
 }
 
-async function handleSubmit() {
-  if (!formRef.value) return
-  await formRef.value.validate().catch(() => {})
-  
+function resetFilters() {
+  filters.q = ''; filters.role = ''; filters.disabled = ''; filters.page = 1
+  reload()
+}
+
+async function changeRole(row: any) {
+  const newRole = row.role === 'admin' ? 'user' : 'admin'
   try {
-    if (editingStudent.value) {
-      await api.put(`/admin/students/${editingStudent.value.id}`, form)
-      ElMessage.success('修改成功')
-    } else {
-      await api.post('/admin/students', form)
-      ElMessage.success('添加成功')
-    }
-    showCreateModal.value = false
-    fetchStudents()
-  } catch {
-    ElMessage.error('操作失败')
+    await ElMessageBox.confirm(
+      `将 ${row.email} 角色修改为「${newRole === 'admin' ? '管理员' : '用户'}」？`,
+      '角色修改', { type: 'warning' }
+    )
+  } catch { return }
+  try {
+    await api.put('/admin/users/' + row.id + '/role', { role: newRole })
+    ElMessage.success('角色已更新')
+    reload()
+  } catch (e: any) {
+    ElMessage.error(e?.message || '修改失败')
   }
 }
 
-function editStudent(student: Student) {
-  editingStudent.value = student
-  form.name = student.name
-  form.email = student.email
-  form.phone = student.phone || ''
-  form.role = student.role
-  showCreateModal.value = true
+async function toggleStatus(row: any) {
+  const next = !row.disabled
+  try {
+    await ElMessageBox.confirm(
+      `${next ? '禁用' : '启用'} 用户 ${row.email}?`,
+      '状态修改', { type: 'warning' }
+    )
+  } catch { return }
+  try {
+    await api.put('/admin/users/' + row.id + '/status', { disabled: next })
+    ElMessage.success(next ? '已禁用' : '已启用')
+    reload()
+  } catch (e: any) {
+    ElMessage.error(e?.message || '操作失败')
+  }
 }
 
-async function deleteStudent(student: Student) {
-  await api.delete(`/admin/students/${student.id}`).catch(() => {})
-  students.value = students.value.filter(s => s.id !== student.id)
-  ElMessage.success('删除成功')
+async function confirmDelete(row: any) {
+  try {
+    await ElMessageBox.confirm(
+      `确定要删除用户 ${row.email} 吗？其数据将被清理，此操作不可恢复。`,
+      '删除确认', { type: 'warning', confirmButtonText: '删除', cancelButtonText: '取消' }
+    )
+  } catch { return }
+  try {
+    await api.delete('/admin/users/' + row.id)
+    ElMessage.success('已删除')
+    reload()
+  } catch (e: any) {
+    ElMessage.error(e?.message || '删除失败')
+  }
 }
 
-fetchStudents()
+onMounted(reload)
 </script>
 
 <style scoped>
-.admin-students {
-  padding: 24px;
-}
-
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 24px;
-}
-
-.page-header h2 {
-  font-size: 24px;
-  font-weight: 700;
-}
-
-.filter-bar {
-  display: flex;
-  gap: 16px;
-  margin-bottom: 24px;
-}
+.admin-students { padding: 8px 4px; }
+.page-title { font-size: 20px; font-weight: 700; margin-bottom: 16px; }
+.filter-bar { display: flex; gap: 8px; align-items: center; margin-bottom: 12px; flex-wrap: wrap; }
+.pagination-wrap { display: flex; justify-content: flex-end; margin-top: 12px; }
 </style>

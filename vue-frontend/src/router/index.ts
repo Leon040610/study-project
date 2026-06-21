@@ -48,6 +48,11 @@ const router = createRouter({
           component: () => import('@/views/Posts.vue')
         },
         {
+          path: '/reminders',
+          name: 'Reminders',
+          component: () => import('@/views/Reminders.vue')
+        },
+        {
           path: '/profile',
           name: 'Profile',
           component: () => import('@/views/Profile.vue')
@@ -81,6 +86,16 @@ const router = createRouter({
           path: '/admin/announcements',
           name: 'AdminAnnouncements',
           component: () => import('@/views/admin/AdminAnnouncements.vue')
+        },
+        {
+          path: '/admin/logs',
+          name: 'AdminLogs',
+          component: () => import('@/views/admin/AdminLogs.vue')
+        },
+        {
+          path: '/admin/settings',
+          name: 'AdminSettings',
+          component: () => import('@/views/admin/AdminSettings.vue')
         }
       ]
     }
@@ -90,16 +105,30 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
   const authStore = useAuthStore()
   const isLoggedIn = authStore.isLoggedIn
+  const user = authStore.user
 
   if (to.path === '/login') {
     if (isLoggedIn) {
-      next('/dashboard')
+      // 已登录时根据角色跳转
+      next(user?.role === 'admin' ? '/admin' : '/dashboard')
+    } else {
+      next()
+    }
+  } else if (to.path === '/' || to.path === '/dashboard') {
+    if (!isLoggedIn) {
+      next('/login')
+    } else if (user?.role === 'admin') {
+      // 管理员访问根路径或首页时重定向到管理控制台
+      next('/admin')
     } else {
       next()
     }
   } else {
     if (!isLoggedIn) {
       next('/login')
+    } else if (to.matched.some(r => r.meta?.requiresAdmin) && (!user || user.role !== 'admin')) {
+      // 权限不足，跳回首页
+      next('/dashboard')
     } else {
       next()
     }

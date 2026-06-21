@@ -1,5 +1,6 @@
 import express from 'express';
 import { authenticate } from '../middleware/auth';
+import { ArrayFileStore } from '../utils/fileStore';
 
 const router = express.Router();
 
@@ -27,8 +28,10 @@ interface Post {
   updated_at: string;
 }
 
-const posts: Post[] = [];
-const comments: Comment[] = [];
+const postStore = new ArrayFileStore<Post>('posts');
+const commentStore = new ArrayFileStore<Comment>('comments');
+const posts = postStore.load();
+const comments = commentStore.load();
 
 router.get('/', (req, res) => {
   const { category, keyword } = req.query;
@@ -75,6 +78,7 @@ router.post('/', authenticate, (req, res) => {
   };
   
   posts.push(post);
+  postStore.save(posts);
   res.status(201).json(post);
 });
 
@@ -86,6 +90,7 @@ router.get('/:id', (req, res) => {
   }
   
   post.view_count++;
+  postStore.save(posts);
   
   const postComments = comments.filter(c => c.post_id === post.id);
   
@@ -112,6 +117,7 @@ router.put('/:id', authenticate, (req, res) => {
     category: category || posts[index].category,
     updated_at: new Date().toISOString(),
   };
+  postStore.save(posts);
   
   res.json(posts[index]);
 });
@@ -124,9 +130,11 @@ router.delete('/:id', authenticate, (req, res) => {
   }
   
   posts.splice(index, 1);
+  postStore.save(posts);
   const remainingComments = comments.filter(c => c.post_id !== req.params.id);
   comments.length = 0;
   comments.push(...remainingComments);
+  commentStore.save(comments);
   
   res.json({ success: true });
 });
@@ -144,10 +152,12 @@ router.post('/:id/like', authenticate, (req, res) => {
   if (likedIndex === -1) {
     post.liked_users.push(userId);
     post.likes++;
+    postStore.save(posts);
     res.json({ liked: true, likes: post.likes });
   } else {
     post.liked_users.splice(likedIndex, 1);
     post.likes--;
+    postStore.save(posts);
     res.json({ liked: false, likes: post.likes });
   }
 });
@@ -179,6 +189,8 @@ router.post('/:id/comments', authenticate, (req, res) => {
   
   comments.push(comment);
   post.comment_count++;
+  commentStore.save(comments);
+  postStore.save(posts);
   
   res.status(201).json(comment);
 });

@@ -1,0 +1,86 @@
+[
+  {
+    "id": "notif_1781881175915_869kpdo",
+    "userId": "sdtjhdgkhjn",
+    "taskId": "test_task",
+    "channel": "email",
+    "status": "sent",
+    "attempts": 1,
+    "maxAttempts": 4,
+    "createdAt": "2026-06-19T14:59:35.915Z",
+    "payload": {
+      "userId": "sdtjhdgkhjn",
+      "userEmail": "yuleon0406@163.com",
+      "taskId": "test_task",
+      "taskTitle": "测试提醒 - 学习任务即将到期",
+      "taskDescription": "这是一条测试通知，验证提醒功能是否正常工作。",
+      "dueDate": "2026-06-19T15:29:35.915Z",
+      "priority": "normal",
+      "planTitle": "测试计划"
+    },
+    "sentAt": "2026-06-19T14:59:36.162Z"
+  },
+  {
+    "id": "notif_1781881175953_7a41abr",
+    "userId": "sdtjhdgkhjn",
+    "taskId": "test_task",
+    "channel": "push",
+    "status": "sent",
+    "attempts": 1,
+    "maxAttempts": 4,
+    "createdAt": "2026-06-19T14:59:35.953Z",
+    "payload": {
+      "userId": "sdtjhdgkhjn",
+      "userEmail": "yuleon0406@163.com",
+      "taskId": "test_task",
+      "taskTitle": "测试提醒 - 学习任务即将到期",
+      "taskDescription": "这是一条测试通知，验证提醒功能是否正常工作。",
+      "dueDate": "2026-06-19T15:29:35.915Z",
+      "priority": "normal",
+      "planTitle": "测试计划"
+    },
+    "sentAt": "2026-06-19T14:59:36.115Z"
+  },
+  {
+    "id": "notif_1781881180611_zcvxne9",
+    "userId": "sdtjhdgkhjn",
+    "taskId": "test_task",
+    "channel": "email",
+    "status": "sent",
+    "attempts": 1,
+    "maxAttempts": 4,
+    "createdAt": "2026-06-19T14:59:40.611Z",
+    "payload": {
+      "userId": "sdtjhdgkhjn",
+      "userEmail": "yuleon0406@163.com",
+      "taskId": "test_task",
+      "taskTitle": "测试提醒 - 学习任务即将到期",
+      "taskDescription": "这是一条测试通知，验证提醒功能是否正常工作。",
+      "dueDate": "2026-06-19T15:29:40.610Z",
+      "priority": "normal",
+      "planTitle": "测试计划"
+    },
+    "sentAt": "2026-06-19T14:59:40.824Z"
+  },
+  {
+    "id": "notif_1781881180614_0u73skk",
+    "userId": "sdtjhdgkhjn",
+    "taskId": "test_task",
+    "channel": "push",
+    "status": "sent",
+    "attempts": 1,
+    "maxAttempts": 4,
+    "createdAt": "2026-06-19T14:59:40.614Z",
+    "payload": {
+      "userId": "sdtjhdgkhjn",
+      "userEmail": "yuleon0406@163.com",
+      "taskId": "test_task",
+      "taskTitle": "测试提醒 - 学习任务即将到期",
+      "taskDescription": "这是一条测试通知，验证提醒功能是否正常工作。",
+      "dueDate": "2026-06-19T15:29:40.610Z",
+      "priority": "normal",
+      "planTitle": "测试计划"
+    },
+    "sentAt": "2026-06-19T14:59:40.777Z"
+  }
+]

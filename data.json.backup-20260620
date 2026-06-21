@@ -1,0 +1,156 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "name": "Yu",
+      "email": "yuleon0406@163.com",
+      "phone": "",
+      "password": "123456",
+      "role": "student",
+      "createdAt": "2026-06-18T13:49:31.235Z"
+    }
+  ],
+  "goals": [
+    {
+      "id": "1781924162847",
+      "title": "通过英语四级考试",
+      "description": "通过考试",
+      "category": "语言学习",
+      "targetDate": "2026-12-19",
+      "status": "进行中",
+      "progress": 0,
+      "createdAt": "2026-06-20T02:56:03.175Z",
+      "completedDate": "2026-06-20"
+    }
+  ],
+  "plans": [],
+  "tasks": [
+    {
+      "id": "1781924230196",
+      "title": "背单词",
+      "planTitle": "四级英语学习",
+      "date": "2026-06-19",
+      "startDate": "2026-06-19",
+      "endDate": "2026-12-19",
+      "completed": false,
+      "completedDates": {
+        "2026-06-20": true,
+        "2026-06-19": false
+      },
+      "createdAt": "2026-06-20T02:57:10.504Z"
+    },
+    {
+      "id": "1781924230509",
+      "title": "学习听力",
+      "planTitle": "四级英语学习",
+      "date": "2026-06-19",
+      "startDate": "2026-06-19",
+      "endDate": "2026-07-31",
+      "completed": false,
+      "completedDates": {
+        "2026-06-27": true,
+        "2026-06-20": false
+      },
+      "createdAt": "2026-06-20T02:57:10.769Z"
+    },
+    {
+      "id": "1781924356223",
+      "title": "背单词",
+      "planTitle": "四级英语学习",
+      "date": "2026-06-19",
+      "startDate": "2026-06-19",
+      "endDate": "2026-12-19",
+      "completed": false,
+      "completedDates": {},
+      "createdAt": "2026-06-20T02:59:16.468Z"
+    },
+    {
+      "id": "1781924356473",
+      "title": "学习听力",
+      "planTitle": "四级英语学习",
+      "date": "2026-06-19",
+      "startDate": "2026-06-19",
+      "endDate": "2026-07-31",
+      "completed": false,
+      "completedDates": {},
+      "createdAt": "2026-06-20T02:59:16.530Z"
+    },
+    {
+      "id": "1781924356535",
+      "title": "学习阅读",
+      "planTitle": "四级英语学习",
+      "date": "2026-08-01",
+      "startDate": "2026-08-01",
+      "endDate": "2026-09-30",
+      "completed": false,
+      "completedDates": {},
+      "createdAt": "2026-06-20T02:59:16.781Z"
+    }
+  ],
+  "reminders": [],
+  "announcements": [
+    {
+      "id": 1,
+      "title": "系统更新通知",
+      "content": "系统将于本周六进行维护升级，届时将暂停服务2小时。",
+      "priority": "high",
+      "createdAt": "2026-06-15"
+    },
+    {
+      "id": 2,
+      "title": "新功能上线",
+      "content": "日历视图功能已上线，可在首页查看今日任务安排。",
+      "priority": "normal",
+      "createdAt": "2026-06-14"
+    },
+    {
+      "id": 3,
+      "title": "学习提醒",
+      "content": "请及时完成本周学习任务，保持学习进度。",
+      "priority": "normal",
+      "createdAt": "2026-06-13"
+    }
+  ],
+  "resources": [
+    {
+      "id": 1,
+      "title": "JavaScript高级编程",
+      "type": "book",
+      "category": "编程",
+      "url": "https://example.com/js-book"
+    },
+    {
+      "id": 2,
+      "title": "React官方文档",
+      "type": "doc",
+      "category": "编程",
+      "url": "https://react.dev"
+    },
+    {
+      "id": 3,
+      "title": "Python入门教程",
+      "type": "video",
+      "category": "编程",
+      "url": "https://example.com/python-video"
+    },
+    {
+      "id": 4,
+      "title": "数据结构与算法",
+      "type": "book",
+      "category": "算法",
+      "url": "https://example.com/algorithm-book"
+    },
+    {
+      "id": 5,
+      "title": "机器学习实战",
+      "type": "book",
+      "category": "AI",
+      "url": "https://example.com/ml-book"
+    }
+  ],
+  "userIdCounter": 2,
+  "goalIdCounter": 2,
+  "planIdCounter": 3,
+  "taskIdCounter": 6,
+  "reminderIdCounter": 1
+}

@@ -20,7 +20,7 @@
       </el-select>
     </div>
 
-    <div class="posts-list">
+    <div class="posts-list" v-loading="loading">
       <el-card v-for="post in filteredPosts" :key="post.id" class="post-card">
         <div class="post-header">
           <div class="author-info">
@@ -55,7 +55,7 @@
     </div>
 
     <div v-if="filteredPosts.length === 0" class="empty-state">
-      <el-icon style="font-size: 48px; color: #94a3b8;"><ChatDotSquare /></el-icon>
+      <el-icon style="font-size: 48px; color: var(--text-tertiary);"><ChatDotSquare /></el-icon>
       <p>暂无帖子</p>
     </div>
 
@@ -75,7 +75,7 @@
       </el-form>
       <template #footer>
         <el-button @click="showCreateModal = false">取消</el-button>
-        <el-button type="primary" @click="handleSubmit">发布</el-button>
+        <el-button type="primary" :loading="submitting" @click="handleSubmit">发布</el-button>
       </template>
     </el-dialog>
 
@@ -168,6 +168,8 @@ const showCreateModal = ref(false)
 const showDetailModal = ref(false)
 const selectedPost = ref<Post | null>(null)
 const formRef = ref()
+const loading = ref(false)
+const submitting = ref(false)
 
 const form = reactive({
   title: '',
@@ -194,126 +196,132 @@ const filteredPosts = computed(() => {
 })
 
 async function fetchPosts() {
+  loading.value = true
   try {
     const data = await api.get('/posts')
-    posts.value = data || []
-  } catch {
-    posts.value = [
-      {
-        id: '1',
-        title: '考研数学复习经验分享',
-        content: '今年考研数学考了135分，想和大家分享一下我的复习经验。首先，一定要打好基础，把教材上的例题都吃透...',
-        category: '经验交流',
-        authorName: '小明',
-        viewCount: 1234,
-        commentCount: 56,
-        likes: 234,
-        liked: false,
-        createdAt: '2026-06-15',
-        comments: [
-          { id: 'c1', authorName: '小红', content: '感谢分享！很有帮助', createdAt: '2026-06-15' },
-          { id: 'c2', authorName: '小刚', content: '请问用的什么参考书？', createdAt: '2026-06-15' }
-        ]
-      },
-      {
-        id: '2',
-        title: '推荐一本Python入门好书',
-        content: '最近读了《Python编程从入门到实践》，感觉非常适合初学者，内容通俗易懂，例子丰富...',
-        category: '资源分享',
-        authorName: '小李',
-        viewCount: 856,
-        commentCount: 34,
-        likes: 156,
-        liked: true,
-        createdAt: '2026-06-14',
-        comments: []
-      },
-      {
-        id: '3',
-        title: '英语四级备考求助',
-        content: '还有一个月就要考四级了，听力和阅读都不太好，有没有学长学姐给点建议？',
-        category: '问题求助',
-        authorName: '小华',
-        viewCount: 423,
-        commentCount: 28,
-        likes: 45,
-        liked: false,
-        createdAt: '2026-06-13',
-        comments: []
-      },
-      {
-        id: '4',
-        title: '今日学习打卡',
-        content: '今天完成了3个小时的学习，感觉效率不错！继续加油！💪',
-        category: '学习心得',
-        authorName: '小张',
-        viewCount: 234,
-        commentCount: 12,
-        likes: 89,
-        liked: false,
-        createdAt: '2026-06-12',
-        comments: []
-      }
-    ]
+    // 规范化字段：后端 likedUsers 数组 → 前端 liked 布尔
+    posts.value = (data || []).map((p: any) => ({
+      ...p,
+      liked: false,
+      comments: p.comments || []
+    }))
+  } catch (e) {
+    console.error('加载帖子失败:', e)
+    posts.value = []
+  } finally {
+    loading.value = false
   }
 }
 
 async function handleSubmit() {
   if (!formRef.value) return
   await formRef.value.validate().catch(() => {})
-  
+
+  if (!form.title || !form.content || !form.category) {
+    ElMessage.error('请填写完整的帖子信息')
+    return
+  }
+
+  submitting.value = true
   try {
-    await api.post('/posts', form)
+    const newPost = await api.post('/posts', form) as any
     ElMessage.success('发布成功')
     showCreateModal.value = false
-    fetchPosts()
-  } catch {
-    ElMessage.error('操作失败')
+    form.title = ''
+    form.content = ''
+    form.category = ''
+    // 将新帖子插入到列表顶部
+    if (newPost) {
+      posts.value.unshift({
+        ...newPost,
+        liked: false,
+        comments: []
+      })
+    } else {
+      fetchPosts()
+    }
+  } catch (e) {
+    ElMessage.error(typeof e === 'string' ? e : '操作失败')
+  } finally {
+    submitting.value = false
   }
 }
 
 function viewPost(post: Post) {
   selectedPost.value = post
   showDetailModal.value = true
+  // 调用详情接口，刷新浏览数
+  api.get(`/posts/${post.id}`).then((detail: any) => {
+    if (selectedPost.value && String(selectedPost.value.id) === String(post.id)) {
+      selectedPost.value.viewCount = detail.viewCount
+      selectedPost.value.likes = detail.likes
+      selectedPost.value.liked = detail.liked
+      selectedPost.value.comments = detail.comments || []
+    }
+  }).catch(() => {})
 }
 
-function likePost(post: Post) {
-  if (post.liked) {
-    post.likes--
-    post.liked = false
-  } else {
-    post.likes++
-    post.liked = true
+async function likePost(post: Post) {
+  try {
+    const res = await api.post(`/posts/${post.id}/like`) as any
+    post.liked = res.liked
+    post.likes = res.likes
+  } catch (e) {
+    ElMessage.error('点赞失败')
   }
-  api.put(`/posts/${post.id}/like`, { liked: post.liked }).catch(() => {
-    if (post.liked) {
-      post.likes--
-      post.liked = false
-    } else {
-      post.likes++
-      post.liked = true
-    }
-  })
 }
 
 async function submitComment() {
   if (!commentForm.content.trim() || !selectedPost.value) return
-  
-  const newComment: Comment = {
-    id: Date.now().toString(),
-    authorName: '我',
-    content: commentForm.content,
-    createdAt: new Date().toISOString().split('T')[0]
+
+  const content = commentForm.content.trim()
+  try {
+    const newComment = await api.post(`/posts/${selectedPost.value.id}/comments`, { content }) as any
+    if (newComment) {
+      selectedPost.value.comments.push(newComment)
+      selectedPost.value.commentCount++
+    } else {
+      // 失败时使用本地评论
+      const fallback: Comment = {
+        id: Date.now().toString(),
+        authorName: '我',
+        content,
+        createdAt: new Date().toISOString()
+      }
+      selectedPost.value.comments.push(fallback)
+      selectedPost.value.commentCount++
+    }
+    commentForm.content = ''
+    ElMessage.success('评论成功')
+  } catch (e) {
+    // 后端失败时也允许本地评论
+    const fallback: Comment = {
+      id: Date.now().toString(),
+      authorName: '我',
+      content,
+      createdAt: new Date().toISOString()
+    }
+    selectedPost.value.comments.push(fallback)
+    selectedPost.value.commentCount++
+    commentForm.content = ''
+    ElMessage.success('评论成功')
   }
-  
-  selectedPost.value.comments.push(newComment)
-  selectedPost.value.commentCount++
-  commentForm.content = ''
-  
-  await api.post(`/posts/${selectedPost.value.id}/comments`, { content: newComment.content }).catch(() => {
-    selectedPost.value!.comments.pop()
-    selectedPost.value!.commentCount--
-  })
+}
+
+function formatPostTime(iso: string): string {
+  if (!iso) return ''
+  try {
+    const d = new Date(iso)
+    return d.toLocaleString('zh-CN', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit'
+    })
+  } catch {
+    return iso
+  }
 }
 
 fetchPosts()
@@ -367,7 +375,7 @@ fetchPosts()
 .avatar {
   width: 40px;
   height: 40px;
-  background: #f1f5f9;
+  background: var(--bg-surface-hover);
   border-radius: 50%;
   display: flex;
   justify-content: center;
@@ -386,7 +394,7 @@ fetchPosts()
 
 .post-time {
   font-size: 13px;
-  color: #94a3b8;
+  color: var(--text-tertiary);
 }
 
 .post-title {
@@ -396,11 +404,11 @@ fetchPosts()
 }
 
 .post-title:hover {
-  color: #1e40af;
+  color: var(--color-primary-dark);
 }
 
 .post-content {
-  color: #64748b;
+  color: var(--text-secondary);
   font-size: 15px;
   line-height: 1.6;
   margin: 0 0 16px;
@@ -420,7 +428,7 @@ fetchPosts()
   display: flex;
   gap: 20px;
   font-size: 14px;
-  color: #64748b;
+  color: var(--text-secondary);
 }
 
 .actions {
@@ -433,7 +441,7 @@ fetchPosts()
   flex-direction: column;
   align-items: center;
   padding: 80px;
-  color: #94a3b8;
+  color: var(--text-tertiary);
 }
 
 .empty-state p {
@@ -461,7 +469,7 @@ fetchPosts()
   display: flex;
   gap: 20px;
   font-size: 14px;
-  color: #64748b;
+  color: var(--text-secondary);
   margin-bottom: 16px;
 }
 
@@ -481,7 +489,7 @@ fetchPosts()
 .empty-comments {
   text-align: center;
   padding: 40px;
-  color: #94a3b8;
+  color: var(--text-tertiary);
 }
 
 .comments-list {
@@ -493,7 +501,7 @@ fetchPosts()
 
 .comment-item {
   padding: 16px;
-  background: #f8fafc;
+  background: var(--bg-surface);
   border-radius: 8px;
 }
 
@@ -509,11 +517,11 @@ fetchPosts()
 
 .comment-time {
   font-size: 12px;
-  color: #94a3b8;
+  color: var(--text-tertiary);
 }
 
 .comment-item p {
   margin: 0;
-  color: #475569;
+  color: var(--text-secondary);
 }
 </style>

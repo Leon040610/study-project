@@ -1,10 +1,10 @@
 <template>
   <div class="calendar-page">
     <div class="calendar-container">
-      <el-card>
+      <el-card class="calendar-card">
         <template #header>
           <div class="card-header-flex">
-            <span>学习计划日历</span>
+            <span class="card-title">学习计划日历</span>
             <el-button type="primary" size="small" @click="showAddTaskModal = true">
               <el-icon><Plus /></el-icon>
               <span>添加任务</span>
@@ -13,38 +13,34 @@
         </template>
         <div class="calendar-wrapper">
           <div class="calendar-nav">
-            <el-button @click="prevMonth">上一月</el-button>
+            <el-button :icon="ArrowLeft" circle @click="prevMonth" aria-label="上一月" />
             <span class="current-month">{{ currentYear }}年{{ currentMonth }}月</span>
-            <el-button @click="nextMonth">下一月</el-button>
-            <el-button @click="goToday">今天</el-button>
+            <el-button :icon="ArrowRight" circle @click="nextMonth" aria-label="下一月" />
+            <el-button size="small" @click="goToday">今天</el-button>
           </div>
           <div class="calendar-grid">
-            <div class="calendar-header">
-              <div v-for="day in weekDays" :key="day" class="day-header">{{ day }}</div>
-            </div>
-            <div class="calendar-body">
-              <div
-                v-for="(day, index) in calendarDays"
-                :key="index"
-                class="day-cell"
-                :class="{
-                  'other-month': !day.isCurrentMonth,
-                  'today': day.isToday,
-                  'selected': isSelected(day),
-                  'has-task': day.tasks.length > 0
-                }"
-                @click="selectDate(day)"
-              >
-                <span class="day-number">{{ day.date }}</span>
-                <div v-if="day.tasks.length > 0" class="task-indicators">
-                  <div
-                    v-for="(task, i) in day.tasks.slice(0, 3)"
-                    :key="i"
-                    class="task-indicator"
-                    :class="{ completed: task.completed }"
-                  ></div>
-                  <span v-if="day.tasks.length > 3" class="more-tasks">{{ day.tasks.length - 3 }}+</span>
-                </div>
+            <div v-for="day in weekDays" :key="day" class="day-header">{{ day }}</div>
+            <div
+              v-for="(day, index) in calendarDays"
+              :key="index"
+              class="day-cell"
+              :class="{
+                'other-month': !day.isCurrentMonth,
+                'today': day.isToday,
+                'selected': isSelected(day),
+                'has-task': day.tasks.length > 0
+              }"
+              @click="selectDate(day)"
+            >
+              <span class="day-number">{{ day.date }}</span>
+              <div v-if="day.tasks.length > 0" class="task-indicators">
+                <div
+                  v-for="(task, i) in day.tasks.slice(0, 3)"
+                  :key="i"
+                  class="task-indicator"
+                  :class="{ completed: dataStore.isTaskCompletedOnDate(task, day.fullDate) }"
+                ></div>
+                <span v-if="day.tasks.length > 3" class="more-tasks">{{ day.tasks.length - 3 }}+</span>
               </div>
             </div>
           </div>
@@ -53,10 +49,10 @@
 
       <el-card class="tasks-panel">
         <template #header>
-          <span>{{ selectedDateStr }} 的任务</span>
+          <span class="card-title">{{ selectedDateStr }} 的任务</span>
         </template>
         <div v-if="selectedTasks.length === 0" class="empty-state">
-          <el-icon style="font-size: 48px; color: #94a3b8;"><Document /></el-icon>
+          <el-icon :size="48" color="var(--text-tertiary)"><Document /></el-icon>
           <p>当日暂无任务</p>
         </div>
         <div v-else class="tasks-list">
@@ -64,30 +60,30 @@
             v-for="task in selectedTasks"
             :key="task.id"
             class="task-item"
-            :class="{ completed: task.completed }"
+            :class="{ completed: dataStore.isTaskCompletedOnDate(task, selectedDateStr) }"
           >
-            <el-checkbox :checked="task.completed" @change="(val) => toggleTask(task, val)" />
+            <el-checkbox :model-value="dataStore.isTaskCompletedOnDate(task, selectedDateStr)" @change="(val) => toggleTask(task, val)" />
             <div class="task-content">
               <h4>{{ task.title }}</h4>
               <p>{{ task.planTitle }}</p>
             </div>
-            <el-tag :type="task.completed ? 'success' : ''">
-              {{ task.completed ? '已完成' : '待完成' }}
+            <el-tag :type="dataStore.isTaskCompletedOnDate(task, selectedDateStr) ? 'success' : 'info'" size="small">
+              {{ dataStore.isTaskCompletedOnDate(task, selectedDateStr) ? '已完成' : '待完成' }}
             </el-tag>
           </div>
         </div>
       </el-card>
     </div>
 
-    <el-dialog v-model="showAddTaskModal" title="添加任务" width="500px">
+    <el-dialog v-model="showAddTaskModal" title="添加任务" width="500px" :class="{ 'dialog-mobile': isMobile }">
       <el-form :model="form" :rules="rules" ref="formRef" label-width="100px">
         <el-form-item label="任务名称" prop="title">
           <el-input v-model="form.title" placeholder="请输入任务名称" />
         </el-form-item>
         <el-form-item label="所属计划" prop="plan">
           <el-select v-model="form.plan" placeholder="请选择所属计划">
-          <el-option v-for="p in dataStore.plans" :key="p.id" :label="p.title" :value="p.title" />
-        </el-select>
+            <el-option v-for="p in dataStore.plans" :key="p.id" :label="p.title" :value="p.title" />
+          </el-select>
         </el-form-item>
         <el-form-item label="任务日期" prop="date">
           <el-date-picker v-model="form.date" type="date" :value="selectedDateStr" />
@@ -102,10 +98,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useDataStore } from '@/stores/data'
-import { Plus, Document } from '@element-plus/icons-vue'
+import { Plus, Document, ArrowLeft, ArrowRight } from '@element-plus/icons-vue'
 
 const dataStore = useDataStore()
 
@@ -124,6 +120,7 @@ const currentMonth = ref(today.getMonth() + 1)
 const selectedDate = ref<CalendarDay | null>(null)
 const showAddTaskModal = ref(false)
 const formRef = ref()
+const isMobile = ref(false)
 
 const form = reactive({
   title: '',
@@ -142,7 +139,7 @@ const calendarDays = computed<CalendarDay[]>(() => {
   const firstDay = new Date(currentYear.value, currentMonth.value - 1, 1)
   const lastDay = new Date(currentYear.value, currentMonth.value, 0)
   const startDay = firstDay.getDay()
-  
+
   const prevMonthLastDay = new Date(currentYear.value, currentMonth.value - 1, 0).getDate()
   for (let i = startDay - 1; i >= 0; i--) {
     const date = prevMonthLastDay - i
@@ -157,7 +154,7 @@ const calendarDays = computed<CalendarDay[]>(() => {
       tasks: getTasksByDate(fullDate)
     })
   }
-  
+
   for (let i = 1; i <= lastDay.getDate(); i++) {
     const fullDate = `${currentYear.value}-${String(currentMonth.value).padStart(2, '0')}-${String(i).padStart(2, '0')}`
     days.push({
@@ -168,7 +165,7 @@ const calendarDays = computed<CalendarDay[]>(() => {
       tasks: getTasksByDate(fullDate)
     })
   }
-  
+
   const remainingDays = 42 - days.length
   for (let i = 1; i <= remainingDays; i++) {
     const month = currentMonth.value + 1 > 12 ? 1 : currentMonth.value + 1
@@ -182,7 +179,7 @@ const calendarDays = computed<CalendarDay[]>(() => {
       tasks: getTasksByDate(fullDate)
     })
   }
-  
+
   return days
 })
 
@@ -196,22 +193,18 @@ const selectedDateStr = computed(() => {
 
 const selectedTasks = computed(() => {
   return dataStore.tasks.filter(t => {
-    // 如果任务有 startDate 和 endDate，检查该日期是否在范围内
     if (t.startDate && t.endDate) {
       return selectedDateStr.value >= t.startDate && selectedDateStr.value <= t.endDate
     }
-    // 兼容旧数据：使用 date 字段
     return t.date === selectedDateStr.value
   })
 })
 
 function getTasksByDate(date: string) {
   return dataStore.tasks.filter(t => {
-    // 如果任务有 startDate 和 endDate，检查该日期是否在范围内
     if (t.startDate && t.endDate) {
       return date >= t.startDate && date <= t.endDate
     }
-    // 兼容旧数据：使用 date 字段
     return t.date === date
   })
 }
@@ -256,14 +249,13 @@ function goToday() {
 async function handleAddTask() {
   if (!formRef.value) return
   await formRef.value.validate().catch(() => {})
-  
-  // 将日期转换为 YYYY-MM-DD 格式
+
   let dateStr = selectedDateStr.value
   if (form.date) {
     const d = new Date(form.date)
     dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
   }
-  
+
   try {
     await dataStore.addTask({
       title: form.title,
@@ -281,7 +273,15 @@ async function handleAddTask() {
 }
 
 function toggleTask(task: typeof dataStore.tasks[0], completed: boolean) {
-  dataStore.updateTask(task.id, { completed })
+  // 日历视图右侧任务列表的勾选/取消只影响"当前选中那一天"的任务状态
+  // 用户在右侧看到的是"某一天"对应的周期任务，应可独立操作各日
+  // 整个周期的批量切换在 Plans 视图完成
+  // 同时通过对象替换触发响应式，确保 el-checkbox 正确重新渲染
+  dataStore.toggleTaskOnDate(task.id, selectedDateStr.value, completed)
+}
+
+function checkMobile() {
+  isMobile.value = window.innerWidth < 768
 }
 
 async function fetchData() {
@@ -291,18 +291,26 @@ async function fetchData() {
 onMounted(() => {
   fetchData()
   goToday()
+  checkMobile()
+  window.addEventListener('resize', checkMobile)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', checkMobile)
 })
 </script>
 
 <style scoped>
 .calendar-page {
-  padding: 24px;
+  padding: var(--space-3) var(--space-4);
+  display: flex;
+  flex-direction: column;
 }
 
 .calendar-container {
   display: grid;
-  grid-template-columns: 1fr 400px;
-  gap: 24px;
+  grid-template-columns: minmax(0, 1.4fr) minmax(320px, 0.9fr);
+  gap: var(--space-4);
 }
 
 .card-header-flex {
@@ -311,65 +319,65 @@ onMounted(() => {
   align-items: center;
 }
 
+.card-title {
+  font-size: var(--text-base);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
 .calendar-wrapper {
-  padding: 16px;
+  padding: var(--space-1) var(--space-2);
 }
 
 .calendar-nav {
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 16px;
-  margin-bottom: 24px;
+  gap: var(--space-2);
+  margin-bottom: var(--space-1);
 }
 
 .current-month {
-  font-size: 18px;
-  font-weight: 600;
+  font-size: var(--text-base);
+  font-weight: 700;
+  color: var(--text-primary);
   min-width: 120px;
   text-align: center;
+  letter-spacing: -0.01em;
 }
 
 .calendar-grid {
-  display: flex;
-  flex-direction: column;
-}
-
-.calendar-header {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 4px;
-  margin-bottom: 8px;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: var(--space-1);
 }
 
 .day-header {
   text-align: center;
-  padding: 12px;
+  padding: var(--space-1) 0;
+  font-size: var(--text-xs);
   font-weight: 600;
-  color: #64748b;
-}
-
-.calendar-body {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 4px;
+  color: var(--text-secondary);
 }
 
 .day-cell {
-  aspect-ratio: 1;
+  min-height: 68px;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
   align-items: center;
-  padding: 8px;
-  border-radius: 8px;
+  padding: var(--space-1);
+  border-radius: var(--radius-md);
   cursor: pointer;
   position: relative;
-  background: #f8fafc;
+  background: var(--bg-surface-hover);
+  transition: all var(--transition-fast);
+  box-sizing: border-box;
 }
 
 .day-cell:hover {
-  background: #e2e8f0;
+  background: var(--color-primary-light);
+  transform: translateY(-1px);
 }
 
 .day-cell.other-month {
@@ -377,84 +385,136 @@ onMounted(() => {
 }
 
 .day-cell.today {
-  background: #dbeafe;
+  background: var(--color-info-light);
 }
 
 .day-cell.today .day-number {
-  background: #1e40af;
+  background: var(--color-primary);
   color: white;
-  border-radius: 50%;
-  width: 28px;
-  height: 28px;
+  border-radius: var(--radius-full);
+  width: 26px;
+  height: 26px;
   display: flex;
   justify-content: center;
   align-items: center;
+  font-weight: 700;
+  font-size: var(--text-sm);
 }
 
 .day-cell.selected {
-  background: #1e40af;
+  background: var(--color-primary);
+  color: white;
+  box-shadow: var(--shadow-md);
+}
+
+/* 选中状态下，任务指示器改为白色以确保可见 */
+.day-cell.selected .task-indicator {
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.3);
+}
+
+.day-cell.selected .task-indicator.completed {
+  background: rgba(209, 250, 229, 0.95);
+  box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.4);
+}
+
+.day-cell.selected .more-tasks {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.day-cell.selected .day-number {
   color: white;
 }
 
 .day-cell.has-task {
-  background: #fef3c7;
+  background: var(--color-warning-light);
+}
+
+.day-cell.has-task.selected {
+  background: var(--color-primary);
 }
 
 .day-number {
-  font-size: 14px;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.2;
+  margin-top: 2px;
 }
 
 .task-indicators {
   display: flex;
-  gap: 2px;
-  margin-top: 4px;
+  gap: 1px;
+  margin-top: 1px;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: center;
+  max-width: 100%;
 }
 
 .task-indicator {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #1e40af;
+  width: 4px;
+  height: 4px;
+  border-radius: var(--radius-full);
+  background: var(--color-primary);
+  transition: background var(--transition-fast);
+  flex-shrink: 0;
 }
 
 .task-indicator.completed {
-  background: #10b981;
+  background: var(--color-success);
 }
 
 .more-tasks {
-  font-size: 10px;
-  color: #64748b;
+  font-size: 9px;
+  color: var(--text-tertiary);
+  margin-left: 1px;
+  line-height: 1;
 }
 
 .tasks-panel {
-  height: fit-content;
+  max-height: 560px;
+  display: flex;
+  flex-direction: column;
+}
+
+.tasks-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .empty-state {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 40px;
-  color: #94a3b8;
+  padding: var(--space-10);
+  color: var(--text-tertiary);
+  gap: var(--space-3);
 }
 
 .empty-state p {
-  margin-top: 12px;
-}
-
-.tasks-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+  margin-top: var(--space-3);
 }
 
 .task-item {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 16px;
-  background: #f8fafc;
-  border-radius: 10px;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  transition: all var(--transition-fast);
+}
+
+.task-item:hover {
+  background: var(--color-primary-light);
+  border-color: var(--color-primary);
+  transform: translateX(2px);
 }
 
 .task-item.completed {
@@ -467,18 +527,87 @@ onMounted(() => {
 
 .task-content h4 {
   margin: 0;
-  font-size: 15px;
+  font-size: var(--text-sm);
+  font-weight: 500;
 }
 
 .task-content p {
-  margin: 4px 0 0;
-  font-size: 13px;
-  color: #94a3b8;
+  margin: var(--space-1) 0 0;
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
 }
 
-@media (max-width: 900px) {
+/* ---- 响应式 ---- */
+@media (max-width: 1280px) {
   .calendar-container {
     grid-template-columns: 1fr;
+  }
+
+  .tasks-panel {
+    max-height: none;
+  }
+
+  .tasks-list {
+    overflow: visible;
+  }
+}
+
+@media (max-width: 1024px) {
+  .day-cell {
+    min-height: 60px;
+  }
+}
+
+@media (max-width: 768px) {
+  .calendar-page {
+    padding: var(--space-3);
+  }
+
+  .calendar-container {
+    gap: var(--space-3);
+  }
+
+  .calendar-wrapper {
+    padding: var(--space-1) var(--space-2);
+  }
+
+  .calendar-nav {
+    gap: var(--space-1);
+    margin-bottom: var(--space-1);
+  }
+
+  .current-month {
+    font-size: var(--text-sm);
+    min-width: 90px;
+  }
+
+  .day-header {
+    padding: var(--space-1) 0;
+    font-size: 10px;
+  }
+
+  .day-cell {
+    min-height: 52px;
+    padding: 2px;
+  }
+
+  .day-number {
+    font-size: var(--text-xs);
+    margin-top: 1px;
+  }
+
+  .task-indicator {
+    width: 3px;
+    height: 3px;
+  }
+
+  .more-tasks {
+    font-size: 8px;
+  }
+
+  .dialog-mobile {
+    width: 90% !important;
+    margin: 0 auto !important;
   }
 }
 </style>

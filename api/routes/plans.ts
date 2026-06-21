@@ -1,45 +1,49 @@
 import express from 'express';
 import { authenticate } from '../middleware/auth';
+import { plans, tasks, savePlans, saveTasks, type Plan, type Task } from '../utils/sharedData';
 
 const router = express.Router();
 
-interface Plan {
-  id: string;
-  user_id: string;
-  title: string;
-  goal: string;
-  start_date: string;
-  end_date: string;
-  daily_minutes: number;
-  progress: number;
-  created_at: string;
-  updated_at: string;
+// 将后端 snake_case 转为前端 camelCase
+function toClientPlan(p: Plan) {
+  return {
+    id: p.id,
+    title: p.title,
+    goalTitle: p.goal,
+    category: p.goal,
+    startDate: p.start_date,
+    endDate: p.end_date,
+    description: '',
+    progress: p.progress,
+  };
 }
 
-interface Task {
-  id: string;
-  plan_id: string;
-  title: string;
-  description?: string;
-  due_date: string;
-  completed: boolean;
-  priority: number;
-  created_at: string;
-  updated_at: string;
+function toClientTask(t: Task) {
+  // 通过 plan_id 查找 plan title
+  const plan = plans.find(p => p.id === t.plan_id);
+  return {
+    id: t.id,
+    title: t.title,
+    planTitle: plan?.title || '',
+    date: t.due_date,
+    completed: t.completed,
+    completedDates: t.completed_dates || {},
+    startDate: t.start_date || t.due_date,
+    endDate: t.end_date || t.due_date,
+  };
 }
-
-const plans: Plan[] = [];
-const tasks: Task[] = [];
 
 router.get('/', authenticate, (req, res) => {
   const userPlans = plans.filter(p => p.user_id === req.user?.id);
-  res.json(userPlans);
+  res.json(userPlans.map(toClientPlan));
 });
 
 router.post('/', authenticate, (req, res) => {
-  const { title, goal, startDate, endDate, dailyMinutes } = req.body;
+  // 兼容前端字段名：goalTitle 或 goal 或 category
+  const { title, goal, goalTitle, category, startDate, endDate, dailyMinutes, description } = req.body;
+  const goalValue = goal || goalTitle || category;
   
-  if (!title || !goal || !startDate || !endDate) {
+  if (!title || !goalValue || !startDate || !endDate) {
     return res.status(400).json({ error: '缺少必填字段' });
   }
   
@@ -50,7 +54,7 @@ router.post('/', authenticate, (req, res) => {
     id,
     user_id: req.user!.id,
     title,
-    goal,
+    goal: goalValue,
     start_date: startDate,
     end_date: endDate,
     daily_minutes: dailyMinutes || 60,
@@ -60,32 +64,11 @@ router.post('/', authenticate, (req, res) => {
   };
   
   plans.push(plan);
+  savePlans();
   
-  const start = new Date(startDate);
-  const end = new Date(endDate);
-  const days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-  const subjects = ['基础知识', '核心概念', '实践练习', '综合复习', '模拟测试'];
+  // 不再自动生成任务，任务由前端通过 POST /tasks 创建
   
-  for (let i = 1; i <= Math.min(days, 14); i++) {
-    const subjectIndex = (i - 1) % subjects.length;
-    const weekNum = Math.ceil(i / 7);
-    const dueDate = new Date(start);
-    dueDate.setDate(start.getDate() + i - 1);
-    
-    tasks.push({
-      id: Math.random().toString(36).substring(2, 15),
-      plan_id: id,
-      title: `第${weekNum}周 - ${subjects[subjectIndex]} - 第${i}天`,
-      description: '',
-      due_date: dueDate.toISOString().split('T')[0],
-      completed: false,
-      priority: 2,
-      created_at: now,
-      updated_at: now,
-    });
-  }
-  
-  res.status(201).json(plan);
+  res.status(201).json(toClientPlan(plan));
 });
 
 router.get('/:id', authenticate, (req, res) => {
@@ -97,7 +80,7 @@ router.get('/:id', authenticate, (req, res) => {
   
   const planTasks = tasks.filter(t => t.plan_id === req.params.id);
   
-  res.json({ plan, tasks: planTasks });
+  res.json({ plan: toClientPlan(plan), tasks: planTasks.map(toClientTask) });
 });
 
 router.put('/:id', authenticate, (req, res) => {
@@ -107,19 +90,21 @@ router.put('/:id', authenticate, (req, res) => {
     return res.status(404).json({ error: '计划不存在' });
   }
   
-  const { title, goal, startDate, endDate, dailyMinutes } = req.body;
+  const { title, goal, goalTitle, category, startDate, endDate, dailyMinutes } = req.body;
+  const goalValue = goal || goalTitle || category;
   
   plans[index] = {
     ...plans[index],
     title: title || plans[index].title,
-    goal: goal || plans[index].goal,
+    goal: goalValue || plans[index].goal,
     start_date: startDate || plans[index].start_date,
     end_date: endDate || plans[index].end_date,
     daily_minutes: dailyMinutes !== undefined ? dailyMinutes : plans[index].daily_minutes,
     updated_at: new Date().toISOString(),
   };
+  savePlans();
   
-  res.json(plans[index]);
+  res.json(toClientPlan(plans[index]));
 });
 
 router.delete('/:id', authenticate, (req, res) => {
@@ -130,9 +115,11 @@ router.delete('/:id', authenticate, (req, res) => {
   }
   
   plans.splice(index, 1);
-  const taskIndex = tasks.filter(t => t.plan_id !== req.params.id);
+  savePlans();
+  const remainingTasks = tasks.filter(t => t.plan_id !== req.params.id);
   tasks.length = 0;
-  tasks.push(...taskIndex);
+  tasks.push(...remainingTasks);
+  saveTasks();
   
   res.json({ success: true });
 });

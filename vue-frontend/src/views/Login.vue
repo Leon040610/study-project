@@ -2,28 +2,32 @@
   <div class="login-page">
     <div class="bg-blob-1"></div>
     <div class="bg-blob-2"></div>
+    <div class="bg-blob-3"></div>
+
     <div class="login-card">
       <div class="card-header">
-        <div class="logo">📚</div>
+        <div class="logo">
+          <el-icon :size="36"><Reading /></el-icon>
+        </div>
         <h1>{{ isLogin ? '欢迎回来' : '创建账户' }}</h1>
         <p>{{ isLogin ? '登录您的学习计划助手' : '开始您的学习之旅' }}</p>
       </div>
       <div class="card-body">
-        <el-form :model="form" :rules="rules" ref="formRef" @submit.prevent="handleSubmit">
+        <el-form :model="form" :rules="rules" ref="formRef" @submit.prevent="handleSubmit" label-position="top">
           <el-form-item v-if="!isLogin" label="用户名" prop="name">
-            <el-input v-model="form.name" placeholder="请输入用户名" />
+            <el-input v-model="form.name" placeholder="请输入用户名" :prefix-icon="User" />
           </el-form-item>
           <el-form-item label="邮箱" prop="email">
-            <el-input v-model="form.email" type="email" placeholder="请输入邮箱地址" />
+            <el-input v-model="form.email" type="email" placeholder="请输入邮箱地址" :prefix-icon="Message" />
           </el-form-item>
           <el-form-item v-if="!isLogin" label="手机号" prop="phone">
-            <el-input v-model="form.phone" type="tel" placeholder="请输入手机号（可选）" />
+            <el-input v-model="form.phone" type="tel" placeholder="请输入手机号（可选）" :prefix-icon="Phone" />
           </el-form-item>
           <el-form-item label="密码" prop="password">
-            <el-input v-model="form.password" type="password" placeholder="请输入密码" />
+            <el-input v-model="form.password" type="password" placeholder="请输入密码" :prefix-icon="Lock" show-password />
           </el-form-item>
-          
-          <el-button type="primary" :loading="loading" style="width: 100%;" @click="handleSubmit">
+
+          <el-button type="primary" :loading="loading" class="submit-btn" @click="handleSubmit">
             {{ isLogin ? '登录' : '注册' }}
           </el-button>
         </el-form>
@@ -38,10 +42,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed } from 'vue'
+import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { ElMessage } from 'element-plus'
+import { Reading, User, Message, Phone, Lock } from '@element-plus/icons-vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -72,13 +77,15 @@ const rules = {
 async function handleSubmit() {
   if (!formRef.value) return
   await formRef.value.validate().catch(() => {})
-  
+
   loading.value = true
   try {
     if (isLogin.value) {
       await authStore.login(form.email, form.password)
       ElMessage.success('登录成功')
-      router.push('/dashboard')
+      // 管理员跳转到管理控制台，学生跳转到首页
+      const redirectTo = authStore.user?.role === 'admin' ? '/admin' : '/dashboard'
+      router.push(redirectTo)
     } else {
       await authStore.register({
         name: form.name,
@@ -108,11 +115,11 @@ function toggleMode() {
 <style scoped>
 .login-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #1e40af 0%, #2563eb 50%, #0d9488 100%);
+  background: var(--gradient-sidebar);
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 20px;
+  padding: var(--space-5);
   position: relative;
   overflow: hidden;
 }
@@ -126,6 +133,7 @@ function toggleMode() {
   background: rgba(255, 255, 255, 0.08);
   border-radius: 50%;
   filter: blur(60px);
+  animation: float 8s ease-in-out infinite;
 }
 
 .bg-blob-2 {
@@ -137,86 +145,150 @@ function toggleMode() {
   background: rgba(245, 158, 11, 0.1);
   border-radius: 50%;
   filter: blur(60px);
+  animation: float 10s ease-in-out infinite reverse;
+}
+
+.bg-blob-3 {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 300px;
+  height: 300px;
+  background: rgba(16, 185, 129, 0.08);
+  border-radius: 50%;
+  filter: blur(80px);
+  transform: translate(-50%, -50%);
+  animation: pulse 6s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(30px, -30px); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.5; transform: translate(-50%, -50%) scale(1); }
+  50% { opacity: 0.8; transform: translate(-50%, -50%) scale(1.1); }
 }
 
 .login-card {
-  background: white;
-  border-radius: 24px;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.2);
+  background: var(--bg-surface);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-2xl);
   width: 100%;
   max-width: 420px;
   overflow: hidden;
   position: relative;
-  z-index: 10;
+  z-index: var(--z-dropdown);
+  animation: cardEnter 0.6s ease-out;
+}
+
+@keyframes cardEnter {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .card-header {
-  background: linear-gradient(135deg, #1e40af 0%, #0d9488 100%);
-  padding: 48px 40px;
+  background: var(--gradient-primary);
+  padding: var(--space-12) var(--space-10);
   text-align: center;
 }
 
-.card-header .logo {
+.logo {
   width: 72px;
   height: 72px;
   background: rgba(255, 255, 255, 0.2);
   backdrop-filter: blur(10px);
-  border-radius: 50%;
+  border-radius: var(--radius-full);
   display: flex;
   justify-content: center;
   align-items: center;
-  margin: 0 auto 20px;
-  font-size: 36px;
+  margin: 0 auto var(--space-5);
+  color: white;
 }
 
 .card-header h1 {
-  font-size: 32px;
+  font-size: var(--text-3xl);
   font-weight: 700;
   color: white;
-  margin-bottom: 8px;
+  margin-bottom: var(--space-2);
+  letter-spacing: -0.02em;
 }
 
 .card-header p {
   opacity: 0.9;
-  font-size: 15px;
+  font-size: var(--text-sm);
   color: white;
 }
 
 .card-body {
-  padding: 40px;
+  padding: var(--space-10);
+}
+
+.submit-btn {
+  width: 100%;
+  height: 44px;
+  font-size: var(--text-base);
+  font-weight: 600;
+  margin-top: var(--space-2);
 }
 
 .toggle-link {
   text-align: center;
-  margin-top: 28px;
-  padding-top: 28px;
-  border-top: 1px solid #e2e8f0;
+  margin-top: var(--space-7);
+  padding-top: var(--space-7);
+  border-top: 1px solid var(--border-default);
 }
 
 .toggle-link span {
-  font-size: 14px;
-  color: #64748b;
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
 }
 
 .toggle-link button {
   background: none;
   border: none;
-  color: #1e40af;
+  color: var(--color-primary);
   font-weight: 600;
   cursor: pointer;
-  font-size: 14px;
-  margin-left: 4px;
+  font-size: var(--text-sm);
+  margin-left: var(--space-1);
+  transition: color var(--transition-fast);
 }
 
 .toggle-link button:hover {
+  color: var(--color-primary-hover);
   text-decoration: underline;
 }
 
 .footer {
   text-align: center;
-  padding: 16px 40px 24px;
-  border-top: 1px solid #e2e8f0;
-  color: #94a3b8;
-  font-size: 12px;
+  padding: var(--space-4) var(--space-10) var(--space-6);
+  border-top: 1px solid var(--border-default);
+  color: var(--text-tertiary);
+  font-size: var(--text-xs);
+}
+
+/* ---- 响应式 ---- */
+@media (max-width: 480px) {
+  .login-page {
+    padding: var(--space-4);
+  }
+
+  .card-header {
+    padding: var(--space-8) var(--space-6);
+  }
+
+  .card-header h1 {
+    font-size: var(--text-2xl);
+  }
+
+  .card-body {
+    padding: var(--space-6);
+  }
+
+  .footer {
+    padding: var(--space-4) var(--space-6) var(--space-5);
+  }
 }
 </style>

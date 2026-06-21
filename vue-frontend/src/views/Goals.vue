@@ -13,7 +13,7 @@
         <el-tab-pane label="进行中" name="in-progress">
           <el-card>
             <div v-if="inProgressGoals.length === 0" class="empty-state">
-              <el-icon style="font-size: 48px; color: #94a3b8;"><Aim /></el-icon>
+              <el-icon style="font-size: 48px; color: var(--text-tertiary);"><Aim /></el-icon>
               <p>暂无进行中的目标</p>
             </div>
             <div v-else class="goals-grid">
@@ -28,7 +28,7 @@
                 </div>
                 <p class="goal-desc">{{ goal.description }}</p>
                 <div class="goal-meta">
-                  <span>截止日期：{{ goal.targetDate }}</span>
+                  <span>截止日期：{{ formatTargetDate(goal.targetDate) }}</span>
                   <span>进度：{{ goal.progress }}%</span>
                 </div>
                 <div class="progress-bar-container">
@@ -45,7 +45,7 @@
         <el-tab-pane label="已完成" name="completed">
           <el-card>
             <div v-if="completedGoals.length === 0" class="empty-state">
-              <el-icon style="font-size: 48px; color: #94a3b8;"><Check /></el-icon>
+              <el-icon style="font-size: 48px; color: var(--text-tertiary);"><Check /></el-icon>
               <p>暂无已完成的目标</p>
             </div>
             <div v-else class="goals-grid">
@@ -72,7 +72,7 @@
         <el-tab-pane label="已放弃" name="abandoned">
           <el-card>
             <div v-if="abandonedGoals.length === 0" class="empty-state">
-              <el-icon style="font-size: 48px; color: #94a3b8;"><CircleClose /></el-icon>
+              <el-icon style="font-size: 48px; color: var(--text-tertiary);"><CircleClose /></el-icon>
               <p>暂无已放弃的目标</p>
             </div>
             <div v-else class="goals-grid">
@@ -114,7 +114,7 @@
           <el-input type="textarea" v-model="form.description" :rows="3" placeholder="请输入目标描述" />
         </el-form-item>
         <el-form-item label="截止日期" prop="targetDate">
-          <el-date-picker v-model="form.targetDate" type="date" placeholder="选择截止日期" />
+          <el-date-picker v-model="form.targetDate" type="date" placeholder="选择截止日期" value-format="YYYY-MM-DD" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -162,13 +162,19 @@ onMounted(async () => {
 async function handleSubmit() {
   if (!formRef.value) return
   await formRef.value.validate().catch(() => {})
-  
+
   try {
+    // 防御性处理：若 targetDate 仍为 Date 对象或 ISO 字符串，强制规范化为 YYYY-MM-DD
+    const payload = {
+      ...form,
+      targetDate: formatTargetDate(form.targetDate)
+    }
+
     if (editingGoal.value) {
-      await dataStore.updateGoal(editingGoal.value.id, form)
+      await dataStore.updateGoal(editingGoal.value.id, payload)
       ElMessage.success('修改成功')
     } else {
-      await dataStore.addGoal(form)
+      await dataStore.addGoal(payload)
       ElMessage.success('创建成功')
     }
     showCreateModal.value = false
@@ -182,12 +188,33 @@ async function handleSubmit() {
   }
 }
 
+// 规范化 targetDate 展示：
+//   - 'YYYY-MM-DD'            -> 原样返回
+//   - 'YYYY-MM-DDTHH:mm:ssZ'  -> 取日期部分
+//   - Date 对象                -> 用本地时间转换为 YYYY-MM-DD
+//   - 其他/空                  -> 返回空串
+// 这是修复"截止日期少一天"bug的核心：避免 UTC 时区把本地日期推前一天
+function formatTargetDate(value: string | Date | null | undefined): string {
+  if (!value) return ''
+  if (value instanceof Date) {
+    if (isNaN(value.getTime())) return ''
+    return `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, '0')}-${String(value.getDate()).padStart(2, '0')}`
+  }
+  if (typeof value === 'string') {
+    // 形如 "2026-12-18T16:00:00.000Z" 这种 ISO 串，取日期部分
+    if (value.includes('T')) return value.split('T')[0]
+    return value
+  }
+  return ''
+}
+
 function editGoal(goal: typeof dataStore.goals[0]) {
   editingGoal.value = goal
   form.title = goal.title
   form.description = goal.description
   form.category = goal.category
-  form.targetDate = goal.targetDate
+  // 兼容历史数据：若后端存的是 ISO 串，也能在日期选择器里正确显示
+  form.targetDate = formatTargetDate(goal.targetDate)
   showCreateModal.value = true
 }
 
@@ -223,7 +250,7 @@ async function deleteGoal(goal: typeof dataStore.goals[0]) {
   flex-direction: column;
   align-items: center;
   padding: 60px;
-  color: #94a3b8;
+  color: var(--text-tertiary);
 }
 
 .empty-state p {
@@ -238,19 +265,19 @@ async function deleteGoal(goal: typeof dataStore.goals[0]) {
 
 .goal-card {
   padding: 20px;
-  background: #fff;
+  background: var(--bg-surface);
   border-radius: 12px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--border-default);
 }
 
 .goal-card.completed {
-  border-color: #d1fae5;
-  background: #f0fdf4;
+  border-color: var(--color-success);
+  background: var(--color-success-subtle);
 }
 
 .goal-card.abandoned {
-  border-color: #fee2e2;
-  background: #fef2f2;
+  border-color: var(--color-danger);
+  background: var(--color-danger-subtle);
   opacity: 0.7;
 }
 
@@ -267,7 +294,7 @@ async function deleteGoal(goal: typeof dataStore.goals[0]) {
 }
 
 .goal-desc {
-  color: #64748b;
+  color: var(--text-secondary);
   font-size: 14px;
   margin: 0 0 16px;
 }
@@ -276,13 +303,13 @@ async function deleteGoal(goal: typeof dataStore.goals[0]) {
   display: flex;
   justify-content: space-between;
   font-size: 13px;
-  color: #94a3b8;
+  color: var(--text-tertiary);
   margin-bottom: 12px;
 }
 
 .progress-bar-container {
   height: 8px;
-  background: #e2e8f0;
+  background: var(--bg-surface-hover);
   border-radius: 4px;
   overflow: hidden;
   margin-bottom: 16px;
@@ -290,13 +317,13 @@ async function deleteGoal(goal: typeof dataStore.goals[0]) {
 
 .progress-bar {
   height: 100%;
-  background: linear-gradient(90deg, #1e40af, #0d9488);
+  background: linear-gradient(90deg, var(--color-primary), var(--color-info));
   border-radius: 4px;
   transition: width 0.5s;
 }
 
 .goal-card.completed .progress-bar {
-  background: #10b981;
+  background: var(--color-success);
 }
 
 .goal-actions {
