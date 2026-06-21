@@ -22,31 +22,31 @@
           active-text-color="#fff"
           @select="handleMenuSelect"
         >
-        <el-menu-item index="/dashboard">
+        <el-menu-item index="/dashboard" v-if="!authStore.isAdmin">
           <el-icon><Monitor /></el-icon>
           <span>首页</span>
         </el-menu-item>
-        <el-menu-item index="/goals">
+        <el-menu-item index="/goals" v-if="!authStore.isAdmin">
           <el-icon><Aim /></el-icon>
           <span>学习目标</span>
         </el-menu-item>
-        <el-menu-item index="/plans">
+        <el-menu-item index="/plans" v-if="!authStore.isAdmin">
           <el-icon><FolderOpened /></el-icon>
           <span>学习计划</span>
         </el-menu-item>
-        <el-menu-item index="/calendar">
+        <el-menu-item index="/calendar" v-if="!authStore.isAdmin">
           <el-icon><Calendar /></el-icon>
           <span>日历视图</span>
         </el-menu-item>
-        <el-menu-item index="/resources">
+        <el-menu-item index="/resources" v-if="!authStore.isAdmin">
           <el-icon><Document /></el-icon>
           <span>共享资源</span>
         </el-menu-item>
-        <el-menu-item index="/posts">
+        <el-menu-item index="/posts" v-if="!authStore.isAdmin">
           <el-icon><ChatLineSquare /></el-icon>
           <span>帖子中心</span>
         </el-menu-item>
-        <el-menu-item index="/reminders">
+        <el-menu-item index="/reminders" v-if="!authStore.isAdmin">
           <el-icon><Bell /></el-icon>
           <span>学习提醒</span>
         </el-menu-item>

@@ -109,7 +109,17 @@ router.beforeEach((to, from, next) => {
 
   if (to.path === '/login') {
     if (isLoggedIn) {
-      next('/dashboard')
+      // 已登录时根据角色跳转
+      next(user?.role === 'admin' ? '/admin' : '/dashboard')
+    } else {
+      next()
+    }
+  } else if (to.path === '/' || to.path === '/dashboard') {
+    if (!isLoggedIn) {
+      next('/login')
+    } else if (user?.role === 'admin') {
+      // 管理员访问根路径或首页时重定向到管理控制台
+      next('/admin')
     } else {
       next()
     }
