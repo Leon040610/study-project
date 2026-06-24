@@ -103,6 +103,9 @@ const CATEGORY_PATTERN = /^[\u4e00-\u9fa5A-Za-z0-9 _\-+]+$/;
 // ========== JSON 文件持久化 ==========
 const DATA_FILE = path.join(__dirname, 'data.json');
 
+// 引入备份自动恢复模块（在 defaultData 之前引入，便于在 loadData 内调用）
+const backupRestore = require('./modules/backup-restore');
+
 const defaultData = {
   users: [],
   goals: [],
@@ -142,6 +145,14 @@ const defaultData = {
 };
 
 function loadData() {
+  // 启动时自动检查并从最新备份恢复（避免人为删除 data.json 后数据彻底丢失）
+  // 默认行为：仅当现有 data.json 缺失/为空时触发；可通过环境变量 AUTO_RESTORE_FORCE=1 强制
+  try {
+    const force = String(process.env.AUTO_RESTORE_FORCE || '').trim() === '1'
+    backupRestore.autoRestoreFromLatestBackup({ force })
+  } catch (e) {
+    console.warn('[backup] 自动恢复模块异常，继续加载:', e.message)
+  }
   try {
     if (fs.existsSync(DATA_FILE)) {
       const raw = fs.readFileSync(DATA_FILE, 'utf-8');
@@ -164,9 +175,53 @@ function saveData() {
       postIdCounter, commentIdCounter, resourceIdCounter, ruleIdCounter
     };
     fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2), 'utf-8');
+    // 异步自动备份：写入成功后，距上次备份超过 5 分钟则创建一份新备份
+    tryAutoBackup(data);
   } catch (e) {
     console.error('数据保存失败:', e.message);
   }
+}
+
+// ========== 自动备份（基于时间间隔） ==========
+let lastAutoBackupAt = 0;
+function tryAutoBackup(dataSnapshot) {
+  const AUTO_BACKUP_INTERVAL_MS = 5 * 60 * 1000; // 5 分钟
+  const now = Date.now();
+  if (now - lastAutoBackupAt < AUTO_BACKUP_INTERVAL_MS) return;
+  try {
+    const dir = path.join(__dirname, 'backups');
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    const ts = new Date().toISOString().replace(/[:.]/g, '-');
+    const file = path.join(dir, `backup-${ts}.json`);
+    const payload = { version: 1, createdAt: new Date().toISOString(), data: dataSnapshot };
+    fs.writeFileSync(file, JSON.stringify(payload, null, 2), 'utf-8');
+    lastAutoBackupAt = now;
+    console.log(`[backup] 自动备份已创建: ${path.basename(file)}`);
+    // 清理 30 天前的旧备份（保留至少 5 份）
+    cleanupOldBackups(dir, 30, 5);
+  } catch (e) {
+    console.warn('[backup] 自动备份失败:', e.message);
+  }
+}
+
+function cleanupOldBackups(dir, maxAgeDays, minKeep) {
+  try {
+    const files = fs.readdirSync(dir).filter(f => /^backup-.*\.json$/.test(f));
+    if (files.length <= minKeep) return;
+    const cutoff = Date.now() - maxAgeDays * 86400000;
+    const items = files.map(f => {
+      const fp = path.join(dir, f);
+      const m = f.match(/backup-([0-9T:\-]+Z?)\.json$/i);
+      const t = m ? Date.parse(m[1].endsWith('Z') ? m[1] : m[1] + 'Z') : fs.statSync(fp).mtimeMs;
+      return { f, fp, t };
+    }).sort((a, b) => b.t - a.t);
+    // 保留最新的 minKeep 份
+    for (let i = minKeep; i < items.length; i++) {
+      if (items[i].t < cutoff) {
+        try { fs.unlinkSync(items[i].fp); } catch {}
+      }
+    }
+  } catch (e) { /* ignore */ }
 }
 
 const persisted = loadData();

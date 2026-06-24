@@ -1,0 +1,1908 @@
+{
+  "version": 1,
+  "createdAt": "2026-06-24T14:45:46.029Z",
+  "data": {
+    "users": [
+      {
+        "id": 1,
+        "name": "管理员",
+        "email": "admin@study.com",
+        "phone": "",
+        "password": "admin01",
+        "role": "admin",
+        "createdAt": "2026-06-20T12:25:10.917Z",
+        "customCategories": [
+          "考研资料"
+        ],
+        "avatar": null,
+        "avatarUpdatedAt": "2026-06-20T15:09:31.267Z"
+      },
+      {
+        "id": 2,
+        "name": "Yu",
+        "email": "yuleon0406@163.com",
+        "phone": "13910961092",
+        "password": "123456",
+        "role": "student",
+        "createdAt": "2026-06-20T12:28:08.645Z",
+        "avatar": "/uploads/avatars/2_1781968223090.png",
+        "avatarUpdatedAt": "2026-06-20T15:10:23.099Z"
+      }
+    ],
+    "goals": [
+      {
+        "id": "1",
+        "userId": 2,
+        "title": "掌握 Vue 3 全家桶开发",
+        "description": "系统学习 Vue 3 + Pinia + Vue Router + Vite，独立完成一个 SPA 项目",
+        "category": "前端开发",
+        "priority": "high",
+        "status": "进行中",
+        "progress": 40,
+        "startDate": "2026-05-25",
+        "endDate": "2026-08-23",
+        "createdAt": "2026-06-24T14:44:57.163Z"
+      },
+      {
+        "id": "2",
+        "userId": 2,
+        "title": "英语六级通过",
+        "description": "CET-6 550+ 目标，重点突破听力和阅读",
+        "category": "语言学习",
+        "priority": "medium",
+        "status": "进行中",
+        "progress": 60,
+        "startDate": "2026-05-05",
+        "endDate": "2026-08-03",
+        "createdAt": "2026-06-24T14:44:57.163Z"
+      }
+    ],
+    "plans": [
+      {
+        "id": "1",
+        "userId": 2,
+        "title": "Vue 3 进阶训练营",
+        "description": "为期 30 天的 Vue 3 强化训练，每日 2 小时",
+        "goalId": "1",
+        "category": "前端开发",
+        "priority": "high",
+        "status": "进行中",
+        "progress": 30,
+        "startDate": "2026-06-09",
+        "endDate": "2026-07-09",
+        "createdAt": "2026-06-24T14:44:57.164Z"
+      },
+      {
+        "id": "2",
+        "userId": 2,
+        "title": "英语听力每日打卡",
+        "description": "每天听 1 篇 VOA 慢速英语",
+        "goalId": "2",
+        "category": "语言学习",
+        "priority": "medium",
+        "status": "进行中",
+        "progress": 70,
+        "startDate": "2026-06-04",
+        "endDate": "2026-07-04",
+        "createdAt": "2026-06-24T14:44:57.164Z"
+      }
+    ],
+    "tasks": [
+      {
+        "id": "1",
+        "userId": 2,
+        "planId": "1",
+        "title": "Vue 3 响应式原理精读",
+        "description": "Vue 3 响应式原理精读 - 第 16 天",
+        "date": "2026-06-09",
+        "startDate": "2026-06-09",
+        "endDate": "2026-07-09",
+        "estimatedHours": 2,
+        "priority": "high",
+        "status": "completed",
+        "completedDates": {
+          "2026-06-09": true
+        },
+        "createdAt": "2026-06-24T14:44:57.164Z"
+      },
+      {
+        "id": "2",
+        "userId": 2,
+        "planId": "1",
+        "title": "Composition API 实战练习",
+        "description": "Composition API 实战练习 - 第 15 天",
+        "date": "2026-06-10",
+        "startDate": "2026-06-09",
+        "endDate": "2026-07-09",
+        "estimatedHours": 2,
+        "priority": "high",
+        "status": "completed",
+        "completedDates": {
+          "2026-06-10": true
+        },
+        "createdAt": "2026-06-24T14:44:57.164Z"
+      },
+      {
+        "id": "3",
+        "userId": 2,
+        "planId": "1",
+        "title": "Pinia 状态管理",
+        "description": "Pinia 状态管理 - 第 14 天",
+        "date": "2026-06-11",
+        "startDate": "2026-06-09",
+        "endDate": "2026-07-09",
+        "estimatedHours": 1.5,
+        "priority": "high",
+        "status": "completed",
+        "completedDates": {
+          "2026-06-11": true
+        },
+        "createdAt": "2026-06-24T14:44:57.164Z"
+      },
+      {
+        "id": "4",
+        "userId": 2,
+        "planId": "1",
+        "title": "Vue Router 路由守卫",
+        "description": "Vue Router 路由守卫 - 第 13 天",
+        "date": "2026-06-12",
+        "startDate": "2026-06-09",
+        "endDate": "2026-07-09",
+        "estimatedHours": 1.5,
+        "priority": "high",
+        "status": "completed",
+        "completedDates": {
+          "2026-06-12": true
+        },
+        "createdAt": "2026-06-24T14:44:57.164Z"
+      },
+      {
+        "id": "5",
+        "userId": 2,
+        "planId": "1",
+        "title": "Vite 构建优化",
+        "description": "Vite 构建优化 - 第 12 天",
+        "date": "2026-06-13",
+        "startDate": "2026-06-09",
+        "endDate": "2026-07-09",
+        "estimatedHours": 1,
+        "priority": "high",
+        "status": "completed",
+        "completedDates": {
+          "2026-06-13": true
+        },
+        "createdAt": "2026-06-24T14:44:57.164Z"
+      },
+      {
+        "id": "6",
+        "userId": 2,
+        "planId": "1",
+        "title": "Vue 3 响应式原理精读",
+        "description": "Vue 3 响应式原理精读 - 第 11 天",
+        "date": "2026-06-14",
+        "startDate": "2026-06-09",
+        "endDate": "2026-07-09",
+        "estimatedHours": 2,
+        "priority": "high",
+        "status": "completed",
+        "completedDates": {
+          "2026-06-14": true
+        },
+        "createdAt": "2026-06-24T14:44:57.164Z"
+      },
+      {
+        "id": "7",
+        "userId": 2,
+        "planId": "1",
+        "title": "Composition API 实战练习",
+        "description": "Composition API 实战练习 - 第 10 天",
+        "date": "2026-06-15",
+        "startDate": "2026-06-09",
+        "endDate": "2026-07-09",
+        "estimatedHours": 2,
+        "priority": "high",
+        "status": "completed",
+        "completedDates": {
+          "2026-06-15": true
+        },
+        "createdAt": "2026-06-24T14:44:57.164Z"
+      },
+      {
+        "id": "8",
+        "userId": 2,
+        "planId": "1",
+        "title": "Pinia 状态管理",
+        "description": "Pinia 状态管理 - 第 9 天",
+        "date": "2026-06-16",
+        "startDate": "2026-06-09",
+        "endDate": "2026-07-09",
+        "estimatedHours": 1.5,
+        "priority": "high",
+        "status": "completed",
+        "completedDates": {
+          "2026-06-16": true
+        },
+        "createdAt": "2026-06-24T14:44:57.164Z"
+      },
+      {
+        "id": "9",
+        "userId": 2,
+        "planId": "1",
+        "title": "Vue Router 路由守卫",
+        "description": "Vue Router 路由守卫 - 第 8 天",
+        "date": "2026-06-17",
+        "startDate": "2026-06-09",
+        "endDate": "2026-07-09",
+        "estimatedHours": 1.5,
+        "priority": "high",
+        "status": "completed",
+        "completedDates": {
+          "2026-06-17": true
+        },
+        "createdAt": "2026-06-24T14:44:57.164Z"
+      },
+      {
+        "id": "10",
+        "userId": 2,
+        "planId": "1",
+        "title": "Vite 构建优化",
+        "description": "Vite 构建优化 - 第 7 天",
+        "date": "2026-06-18",
+        "startDate": "2026-06-09",
+        "endDate": "2026-07-09",
+        "estimatedHours": 1,
+        "priority": "high",
+        "status": "completed",
+        "completedDates": {
+          "2026-06-18": true
+        },
+        "createdAt": "2026-06-24T14:44:57.164Z"
+      },
+      {
+        "id": "11",
+        "userId": 2,
+        "planId": "1",
+        "title": "Vue 3 响应式原理精读",
+        "description": "Vue 3 响应式原理精读 - 第 6 天",
+        "date": "2026-06-19",
+        "startDate": "2026-06-09",
+        "endDate": "2026-07-09",
+        "estimatedHours": 2,
+        "priority": "high",
+        "status": "completed",
+        "completedDates": {
+          "2026-06-19": true
+        },
+        "createdAt": "2026-06-24T14:44:57.164Z"
+      },
+      {
+        "id": "12",
+        "userId": 2,
+        "planId": "1",
+        "title": "Composition API 实战练习",
+        "description": "Composition API 实战练习 - 第 5 天",
+        "date": "2026-06-20",
+        "startDate": "2026-06-09",
+        "endDate": "2026-07-09",
+        "estimatedHours": 2,
+        "priority": "high",
+        "status": "completed",
+        "completedDates": {
+          "2026-06-20": true
+        },
+        "createdAt": "2026-06-24T14:44:57.164Z"
+      },
+      {
+        "id": "13",
+        "userId": 2,
+        "planId": "1",
+        "title": "Pinia 状态管理",
+        "description": "Pinia 状态管理 - 第 4 天",
+        "date": "2026-06-21",
+        "startDate": "2026-06-09",
+        "endDate": "2026-07-09",
+        "estimatedHours": 1.5,
+        "priority": "high",
+        "status": "completed",
+        "completedDates": {
+          "2026-06-21": true
+        },
+        "createdAt": "2026-06-24T14:44:57.164Z"
+      },
+      {
+        "id": "14",
+        "userId": 2,
+        "planId": "1",
+        "title": "Vue Router 路由守卫",
+        "description": "Vue Router 路由守卫 - 第 3 天",
+        "date": "2026-06-22",
+        "startDate": "2026-06-09",
+        "endDate": "2026-07-09",
+        "estimatedHours": 1.5,
+        "priority": "high",
+        "status": "completed",
+        "completedDates": {
+          "2026-06-22": true
+        },
+        "createdAt": "2026-06-24T14:44:57.164Z"
+      },
+      {
+        "id": "15",
+        "userId": 2,
+        "planId": "1",
+        "title": "Vite 构建优化",
+        "description": "Vite 构建优化 - 第 2 天",
+        "date": "2026-06-23",
+        "startDate": "2026-06-09",
+        "endDate": "2026-07-09",
+        "estimatedHours": 1,
+        "priority": "high",
+        "status": "completed",
+        "completedDates": {
+          "2026-06-23": true
+        },
+        "createdAt": "2026-06-24T14:44:57.164Z"
+      },
+      {
+        "id": "16",
+        "userId": 2,
+        "planId": "1",
+        "title": "Vue 3 响应式原理精读",
+        "description": "Vue 3 响应式原理精读 - 第 1 天",
+        "date": "2026-06-24",
+        "startDate": "2026-06-09",
+        "endDate": "2026-07-09",
+        "estimatedHours": 2,
+        "priority": "high",
+        "status": "completed",
+        "completedDates": {
+          "2026-06-24": true
+        },
+        "createdAt": "2026-06-24T14:44:57.164Z"
+      },
+      {
+        "id": "17",
+        "userId": 2,
+        "planId": "1",
+        "title": "Composition API 实战练习",
+        "description": "Composition API 实战练习 - 第 2 天",
+        "date": "2026-06-25",
+        "startDate": "2026-06-09",
+        "endDate": "2026-07-09",
+        "estimatedHours": 2,
+        "priority": "high",
+        "status": "pending",
+        "completedDates": {},
+        "createdAt": "2026-06-24T14:44:57.164Z"
+      },
+      {
+        "id": "18",
+        "userId": 2,
+        "planId": "1",
+        "title": "Pinia 状态管理",
+        "description": "Pinia 状态管理 - 第 3 天",
+        "date": "2026-06-26",
+        "startDate": "2026-06-09",
+        "endDate": "2026-07-09",
+        "estimatedHours": 1.5,
+        "priority": "high",
+        "status": "pending",
+        "completedDates": {},
+        "createdAt": "2026-06-24T14:44:57.164Z"
+      },
+      {
+        "id": "19",
+        "userId": 2,
+        "planId": "1",
+        "title": "Vue Router 路由守卫",
+        "description": "Vue Router 路由守卫 - 第 4 天",
+        "date": "2026-06-27",
+        "startDate": "2026-06-09",
+        "endDate": "2026-07-09",
+        "estimatedHours": 1.5,
+        "priority": "high",
+        "status": "pending",
+        "completedDates": {},
+        "createdAt": "2026-06-24T14:44:57.164Z"
+      },
+      {
+        "id": "20",
+        "userId": 2,
+        "planId": "1",
+        "title": "Vite 构建优化",
+        "description": "Vite 构建优化 - 第 5 天",
+        "date": "2026-06-28",
+        "startDate": "2026-06-09",
+        "endDate": "2026-07-09",
+        "estimatedHours": 1,
+        "priority": "high",
+        "status": "pending",
+        "completedDates": {},
+        "createdAt": "2026-06-24T14:44:57.164Z"
+      },
+      {
+        "id": "21",
+        "userId": 2,
+        "planId": "1",
+        "title": "Vue 3 响应式原理精读",
+        "description": "Vue 3 响应式原理精读 - 第 6 天",
+        "date": "2026-06-29",
+        "startDate": "2026-06-09",
+        "endDate": "2026-07-09",
+        "estimatedHours": 2,
+        "priority": "high",
+        "status": "pending",
+        "completedDates": {},
+        "createdAt": "2026-06-24T14:44:57.164Z"
+      },
+      {
+        "id": "22",
+        "userId": 2,
+        "planId": "1",
+        "title": "Composition API 实战练习",
+        "description": "Composition API 实战练习 - 第 7 天",
+        "date": "2026-06-30",
+        "startDate": "2026-06-09",
+        "endDate": "2026-07-09",
+        "estimatedHours": 2,
+        "priority": "high",
+        "status": "pending",
+        "completedDates": {},
+        "createdAt": "2026-06-24T14:44:57.164Z"
+      },
+      {
+        "id": "23",
+        "userId": 2,
+        "planId": "1",
+        "title": "Pinia 状态管理",
+        "description": "Pinia 状态管理 - 第 8 天",
+        "date": "2026-07-01",
+        "startDate": "2026-06-09",
+        "endDate": "2026-07-09",
+        "estimatedHours": 1.5,
+        "priority": "high",
+        "status": "pending",
+        "completedDates": {},
+        "createdAt": "2026-06-24T14:44:57.164Z"
+      },
+      {
+        "id": "24",
+        "userId": 2,
+        "planId": "1",
+        "title": "Vue Router 路由守卫",
+        "description": "Vue Router 路由守卫 - 第 9 天",
+        "date": "2026-07-02",
+        "startDate": "2026-06-09",
+        "endDate": "2026-07-09",
+        "estimatedHours": 1.5,
+        "priority": "high",
+        "status": "pending",
+        "completedDates": {},
+        "createdAt": "2026-06-24T14:44:57.164Z"
+      },
+      {
+        "id": "25",
+        "userId": 2,
+        "planId": "1",
+        "title": "Vite 构建优化",
+        "description": "Vite 构建优化 - 第 10 天",
+        "date": "2026-07-03",
+        "startDate": "2026-06-09",
+        "endDate": "2026-07-09",
+        "estimatedHours": 1,
+        "priority": "high",
+        "status": "pending",
+        "completedDates": {},
+        "createdAt": "2026-06-24T14:44:57.164Z"
+      },
+      {
+        "id": "26",
+        "userId": 2,
+        "planId": "1",
+        "title": "Vue 3 响应式原理精读",
+        "description": "Vue 3 响应式原理精读 - 第 11 天",
+        "date": "2026-07-04",
+        "startDate": "2026-06-09",
+        "endDate": "2026-07-09",
+        "estimatedHours": 2,
+        "priority": "high",
+        "status": "pending",
+        "completedDates": {},
+        "createdAt": "2026-06-24T14:44:57.164Z"
+      },
+      {
+        "id": "27",
+        "userId": 2,
+        "planId": "1",
+        "title": "Composition API 实战练习",
+        "description": "Composition API 实战练习 - 第 12 天",
+        "date": "2026-07-05",
+        "startDate": "2026-06-09",
+        "endDate": "2026-07-09",
+        "estimatedHours": 2,
+        "priority": "high",
+        "status": "pending",
+        "completedDates": {},
+        "createdAt": "2026-06-24T14:44:57.164Z"
+      },
+      {
+        "id": "28",
+        "userId": 2,
+        "planId": "1",
+        "title": "Pinia 状态管理",
+        "description": "Pinia 状态管理 - 第 13 天",
+        "date": "2026-07-06",
+        "startDate": "2026-06-09",
+        "endDate": "2026-07-09",
+        "estimatedHours": 1.5,
+        "priority": "high",
+        "status": "pending",
+        "completedDates": {},
+        "createdAt": "2026-06-24T14:44:57.164Z"
+      },
+      {
+        "id": "29",
+        "userId": 2,
+        "planId": "1",
+        "title": "Vue Router 路由守卫",
+        "description": "Vue Router 路由守卫 - 第 14 天",
+        "date": "2026-07-07",
+        "startDate": "2026-06-09",
+        "endDate": "2026-07-09",
+        "estimatedHours": 1.5,
+        "priority": "high",
+        "status": "pending",
+        "completedDates": {},
+        "createdAt": "2026-06-24T14:44:57.164Z"
+      },
+      {
+        "id": "30",
+        "userId": 2,
+        "planId": "1",
+        "title": "Vite 构建优化",
+        "description": "Vite 构建优化 - 第 15 天",
+        "date": "2026-07-08",
+        "startDate": "2026-06-09",
+        "endDate": "2026-07-09",
+        "estimatedHours": 1,
+        "priority": "high",
+        "status": "pending",
+        "completedDates": {},
+        "createdAt": "2026-06-24T14:44:57.164Z"
+      },
+      {
+        "id": "31",
+        "userId": 2,
+        "planId": "1",
+        "title": "Vue 3 响应式原理精读",
+        "description": "Vue 3 响应式原理精读 - 第 16 天",
+        "date": "2026-07-09",
+        "startDate": "2026-06-09",
+        "endDate": "2026-07-09",
+        "estimatedHours": 2,
+        "priority": "high",
+        "status": "pending",
+        "completedDates": {},
+        "createdAt": "2026-06-24T14:44:57.164Z"
+      },
+      {
+        "id": "32",
+        "userId": 2,
+        "planId": "2",
+        "title": "VOA 慢速英语听力",
+        "description": "VOA 慢速英语听力",
+        "date": "2026-06-04",
+        "startDate": "2026-06-04",
+        "endDate": "2026-07-04",
+        "estimatedHours": 0.5,
+        "priority": "medium",
+        "status": "completed",
+        "completedDates": {
+          "2026-06-04": true
+        },
+        "createdAt": "2026-06-24T14:44:57.164Z"
+      },
+      {
+        "id": "33",
+        "userId": 2,
+        "planId": "2",
+        "title": "六级词汇 30 个",
+        "description": "六级词汇 30 个",
+        "date": "2026-06-05",
+        "startDate": "2026-06-04",
+        "endDate": "2026-07-04",
+        "estimatedHours": 0.5,
+        "priority": "medium",
+        "status": "completed",
+        "completedDates": {
+          "2026-06-05": true
+        },
+        "createdAt": "2026-06-24T14:44:57.164Z"
+      },
+      {
+        "id": "34",
+        "userId": 2,
+        "planId": "2",
+        "title": "阅读理解 1 篇",
+        "description": "阅读理解 1 篇",
+        "date": "2026-06-06",
+        "startDate": "2026-06-04",
+        "endDate": "2026-07-04",
+        "estimatedHours": 1,
+        "priority": "medium",
+        "status": "completed",
+        "completedDates": {
+          "2026-06-06": true
+        },
+        "createdAt": "2026-06-24T14:44:57.164Z"
+      },
+      {
+        "id": "35",
+        "userId": 2,
+        "planId": "2",
+        "title": "听力真题 1 套",
+        "description": "听力真题 1 套",
+        "date": "2026-06-07",
+        "startDate": "2026-06-04",
+        "endDate": "2026-07-04",
+        "estimatedHours": 1,
+        "priority": "medium",
+        "status": "completed",
+        "completedDates": {
+          "2026-06-07": true
+        },
+        "createdAt": "2026-06-24T14:44:57.164Z"
+      },
+      {
+        "id": "36",
+        "userId": 2,
+        "planId": "2",
+        "title": "VOA 慢速英语听力",
+        "description": "VOA 慢速英语听力",
+        "date": "2026-06-08",
+        "startDate": "2026-06-04",
+        "endDate": "2026-07-04",
+        "estimatedHours": 0.5,
+        "priority": "medium",
+        "status": "completed",
+        "completedDates": {
+          "2026-06-08": true
+        },
+        "createdAt": "2026-06-24T14:44:57.164Z"
+      },
+      {
+        "id": "37",
+        "userId": 2,
+        "planId": "2",
+        "title": "六级词汇 30 个",
+        "description": "六级词汇 30 个",
+        "date": "2026-06-09",
+        "startDate": "2026-06-04",
+        "endDate": "2026-07-04",
+        "estimatedHours": 0.5,
+        "priority": "medium",
+        "status": "completed",
+        "completedDates": {
+          "2026-06-09": true
+        },
+        "createdAt": "2026-06-24T14:44:57.164Z"
+      },
+      {
+        "id": "38",
+        "userId": 2,
+        "planId": "2",
+        "title": "阅读理解 1 篇",
+        "description": "阅读理解 1 篇",
+        "date": "2026-06-10",
+        "startDate": "2026-06-04",
+        "endDate": "2026-07-04",
+        "estimatedHours": 1,
+        "priority": "medium",
+        "status": "completed",
+        "completedDates": {
+          "2026-06-10": true
+        },
+        "createdAt": "2026-06-24T14:44:57.164Z"
+      },
+      {
+        "id": "39",
+        "userId": 2,
+        "planId": "2",
+        "title": "听力真题 1 套",
+        "description": "听力真题 1 套",
+        "date": "2026-06-11",
+        "startDate": "2026-06-04",
+        "endDate": "2026-07-04",
+        "estimatedHours": 1,
+        "priority": "medium",
+        "status": "completed",
+        "completedDates": {
+          "2026-06-11": true
+        },
+        "createdAt": "2026-06-24T14:44:57.164Z"
+      },
+      {
+        "id": "40",
+        "userId": 2,
+        "planId": "2",
+        "title": "VOA 慢速英语听力",
+        "description": "VOA 慢速英语听力",
+        "date": "2026-06-12",
+        "startDate": "2026-06-04",
+        "endDate": "2026-07-04",
+        "estimatedHours": 0.5,
+        "priority": "medium",
+        "status": "completed",
+        "completedDates": {
+          "2026-06-12": true
+        },
+        "createdAt": "2026-06-24T14:44:57.164Z"
+      },
+      {
+        "id": "41",
+        "userId": 2,
+        "planId": "2",
+        "title": "六级词汇 30 个",
+        "description": "六级词汇 30 个",
+        "date": "2026-06-13",
+        "startDate": "2026-06-04",
+        "endDate": "2026-07-04",
+        "estimatedHours": 0.5,
+        "priority": "medium",
+        "status": "completed",
+        "completedDates": {
+          "2026-06-13": true
+        },
+        "createdAt": "2026-06-24T14:44:57.164Z"
+      },
+      {
+        "id": "42",
+        "userId": 2,
+        "planId": "2",
+        "title": "阅读理解 1 篇",
+        "description": "阅读理解 1 篇",
+        "date": "2026-06-14",
+        "startDate": "2026-06-04",
+        "endDate": "2026-07-04",
+        "estimatedHours": 1,
+        "priority": "medium",
+        "status": "completed",
+        "completedDates": {
+          "2026-06-14": true
+        },
+        "createdAt": "2026-06-24T14:44:57.164Z"
+      },
+      {
+        "id": "43",
+        "userId": 2,
+        "planId": "2",
+        "title": "听力真题 1 套",
+        "description": "听力真题 1 套",
+        "date": "2026-06-15",
+        "startDate": "2026-06-04",
+        "endDate": "2026-07-04",
+        "estimatedHours": 1,
+        "priority": "medium",
+        "status": "completed",
+        "completedDates": {
+          "2026-06-15": true
+        },
+        "createdAt": "2026-06-24T14:44:57.164Z"
+      },
+      {
+        "id": "44",
+        "userId": 2,
+        "planId": "2",
+        "title": "VOA 慢速英语听力",
+        "description": "VOA 慢速英语听力",
+        "date": "2026-06-16",
+        "startDate": "2026-06-04",
+        "endDate": "2026-07-04",
+        "estimatedHours": 0.5,
+        "priority": "medium",
+        "status": "completed",
+        "completedDates": {
+          "2026-06-16": true
+        },
+        "createdAt": "2026-06-24T14:44:57.164Z"
+      },
+      {
+        "id": "45",
+        "userId": 2,
+        "planId": "2",
+        "title": "六级词汇 30 个",
+        "description": "六级词汇 30 个",
+        "date": "2026-06-17",
+        "startDate": "2026-06-04",
+        "endDate": "2026-07-04",
+        "estimatedHours": 0.5,
+        "priority": "medium",
+        "status": "completed",
+        "completedDates": {
+          "2026-06-17": true
+        },
+        "createdAt": "2026-06-24T14:44:57.164Z"
+      },
+      {
+        "id": "46",
+        "userId": 2,
+        "planId": "2",
+        "title": "阅读理解 1 篇",
+        "description": "阅读理解 1 篇",
+        "date": "2026-06-18",
+        "startDate": "2026-06-04",
+        "endDate": "2026-07-04",
+        "estimatedHours": 1,
+        "priority": "medium",
+        "status": "completed",
+        "completedDates": {
+          "2026-06-18": true
+        },
+        "createdAt": "2026-06-24T14:44:57.164Z"
+      },
+      {
+        "id": "47",
+        "userId": 2,
+        "planId": "2",
+        "title": "听力真题 1 套",
+        "description": "听力真题 1 套",
+        "date": "2026-06-19",
+        "startDate": "2026-06-04",
+        "endDate": "2026-07-04",
+        "estimatedHours": 1,
+        "priority": "medium",
+        "status": "completed",
+        "completedDates": {
+          "2026-06-19": true
+        },
+        "createdAt": "2026-06-24T14:44:57.164Z"
+      },
+      {
+        "id": "48",
+        "userId": 2,
+        "planId": "2",
+        "title": "VOA 慢速英语听力",
+        "description": "VOA 慢速英语听力",
+        "date": "2026-06-20",
+        "startDate": "2026-06-04",
+        "endDate": "2026-07-04",
+        "estimatedHours": 0.5,
+        "priority": "medium",
+        "status": "completed",
+        "completedDates": {
+          "2026-06-20": true
+        },
+        "createdAt": "2026-06-24T14:44:57.164Z"
+      },
+      {
+        "id": "49",
+        "userId": 2,
+        "planId": "2",
+        "title": "六级词汇 30 个",
+        "description": "六级词汇 30 个",
+        "date": "2026-06-21",
+        "startDate": "2026-06-04",
+        "endDate": "2026-07-04",
+        "estimatedHours": 0.5,
+        "priority": "medium",
+        "status": "completed",
+        "completedDates": {
+          "2026-06-21": true
+        },
+        "createdAt": "2026-06-24T14:44:57.164Z"
+      },
+      {
+        "id": "50",
+        "userId": 2,
+        "planId": "2",
+        "title": "阅读理解 1 篇",
+        "description": "阅读理解 1 篇",
+        "date": "2026-06-22",
+        "startDate": "2026-06-04",
+        "endDate": "2026-07-04",
+        "estimatedHours": 1,
+        "priority": "medium",
+        "status": "completed",
+        "completedDates": {
+          "2026-06-22": true
+        },
+        "createdAt": "2026-06-24T14:44:57.164Z"
+      },
+      {
+        "id": "51",
+        "userId": 2,
+        "planId": "2",
+        "title": "听力真题 1 套",
+        "description": "听力真题 1 套",
+        "date": "2026-06-23",
+        "startDate": "2026-06-04",
+        "endDate": "2026-07-04",
+        "estimatedHours": 1,
+        "priority": "medium",
+        "status": "completed",
+        "completedDates": {
+          "2026-06-23": true
+        },
+        "createdAt": "2026-06-24T14:44:57.164Z"
+      },
+      {
+        "id": "52",
+        "userId": 2,
+        "planId": "2",
+        "title": "VOA 慢速英语听力",
+        "description": "VOA 慢速英语听力",
+        "date": "2026-06-24",
+        "startDate": "2026-06-04",
+        "endDate": "2026-07-04",
+        "estimatedHours": 0.5,
+        "priority": "medium",
+        "status": "completed",
+        "completedDates": {
+          "2026-06-24": true
+        },
+        "createdAt": "2026-06-24T14:44:57.164Z"
+      },
+      {
+        "id": "53",
+        "userId": 2,
+        "planId": "2",
+        "title": "六级词汇 30 个",
+        "description": "六级词汇 30 个",
+        "date": "2026-06-25",
+        "startDate": "2026-06-04",
+        "endDate": "2026-07-04",
+        "estimatedHours": 0.5,
+        "priority": "medium",
+        "status": "pending",
+        "completedDates": {},
+        "createdAt": "2026-06-24T14:44:57.164Z"
+      },
+      {
+        "id": "54",
+        "userId": 2,
+        "planId": "2",
+        "title": "阅读理解 1 篇",
+        "description": "阅读理解 1 篇",
+        "date": "2026-06-26",
+        "startDate": "2026-06-04",
+        "endDate": "2026-07-04",
+        "estimatedHours": 1,
+        "priority": "medium",
+        "status": "pending",
+        "completedDates": {},
+        "createdAt": "2026-06-24T14:44:57.164Z"
+      },
+      {
+        "id": "55",
+        "userId": 2,
+        "planId": "2",
+        "title": "听力真题 1 套",
+        "description": "听力真题 1 套",
+        "date": "2026-06-27",
+        "startDate": "2026-06-04",
+        "endDate": "2026-07-04",
+        "estimatedHours": 1,
+        "priority": "medium",
+        "status": "pending",
+        "completedDates": {},
+        "createdAt": "2026-06-24T14:44:57.164Z"
+      },
+      {
+        "id": "56",
+        "userId": 2,
+        "planId": "2",
+        "title": "VOA 慢速英语听力",
+        "description": "VOA 慢速英语听力",
+        "date": "2026-06-28",
+        "startDate": "2026-06-04",
+        "endDate": "2026-07-04",
+        "estimatedHours": 0.5,
+        "priority": "medium",
+        "status": "pending",
+        "completedDates": {},
+        "createdAt": "2026-06-24T14:44:57.164Z"
+      },
+      {
+        "id": "57",
+        "userId": 2,
+        "planId": "2",
+        "title": "六级词汇 30 个",
+        "description": "六级词汇 30 个",
+        "date": "2026-06-29",
+        "startDate": "2026-06-04",
+        "endDate": "2026-07-04",
+        "estimatedHours": 0.5,
+        "priority": "medium",
+        "status": "pending",
+        "completedDates": {},
+        "createdAt": "2026-06-24T14:44:57.164Z"
+      },
+      {
+        "id": "58",
+        "userId": 2,
+        "planId": "2",
+        "title": "阅读理解 1 篇",
+        "description": "阅读理解 1 篇",
+        "date": "2026-06-30",
+        "startDate": "2026-06-04",
+        "endDate": "2026-07-04",
+        "estimatedHours": 1,
+        "priority": "medium",
+        "status": "pending",
+        "completedDates": {},
+        "createdAt": "2026-06-24T14:44:57.164Z"
+      },
+      {
+        "id": "59",
+        "userId": 2,
+        "planId": "2",
+        "title": "听力真题 1 套",
+        "description": "听力真题 1 套",
+        "date": "2026-07-01",
+        "startDate": "2026-06-04",
+        "endDate": "2026-07-04",
+        "estimatedHours": 1,
+        "priority": "medium",
+        "status": "pending",
+        "completedDates": {},
+        "createdAt": "2026-06-24T14:44:57.164Z"
+      },
+      {
+        "id": "60",
+        "userId": 2,
+        "planId": "2",
+        "title": "VOA 慢速英语听力",
+        "description": "VOA 慢速英语听力",
+        "date": "2026-07-02",
+        "startDate": "2026-06-04",
+        "endDate": "2026-07-04",
+        "estimatedHours": 0.5,
+        "priority": "medium",
+        "status": "pending",
+        "completedDates": {},
+        "createdAt": "2026-06-24T14:44:57.164Z"
+      },
+      {
+        "id": "61",
+        "userId": 2,
+        "planId": "2",
+        "title": "六级词汇 30 个",
+        "description": "六级词汇 30 个",
+        "date": "2026-07-03",
+        "startDate": "2026-06-04",
+        "endDate": "2026-07-04",
+        "estimatedHours": 0.5,
+        "priority": "medium",
+        "status": "pending",
+        "completedDates": {},
+        "createdAt": "2026-06-24T14:44:57.164Z"
+      },
+      {
+        "id": "62",
+        "userId": 2,
+        "planId": "2",
+        "title": "阅读理解 1 篇",
+        "description": "阅读理解 1 篇",
+        "date": "2026-07-04",
+        "startDate": "2026-06-04",
+        "endDate": "2026-07-04",
+        "estimatedHours": 1,
+        "priority": "medium",
+        "status": "pending",
+        "completedDates": {},
+        "createdAt": "2026-06-24T14:44:57.164Z"
+      }
+    ],
+    "reminders": [],
+    "posts": [
+      {
+        "id": "p2",
+        "userId": 2,
+        "authorName": "Yu",
+        "title": "学习",
+        "content": "四级",
+        "category": "学习心得",
+        "viewCount": 9,
+        "commentCount": 1,
+        "likes": 1,
+        "likedUsers": [
+          3
+        ],
+        "createdAt": "2026-06-20T12:28:50.852Z"
+      }
+    ],
+    "comments": [
+      {
+        "id": "c1",
+        "postId": "p2",
+        "userId": 3,
+        "authorName": "test",
+        "content": "好",
+        "createdAt": "2026-06-20T12:35:04.993Z"
+      }
+    ],
+    "notificationLogs": [
+      {
+        "id": "log_1781958310943_602g",
+        "userId": 1,
+        "taskId": "test_task",
+        "channel": "email",
+        "status": "sent",
+        "attempts": 1,
+        "maxAttempts": 3,
+        "createdAt": "2026-06-20T12:25:10.943Z",
+        "sentAt": "2026-06-20T12:25:10.943Z",
+        "payload": {
+          "taskTitle": "测试提醒 - 学习任务即将到期",
+          "taskDescription": "这是一条测试通知，验证提醒功能是否正常工作。",
+          "dueDate": "2026-06-20T12:55:10.943Z",
+          "priority": "normal",
+          "planTitle": "测试计划"
+        }
+      },
+      {
+        "id": "log_1781958310943_kzo7",
+        "userId": 1,
+        "taskId": "test_task",
+        "channel": "push",
+        "status": "sent",
+        "attempts": 1,
+        "maxAttempts": 3,
+        "createdAt": "2026-06-20T12:25:10.943Z",
+        "sentAt": "2026-06-20T12:25:10.943Z",
+        "payload": {
+          "taskTitle": "测试提醒 - 学习任务即将到期",
+          "taskDescription": "这是一条测试通知，验证提醒功能是否正常工作。",
+          "dueDate": "2026-06-20T12:55:10.943Z",
+          "priority": "normal",
+          "planTitle": "测试计划"
+        }
+      },
+      {
+        "id": "log_1781959587611_is7y",
+        "userId": 1,
+        "taskId": "test_task",
+        "channel": "email",
+        "status": "failed",
+        "attempts": 1,
+        "maxAttempts": 3,
+        "createdAt": "2026-06-20T12:46:27.589Z",
+        "sentAt": null,
+        "payload": {
+          "taskTitle": "测试提醒 - 学习任务即将到期",
+          "taskDescription": "这是一条测试通知，验证提醒功能是否正常工作。",
+          "dueDate": "2026-06-20T13:16:27.589Z",
+          "priority": "normal",
+          "planTitle": "测试计划"
+        },
+        "details": {
+          "to": "test1@x.com",
+          "error": "SMTP 未配置"
+        }
+      },
+      {
+        "id": "log_1781959587612_ykgm",
+        "userId": 1,
+        "taskId": "test_task",
+        "channel": "push",
+        "status": "sent",
+        "attempts": 1,
+        "maxAttempts": 3,
+        "createdAt": "2026-06-20T12:46:27.589Z",
+        "sentAt": "2026-06-20T12:46:27.612Z",
+        "payload": {
+          "taskTitle": "测试提醒 - 学习任务即将到期",
+          "taskDescription": "这是一条测试通知，验证提醒功能是否正常工作。",
+          "dueDate": "2026-06-20T13:16:27.589Z",
+          "priority": "normal",
+          "planTitle": "测试计划"
+        },
+        "details": {
+          "userId": 1,
+          "content": "测试提醒 - 学习任务即将到期"
+        }
+      },
+      {
+        "id": "log_1781959587621_lroa",
+        "userId": 1,
+        "taskId": "rule_rule2",
+        "ruleId": "rule2",
+        "channel": "push",
+        "status": "sent",
+        "attempts": 1,
+        "maxAttempts": 3,
+        "createdAt": "2026-06-20T12:46:27.621Z",
+        "sentAt": "2026-06-20T12:46:27.621Z",
+        "payload": {
+          "taskTitle": "5秒测试规则",
+          "taskDescription": "这是一个5秒后触发的测试规则",
+          "dueDate": "2026-06-20T12:46:32.616Z",
+          "priority": "normal",
+          "planTitle": "5秒测试规则"
+        },
+        "details": {
+          "userId": 1,
+          "content": "5秒测试规则"
+        }
+      },
+      {
+        "id": "log_1781960965805_vqft",
+        "userId": 1,
+        "taskId": "test_task",
+        "channel": "email",
+        "status": "sent",
+        "attempts": 1,
+        "maxAttempts": 3,
+        "createdAt": "2026-06-20T13:09:24.730Z",
+        "sentAt": "2026-06-20T13:09:25.805Z",
+        "payload": {
+          "taskTitle": "测试提醒 - 学习任务即将到期",
+          "taskDescription": "这是一条测试通知，验证提醒功能是否正常工作。",
+          "dueDate": "2026-06-20T13:39:24.730Z",
+          "priority": "normal",
+          "planTitle": "测试计划"
+        },
+        "details": {
+          "to": "test1@x.com",
+          "messageId": "<6cf8dd1a-0624-1549-4456-833b64748248@163.com>"
+        }
+      },
+      {
+        "id": "log_1781960965806_gh0k",
+        "userId": 1,
+        "taskId": "test_task",
+        "channel": "push",
+        "status": "sent",
+        "attempts": 1,
+        "maxAttempts": 3,
+        "createdAt": "2026-06-20T13:09:24.730Z",
+        "sentAt": "2026-06-20T13:09:25.806Z",
+        "payload": {
+          "taskTitle": "测试提醒 - 学习任务即将到期",
+          "taskDescription": "这是一条测试通知，验证提醒功能是否正常工作。",
+          "dueDate": "2026-06-20T13:39:24.730Z",
+          "priority": "normal",
+          "planTitle": "测试计划"
+        },
+        "details": {
+          "userId": 1,
+          "content": "测试提醒 - 学习任务即将到期"
+        }
+      },
+      {
+        "id": "log_1781961117141_i8ge",
+        "userId": 2,
+        "taskId": "test_task",
+        "channel": "email",
+        "status": "sent",
+        "attempts": 1,
+        "maxAttempts": 3,
+        "createdAt": "2026-06-20T13:11:56.381Z",
+        "sentAt": "2026-06-20T13:11:57.141Z",
+        "payload": {
+          "taskTitle": "测试提醒 - 学习任务即将到期",
+          "taskDescription": "这是一条测试通知，验证提醒功能是否正常工作。",
+          "dueDate": "2026-06-20T13:41:56.381Z",
+          "priority": "normal",
+          "planTitle": "测试计划"
+        },
+        "details": {
+          "to": "yuleon0406@163.com",
+          "messageId": "<6578b1a9-d354-fe09-d162-eb5a2863c0b9@163.com>"
+        }
+      },
+      {
+        "id": "log_1781961634531_f8yu",
+        "userId": 2,
+        "taskId": "test_task",
+        "channel": "email",
+        "status": "sent",
+        "attempts": 1,
+        "maxAttempts": 3,
+        "createdAt": "2026-06-20T13:20:33.939Z",
+        "sentAt": "2026-06-20T13:20:34.531Z",
+        "payload": {
+          "taskTitle": "测试提醒 - 学习任务即将到期",
+          "taskDescription": "这是一条测试通知，验证提醒功能是否正常工作。",
+          "dueDate": "2026-06-20T13:50:33.939Z",
+          "priority": "normal",
+          "planTitle": "测试计划"
+        },
+        "details": {
+          "to": "yuleon0406@163.com",
+          "messageId": "<3351458d-91b1-8425-e467-eddfde4d6a5e@163.com>"
+        }
+      },
+      {
+        "id": "log_1781961668006_ja8q",
+        "userId": 2,
+        "taskId": "test_task",
+        "channel": "email",
+        "status": "sent",
+        "attempts": 1,
+        "maxAttempts": 3,
+        "createdAt": "2026-06-20T13:21:07.031Z",
+        "sentAt": "2026-06-20T13:21:08.006Z",
+        "payload": {
+          "taskTitle": "测试提醒 - 学习任务即将到期",
+          "taskDescription": "这是一条测试通知，验证提醒功能是否正常工作。",
+          "dueDate": "2026-06-20T13:51:07.031Z",
+          "priority": "normal",
+          "planTitle": "测试计划"
+        },
+        "details": {
+          "to": "yuleon0406@163.com",
+          "messageId": "<8b71a378-3680-6f1a-fd88-a3acb7d946b2@163.com>"
+        }
+      },
+      {
+        "id": "log_1781962293271_jvzj",
+        "userId": 1,
+        "taskId": "test_task",
+        "channel": "push",
+        "status": "sent",
+        "attempts": 1,
+        "maxAttempts": 3,
+        "createdAt": "2026-06-20T13:31:33.270Z",
+        "sentAt": "2026-06-20T13:31:33.271Z",
+        "payload": {
+          "taskTitle": "测试提醒 - 学习任务即将到期",
+          "taskDescription": "这是一条测试通知，验证提醒功能是否正常工作。",
+          "dueDate": "2026-06-20T14:01:33.270Z",
+          "priority": "normal",
+          "planTitle": "测试计划"
+        },
+        "details": {
+          "userId": 1,
+          "content": "测试提醒 - 学习任务即将到期"
+        }
+      },
+      {
+        "id": "log_1781962294173_79ou",
+        "userId": 1,
+        "taskId": "test_task",
+        "channel": "email",
+        "status": "sent",
+        "attempts": 1,
+        "maxAttempts": 3,
+        "createdAt": "2026-06-20T13:31:33.275Z",
+        "sentAt": "2026-06-20T13:31:34.173Z",
+        "payload": {
+          "taskTitle": "测试提醒 - 学习任务即将到期",
+          "taskDescription": "这是一条测试通知，验证提醒功能是否正常工作。",
+          "dueDate": "2026-06-20T14:01:33.275Z",
+          "priority": "normal",
+          "planTitle": "测试计划"
+        },
+        "details": {
+          "to": "test1@x.com",
+          "messageId": "<64cdef25-e0c3-e503-013b-bbef1d1d8f16@163.com>"
+        }
+      },
+      {
+        "id": "log_1781962294749_stid",
+        "userId": 1,
+        "taskId": "test_task",
+        "channel": "email",
+        "status": "sent",
+        "attempts": 1,
+        "maxAttempts": 3,
+        "createdAt": "2026-06-20T13:31:34.176Z",
+        "sentAt": "2026-06-20T13:31:34.749Z",
+        "payload": {
+          "taskTitle": "测试提醒 - 学习任务即将到期",
+          "taskDescription": "这是一条测试通知，验证提醒功能是否正常工作。",
+          "dueDate": "2026-06-20T14:01:34.176Z",
+          "priority": "normal",
+          "planTitle": "测试计划"
+        },
+        "details": {
+          "to": "test1@x.com",
+          "messageId": "<02b0e600-1be7-6c9d-1f0b-0128d90c0b43@163.com>"
+        }
+      },
+      {
+        "id": "log_1781962294750_vic0",
+        "userId": 1,
+        "taskId": "test_task",
+        "channel": "push",
+        "status": "sent",
+        "attempts": 1,
+        "maxAttempts": 3,
+        "createdAt": "2026-06-20T13:31:34.176Z",
+        "sentAt": "2026-06-20T13:31:34.750Z",
+        "payload": {
+          "taskTitle": "测试提醒 - 学习任务即将到期",
+          "taskDescription": "这是一条测试通知，验证提醒功能是否正常工作。",
+          "dueDate": "2026-06-20T14:01:34.176Z",
+          "priority": "normal",
+          "planTitle": "测试计划"
+        },
+        "details": {
+          "userId": 1,
+          "content": "测试提醒 - 学习任务即将到期"
+        }
+      },
+      {
+        "id": "log_1781962343688_gc0x",
+        "userId": 1,
+        "taskId": "test_task",
+        "channel": "push",
+        "status": "sent",
+        "attempts": 1,
+        "maxAttempts": 3,
+        "createdAt": "2026-06-20T13:32:23.687Z",
+        "sentAt": "2026-06-20T13:32:23.688Z",
+        "payload": {
+          "taskTitle": "测试提醒 - 学习任务即将到期",
+          "taskDescription": "这是一条测试通知，验证提醒功能是否正常工作。",
+          "dueDate": "2026-06-20T14:02:23.687Z",
+          "priority": "normal",
+          "planTitle": "测试计划"
+        },
+        "details": {
+          "userId": 1,
+          "content": "测试提醒 - 学习任务即将到期"
+        }
+      },
+      {
+        "id": "log_1781962344917_q8p9",
+        "userId": 1,
+        "taskId": "test_task",
+        "channel": "email",
+        "status": "sent",
+        "attempts": 1,
+        "maxAttempts": 3,
+        "createdAt": "2026-06-20T13:32:23.691Z",
+        "sentAt": "2026-06-20T13:32:24.917Z",
+        "payload": {
+          "taskTitle": "测试提醒 - 学习任务即将到期",
+          "taskDescription": "这是一条测试通知，验证提醒功能是否正常工作。",
+          "dueDate": "2026-06-20T14:02:23.691Z",
+          "priority": "normal",
+          "planTitle": "测试计划"
+        },
+        "details": {
+          "to": "test1@x.com",
+          "messageId": "<0e0c24c7-3535-3151-d015-328976b0d9b5@163.com>"
+        }
+      },
+      {
+        "id": "log_1781962345476_26f7",
+        "userId": 1,
+        "taskId": "test_task",
+        "channel": "email",
+        "status": "sent",
+        "attempts": 1,
+        "maxAttempts": 3,
+        "createdAt": "2026-06-20T13:32:24.920Z",
+        "sentAt": "2026-06-20T13:32:25.476Z",
+        "payload": {
+          "taskTitle": "测试提醒 - 学习任务即将到期",
+          "taskDescription": "这是一条测试通知，验证提醒功能是否正常工作。",
+          "dueDate": "2026-06-20T14:02:24.920Z",
+          "priority": "normal",
+          "planTitle": "测试计划"
+        },
+        "details": {
+          "to": "test1@x.com",
+          "messageId": "<64e9d434-2800-1efb-7509-42966a507854@163.com>"
+        }
+      },
+      {
+        "id": "log_1781962345476_gtaf",
+        "userId": 1,
+        "taskId": "test_task",
+        "channel": "push",
+        "status": "sent",
+        "attempts": 1,
+        "maxAttempts": 3,
+        "createdAt": "2026-06-20T13:32:24.920Z",
+        "sentAt": "2026-06-20T13:32:25.476Z",
+        "payload": {
+          "taskTitle": "测试提醒 - 学习任务即将到期",
+          "taskDescription": "这是一条测试通知，验证提醒功能是否正常工作。",
+          "dueDate": "2026-06-20T14:02:24.920Z",
+          "priority": "normal",
+          "planTitle": "测试计划"
+        },
+        "details": {
+          "userId": 1,
+          "content": "测试提醒 - 学习任务即将到期"
+        }
+      },
+      {
+        "id": "log_1781962669053_o8rw",
+        "userId": 2,
+        "taskId": "test_task",
+        "channel": "push",
+        "status": "sent",
+        "attempts": 1,
+        "maxAttempts": 3,
+        "createdAt": "2026-06-20T13:37:49.052Z",
+        "sentAt": "2026-06-20T13:37:49.053Z",
+        "payload": {
+          "taskTitle": "测试提醒 - 学习任务即将到期",
+          "taskDescription": "这是一条测试通知，验证提醒功能是否正常工作。",
+          "dueDate": "2026-06-20T14:07:49.052Z",
+          "priority": "normal",
+          "planTitle": "测试计划"
+        },
+        "details": {
+          "userId": 2,
+          "content": "测试提醒 - 学习任务即将到期"
+        }
+      },
+      {
+        "id": "log_1781968119902_v7uj",
+        "userId": 1,
+        "taskId": "test_task",
+        "channel": "push",
+        "status": "sent",
+        "attempts": 1,
+        "maxAttempts": 3,
+        "createdAt": "2026-06-20T15:08:39.901Z",
+        "sentAt": "2026-06-20T15:08:39.902Z",
+        "payload": {
+          "taskTitle": "测试提醒 - 学习任务即将到期",
+          "taskDescription": "这是一条测试通知，验证提醒功能是否正常工作。",
+          "dueDate": "2026-06-20T15:38:39.901Z",
+          "priority": "normal",
+          "planTitle": "测试计划"
+        },
+        "details": {
+          "userId": 1,
+          "content": "测试提醒 - 学习任务即将到期"
+        }
+      },
+      {
+        "id": "log_1781968156947_m7cr",
+        "userId": 1,
+        "taskId": "test_task",
+        "channel": "push",
+        "status": "sent",
+        "attempts": 1,
+        "maxAttempts": 3,
+        "createdAt": "2026-06-20T15:09:16.947Z",
+        "sentAt": "2026-06-20T15:09:16.947Z",
+        "payload": {
+          "taskTitle": "测试提醒 - 学习任务即将到期",
+          "taskDescription": "这是一条测试通知，验证提醒功能是否正常工作。",
+          "dueDate": "2026-06-20T15:39:16.947Z",
+          "priority": "normal",
+          "planTitle": "测试计划"
+        },
+        "details": {
+          "userId": 1,
+          "content": "测试提醒 - 学习任务即将到期"
+        }
+      }
+    ],
+    "userNotifications": [],
+    "userPreferences": [
+      {
+        "userId": 2,
+        "email": "yuleon0406@163.com",
+        "defaultChannel": "email",
+        "advanceMinutes": 30,
+        "quietHoursStart": "22:00",
+        "quietHoursEnd": "07:00",
+        "updatedAt": "2026-06-20T12:30:27.139Z"
+      },
+      {
+        "userId": 1,
+        "email": "test1@x.com",
+        "defaultChannel": "both",
+        "advanceMinutes": 30,
+        "quietHoursStart": "22:00",
+        "quietHoursEnd": "07:00",
+        "updatedAt": "2026-06-20T15:08:37.907Z"
+      }
+    ],
+    "reminderRules": [
+      {
+        "id": "rule2",
+        "userId": 1,
+        "planId": null,
+        "name": "5秒测试规则",
+        "description": "这是一个5秒后触发的测试规则",
+        "triggerType": "fixed_time",
+        "triggerTime": "20:46",
+        "advanceMinutes": 30,
+        "frequency": "once",
+        "channel": "push",
+        "enabled": true,
+        "lastTriggeredAt": "2026-06-20T12:46:27.621Z",
+        "lastTriggeredKey": null,
+        "createdAt": "2026-06-20T12:46:27.617Z",
+        "updatedAt": "2026-06-20T12:46:27.617Z"
+      }
+    ],
+    "announcements": [
+      {
+        "id": 1,
+        "title": "系统更新通知",
+        "content": "系统将于本周六进行维护升级，届时将暂停服务2小时。",
+        "priority": "high",
+        "createdAt": "2026-06-15"
+      },
+      {
+        "id": 2,
+        "title": "新功能上线",
+        "content": "日历视图功能已上线，可在首页查看今日任务安排。",
+        "priority": "normal",
+        "createdAt": "2026-06-14"
+      },
+      {
+        "id": 3,
+        "title": "学习提醒",
+        "content": "请及时完成本周学习任务，保持学习进度。",
+        "priority": "normal",
+        "createdAt": "2026-06-13"
+      }
+    ],
+    "resources": [
+      {
+        "id": "r1",
+        "title": "JavaScript高级编程",
+        "description": "深入讲解JavaScript语言核心特性与最佳实践",
+        "category": "编程开发",
+        "type": "ebook",
+        "downloadCount": 1256,
+        "rating": 4.8,
+        "fileUrl": "",
+        "author": "Douglas Crockford",
+        "createdAt": "2026-06-15"
+      },
+      {
+        "id": "r2",
+        "title": "React官方教程",
+        "description": "React 18 官方学习资源",
+        "category": "前端开发",
+        "type": "ebook",
+        "downloadCount": 892,
+        "rating": 4.9,
+        "fileUrl": "",
+        "author": "Meta",
+        "createdAt": "2026-06-14"
+      },
+      {
+        "id": "r3",
+        "title": "Python速成课程",
+        "description": "一周内学会Python编程",
+        "category": "编程开发",
+        "type": "video",
+        "downloadCount": 654,
+        "rating": 4.7,
+        "fileUrl": "",
+        "author": "Eric Matthes",
+        "createdAt": "2026-06-13"
+      },
+      {
+        "id": "r4",
+        "title": "高等数学视频教程",
+        "description": "考研数学全套视频课程",
+        "category": "数据科学",
+        "type": "video",
+        "downloadCount": 523,
+        "rating": 4.8,
+        "fileUrl": "",
+        "author": "考研名师",
+        "createdAt": "2026-06-12"
+      },
+      {
+        "id": "r5",
+        "title": "SQL学习手册",
+        "description": "SQL数据库查询与优化技巧详解",
+        "category": "数据库",
+        "type": "document",
+        "downloadCount": 432,
+        "rating": 4.6,
+        "fileUrl": "",
+        "author": "DataCamp",
+        "createdAt": "2026-06-11"
+      },
+      {
+        "id": "r6",
+        "title": "Vue3实战项目",
+        "description": "使用Vue3构建企业级应用",
+        "category": "前端开发",
+        "type": "video",
+        "downloadCount": 389,
+        "rating": 4.7,
+        "fileUrl": "",
+        "author": "社区贡献",
+        "createdAt": "2026-06-10"
+      },
+      {
+        "id": "r7",
+        "title": "机器学习入门",
+        "description": "从零开始学习机器学习算法",
+        "category": "人工智能",
+        "type": "ebook",
+        "downloadCount": 276,
+        "rating": 4.5,
+        "fileUrl": "",
+        "author": "Andrew Ng",
+        "createdAt": "2026-06-09"
+      },
+      {
+        "id": "r8",
+        "title": "Linux命令速查",
+        "description": "常用Linux命令大全",
+        "category": "操作系统",
+        "type": "document",
+        "downloadCount": 567,
+        "rating": 4.9,
+        "fileUrl": "",
+        "author": "社区贡献",
+        "createdAt": "2026-06-08"
+      },
+      {
+        "id": "r100",
+        "title": "测试资源",
+        "description": "desc",
+        "category": "其他",
+        "type": "document",
+        "author": "匿名用户",
+        "downloadCount": 0,
+        "rating": 0,
+        "fileUrl": "",
+        "createdAt": "2026-06-20T12:25:10.935Z"
+      },
+      {
+        "id": "r101",
+        "title": "我的上传测试资源",
+        "description": "通过 API 上传",
+        "category": "编程开发",
+        "type": "document",
+        "author": "匿名用户",
+        "downloadCount": 1,
+        "rating": 0,
+        "fileUrl": "/api/resources/file/1781958373214_c9grtzc_test-upload.txt",
+        "createdAt": "2026-06-20T12:26:13.227Z"
+      },
+      {
+        "id": "r102",
+        "title": "四级",
+        "description": "",
+        "category": "其他",
+        "type": "other",
+        "author": "匿名用户",
+        "downloadCount": 1,
+        "rating": 0,
+        "fileUrl": "/api/resources/file/1781958665260_8lxheku_思维导图.png",
+        "createdAt": "2026-06-20T12:31:05.521Z"
+      },
+      {
+        "id": "r103",
+        "title": "测试图片资源",
+        "description": "这是一张测试图片，包含详细描述信息。\n\n支持多行文字输入。",
+        "category": "前端开发",
+        "type": "ebook",
+        "author": "匿名用户",
+        "downloadCount": 1,
+        "rating": 0,
+        "fileUrl": "/api/resources/file/1781959587569_9w92ch1_test-img.png",
+        "mimeType": "image/png",
+        "fileSize": 70,
+        "originalName": "test-img.png",
+        "createdAt": "2026-06-20T12:46:27.575Z"
+      }
+    ],
+    "adminLogs": [
+      {
+        "id": "log_1781969375189_ms21a",
+        "actor": "test1@x.com",
+        "actorId": 1,
+        "action": "backup.create",
+        "target": "bk_1781969375188",
+        "meta": {
+          "filename": "backup-2026-06-20T15-29-35-185Z.json"
+        },
+        "ip": "",
+        "createdAt": "2026-06-20T15:29:35.189Z"
+      },
+      {
+        "id": "log_1781969341050_ca3x8",
+        "actor": "test1@x.com",
+        "actorId": 1,
+        "action": "settings.update",
+        "target": "",
+        "meta": {
+          "keys": [
+            "mail",
+            "site",
+            "security"
+          ]
+        },
+        "ip": "",
+        "createdAt": "2026-06-20T15:29:01.050Z"
+      },
+      {
+        "id": "log_1781969341016_0hct9",
+        "actor": "test1@x.com",
+        "actorId": 1,
+        "action": "backup.create",
+        "target": "bk_1781969341014",
+        "meta": {
+          "filename": "backup-2026-06-20T15-29-01-013Z.json"
+        },
+        "ip": "",
+        "createdAt": "2026-06-20T15:29:01.016Z"
+      }
+    ],
+    "settings": {
+      "site": {
+        "name": "????X",
+        "description": "一站式个人学习管理",
+        "contact": "admin@example.com",
+        "subtitle": "",
+        "icp": "",
+        "supportEmail": "admin@example.com",
+        "maintenance": false
+      },
+      "security": {
+        "passwordMinLength": 6,
+        "maxLoginAttempts": 5,
+        "lockoutMinutes": 15,
+        "sessionTimeoutHours": 24,
+        "tokenTtlDays": 14,
+        "passwordMinLen": 6,
+        "maxLoginFail": 5,
+        "allowRegister": true,
+        "requireApproval": false
+      },
+      "mail": {
+        "from": "puwei78100594164@163.com",
+        "smtpHost": "",
+        "smtpPort": 465,
+        "smtpUser": "",
+        "smtpSecure": true,
+        "enabled": true,
+        "host": "smtp.163.com",
+        "port": 465,
+        "secure": true,
+        "user": "puwei78100594164@163.com",
+        "pass": "CUsTA36qNcap2a82"
+      },
+      "guide": {
+        "content": "<h2>智能学习计划助手 - 使用指南</h2>\n<p>欢迎使用智能学习计划助手！本指南将详细介绍系统的使用流程、注意事项及各项功能说明，帮助您高效管理学习计划。</p>\n\n<h3>一、使用流程</h3>\n\n<h4>1. 创建学习目标</h4>\n<p>学习目标是您学习的最终方向，例如\"通过英语四级考试\"。</p>\n<ul>\n<li>进入左侧菜单的<strong>\"学习目标\"</strong>页面</li>\n<li>点击<strong>\"新建目标\"</strong>按钮</li>\n<li>填写目标标题、描述、分类（如语言学习、职业技能等）和目标日期</li>\n<li>点击<strong>\"保存\"</strong>完成创建</li>\n</ul>\n<p><em>提示：目标建议具体可衡量，例如\"3个月内掌握Python基础\"比\"学Python\"更有效。</em></p>\n\n<h4>2. 创建学习计划并关联目标</h4>\n<p>学习计划是为了实现目标而制定的具体执行方案。</p>\n<ul>\n<li>进入<strong>\"学习计划\"</strong>页面</li>\n<li>点击<strong>\"新建计划\"</strong>按钮</li>\n<li>填写计划标题、描述、起止时间</li>\n<li>在<strong>\"关联目标\"</strong>下拉框中选择已创建的学习目标</li>\n<li>点击<strong>\"保存\"</strong>完成创建</li>\n</ul>\n<p><em>提示：一个目标可以关联多个计划，系统会综合所有关联计划的进度自动计算目标进度。</em></p>\n\n<h4>3. 在计划中添加和设置任务</h4>\n<p>任务是计划下的具体执行项，例如\"背50个单词\"、\"完成第1章习题\"。</p>\n<ul>\n<li>在<strong>\"学习计划\"</strong>页面点击某个计划进入详情</li>\n<li>点击<strong>\"添加任务\"</strong>按钮</li>\n<li>填写任务标题、计划日期、预计时长</li>\n<li>可设置任务优先级（高/中/低）</li>\n<li>点击<strong>\"保存\"</strong>完成任务添加</li>\n</ul>\n\n<h4>4. 任务自动同步至日历视图</h4>\n<p>系统会自动将所有计划中的任务同步到日历视图，无需手动操作。</p>\n<ul>\n<li>进入<strong>\"日历视图\"</strong>页面</li>\n<li>可选择<strong>月视图</strong>、<strong>周视图</strong>或<strong>日视图</strong></li>\n<li>每个任务会按其计划日期显示在对应日期上</li>\n<li>不同优先级的任务用不同颜色标识</li>\n<li>点击日历中的任务可查看详情或直接标记完成</li>\n</ul>\n<p><em>机制说明：当您在计划中创建或修改任务时，日历视图会实时同步更新，确保您看到的是最新的任务安排。</em></p>\n\n<h4>5. 完成日历任务自动推进计划进度</h4>\n<p>当您在日历视图中完成每日任务时，系统会自动推进所属计划的进度。</p>\n<ul>\n<li>在日历视图中点击对应任务</li>\n<li>勾选<strong>\"已完成\"</strong>或点击完成按钮</li>\n<li>系统自动计算：计划进度 = 已完成任务数 / 总任务数 × 100%</li>\n<li>计划进度实时更新，无需手动调整</li>\n</ul>\n<p><em>例如：计划共有10个任务，完成5个后，计划进度自动显示为50%。</em></p>\n\n<h4>6. 计划进度同步推进目标进度</h4>\n<p>目标进度由所有关联计划的进度综合计算得出。</p>\n<ul>\n<li>系统自动计算：目标进度 = 所有关联计划进度的平均值</li>\n<li>当所有关联计划进度达到100%时，目标自动标记为\"已达成\"</li>\n<li>目标进度实时同步，无需手动维护</li>\n</ul>\n<p><em>例如：目标A关联了2个计划，计划1进度80%，计划2进度60%，则目标A进度为(80%+60%)/2=70%。</em></p>\n\n<h3>二、注意事项</h3>\n<ul>\n<li><strong>目标-计划-任务层级关系：</strong>建议按照\"先目标→再计划→后任务\"的顺序创建，确保层级关系清晰</li>\n<li><strong>任务日期：</strong>请合理设置任务计划日期，避免任务堆积在某一天</li>\n<li><strong>进度计算：</strong>删除任务会影响计划进度，请谨慎操作</li>\n<li><strong>消息中心：</strong>任务/计划/目标的完成和进度变化会自动推送通知到右上角消息中心</li>\n<li><strong>数据安全：</strong>建议定期备份重要数据，管理员可在系统设置中操作</li>\n</ul>\n\n<h3>三、功能说明</h3>\n<ul>\n<li><strong>首页：</strong>展示学习统计、今日任务、系统公告和近期目标</li>\n<li><strong>学习目标：</strong>创建、编辑、删除学习目标，查看进度</li>\n<li><strong>学习计划：</strong>管理学习计划，关联目标，添加任务</li>\n<li><strong>日历视图：</strong>月/周/日视图查看和完成任务</li>\n<li><strong>共享资源：</strong>上传和下载学习资料</li>\n<li><strong>帖子中心：</strong>学习交流社区</li>\n<li><strong>学习提醒：</strong>自定义提醒规则，定时推送</li>\n<li><strong>个人中心：</strong>管理个人信息、头像、密码</li>\n<li><strong>消息中心：</strong>查看系统通知、任务/计划/目标进度提醒</li>\n</ul>\n\n<p style=\"color:#888;margin-top:24px\">如有其他疑问，请联系管理员或查阅系统公告。</p>",
+        "updatedAt": "2026-06-24T14:41:33.757Z",
+        "updatedBy": "system"
+      }
+    },
+    "backups": [
+      {
+        "id": "bk_1781969375188",
+        "name": "backup-2026-06-20T15-29-35-185Z.json",
+        "filename": "backup-2026-06-20T15-29-35-185Z.json",
+        "size": 24815,
+        "operator": "test1@x.com",
+        "createdBy": "test1@x.com",
+        "createdAt": "2026-06-20T15:29:35.185Z",
+        "snapshot": {
+          "userCount": 3,
+          "postCount": 1,
+          "resourceCount": 12
+        }
+      },
+      {
+        "id": "bk_1781969341014",
+        "filename": "backup-2026-06-20T15-29-01-013Z.json",
+        "size": 23848,
+        "operator": "test1@x.com",
+        "createdAt": "2026-06-20T15:29:01.013Z"
+      }
+    ],
+    "userIdCounter": 3,
+    "goalIdCounter": 3,
+    "planIdCounter": 3,
+    "taskIdCounter": 63,
+    "reminderIdCounter": 1,
+    "postIdCounter": 1,
+    "commentIdCounter": 1,
+    "resourceIdCounter": 100,
+    "ruleIdCounter": 1
+  }
+}
